@@ -1,0 +1,1283 @@
+<div class="fill-height px-2 pb-2 d-flex justify-content-center px-lg-5">
+  <div *ngIf="isLoading" class="d-flex h-100 align-items-center justify-content-center">
+    <mat-spinner class="zx-medium-icon-size zx-medium-big-icon-size-lg"></mat-spinner>
+  </div>
+  <!-- orders -------------------------------------------------------------------------------------------------------- orders -->
+  <section *ngIf="!isLoading" class="w-100 d-flex flex-column">
+
+    <!-- title -->
+    <div class="w-100 d-flex justify-content-between align-items-center px-2 pt-1 pb-3 p-lg-3">
+      <h6 class="mb-0 zx-text-medium fw-bold zx-text-sm-big">
+        <span *ngIf="!isManigmentView">
+          {{ 'main-nav.my-orders' | translate }}
+        </span>
+        <span *ngIf="isManigmentView">
+          <span *ngIf="isRTL">
+            {{ 'su-management.orders-of-user' | translate }}
+          </span>
+          <span>{{ user.email | slice:0:25 }}</span>
+          <span *ngIf="user.email.length > 25">
+            ...
+          </span>
+          <span *ngIf="!isRTL">
+            {{ 'su-management.orders-of-user' | translate }}
+          </span>
+        </span>
+      </h6>
+    </div>
+
+    <!-- orders accordion -->
+    <mat-accordion #scrollContainer class="w-100 pb-3" multi="false" *ngIf="orders.length > 0 && !isLoading">
+      <mat-expansion-panel *ngFor="let order of orders; index as o" (opened)="isAllImagesShowen = false"
+        (closed)="isAllImagesShowen = false">
+
+        <mat-expansion-panel-header (click)="togglePanel(order)"
+          [class.zx-choosen-order]="expandedPanelId === order._id"
+          [class.zx-big-order-header]="!isAllFilesHavePaperSet(order)"
+          [class.zx-inqlude-title-h]="lastPendingOrderIndex === o || o === 0">
+          <article class="w-100 d-flex flex-column">
+
+            <!-- title -->
+            <article *ngIf="lastPendingOrderIndex === o || o === 0"
+              class="d-flex py-3 position-absolute top-0 w-100 zx-p-x-order-title"
+              [class.zx-p-x-order-title-not-rtl]="!isRTL" [class.zx-p-x-order-title-darkmode]="isDarkMode">
+              <h6 class="p-0 m-0 zx-text-small zx-text-sm-medium opacity-75">
+                <!-- pending orders -->
+                <b *ngIf="lastPendingOrderIndex + 1 > 0">
+                  {{ 'my-orders.pending-orders' | translate }}
+                </b>
+                <!-- printed orders -->
+                <b *ngIf="(lastPendingOrderIndex + 1 === 0) || (o > 0 && lastPendingOrderIndex + 1 > 0)">
+                  {{ 'my-orders.printed-orders' | translate }}
+                </b>
+              </h6>
+            </article>
+            <!-- // title -->
+
+            <article class="w-100 d-flex align-items-center justify-content-between">
+              <!-- ** main container ** -->
+              <article class="d-flex flex-column flex-grow-1 gap-1 gap-lg-2 py-3">
+                <!-- MAIN row -->
+                <div class="d-flex row w-100 flex-row-reverse">
+
+                  <!-- delete -->
+                  <div class="d-flex col-3 col-lg-1 align-items-lg-center justify-content-end opacity-50">
+                    <img *ngIf="!order.isDeleted && o < lastPendingOrderIndex"
+                      (click)="openDeleteOrderDialog($event, order)" [matTooltip]="'delete-order.title' | translate"
+                      [matTooltipPosition]="'above'"
+                      class="zx-small-icon-size zx-small-small-plus-icon-size-lg svg delete-on-hover"
+                      [src]="'assets/images/delete-icon.svg'">
+                  </div>
+                  <!-- // delete -->
+
+                  <!-- files and price -->
+                  <div class="col-9 col-lg-2 zx-text-small">
+                    <span>
+                      <!-- files -->
+                      <span *ngIf="order.files.length > 1 ||
+                               (!order.files || order.files.length === 0)">
+                        <span>
+                          {{ order.files.length }}
+                        </span>
+                        <span>
+                          {{ "printing-table.files" | translate }}
+                        </span>
+                      </span>
+                      <span *ngIf="order.files.length === 1">
+                        <span>
+                          {{ "printing-table.one-file" | translate }}
+                        </span>
+                      </span>
+                      <!-- , -->
+                      <span>, </span>
+                      <!-- before discount price - order discounted -->
+                      <span class="opacity-75" *ngIf="order.discount && order.discount !== 0 && !order.adminOrder">
+                        <span class="strikethrough">
+                          <span>
+                            {{ roundDownTowDecimal(order.totalCost + order.discount) }}
+                          </span>
+                          <span>
+                            {{ 'printing-table.nis' | translate }}
+                          </span>
+                        </span>
+                        <span class="zx-100-opacity">.</span>
+                        <span class="zx-text-tiny text-green">
+                          <span>( %</span>
+                          <span>
+                            {{ roundDownTowDecimal(
+                            100 - ((((order.totalCost + order.discount) - order.discount) / (order.totalCost +
+                            order.discount))
+                            * 100))
+                            }}
+                          </span>
+                          <span>
+                            {{ "my-orders.discount" | translate }}
+                          </span>
+                          <span>)</span>
+                        </span>
+                        <span class="zx-100-opacity">.</span>
+                      </span>
+                      <!-- normal user -->
+                      <span *ngIf="!order.adminOrder">
+                        <!-- total cost -->
+                        <span
+                          *ngIf="order.addedToQueue || (!order.addedToQueue && !user.points && user.points === 0 && (!user.discount || user.discount === 0))">
+                          {{ roundDownTowDecimal(order.totalCost) }}
+                        </span>
+                        <span *ngIf="!order.addedToQueue && (!user.discount || user.discount === 0)">
+                          <span *ngIf="user.points > 0 && order.totalCost > user.points">
+                            {{ roundDownTowDecimal(order.totalCost - user.points) }}
+                          </span>
+                          <span *ngIf="user.points > 0 && order.totalCost <= user.points">
+                            0
+                          </span>
+                        </span>
+                        <span *ngIf="!order.addedToQueue && user.discount > 0 && !order.adminOrder">
+                          <span *ngIf="!user.points || user.points === 0">
+                            {{ roundDownTowDecimal(order.totalCost) }}
+                          </span>
+                          <span *ngIf="user.points > 0">
+                            <span *ngIf="user.points > 0 && order.totalCost >= user.points">
+                              {{ roundDownTowDecimal(order.totalCost - user.points) }}
+                            </span>
+                            <span *ngIf="user.points > 0 && order.totalCost < user.points">
+                              0
+                            </span>
+                          </span>
+                        </span>
+                        <span class="zx-text-tiny">
+                          {{ "printing-table.nis" | translate }}
+                        </span>
+                        <!-- points cost - printed -->
+                        <span *ngIf="!order.addedToQueue && user.points && user.points !== 0 && !order.adminOrder">
+                          <span>
+                            {{ "my-orders.and" | translate }}
+                          </span>
+                          <span *ngIf="order.totalCost > user.points">
+                            {{ roundDownTowDecimal(user.points) }}
+                          </span>
+                          <span *ngIf="order.totalCost <= user.points">
+                            {{ roundDownTowDecimal(order.totalCost) }}
+                          </span>
+                          <span class="zx-text-tiny">
+                            {{ "printing-table.points-short" | translate }}
+                          </span>
+                        </span>
+                        <!-- didnt charge? -->
+                        <span class="zx-text-tiny text-green fw-bold" *ngIf="!order.addedToQueue && !order.adminOrder">
+                          <span class="zx-100-opacity">-</span>
+                          <span>(</span>
+                          <span>
+                            {{ "my-orders.didnt-charge" | translate }}
+                          </span>
+                          <span>)</span>
+                        </span>
+                      </span>
+                      <!-- manager user - admin order -->
+                      <span *ngIf="order.adminOrder">
+                        <span>
+                          {{ roundDownTowDecimal(order.totalCost) }}
+                        </span>
+                        <span class="zx-text-tiny">
+                          {{ "printing-table.nis" | translate }}
+                        </span>
+                      </span>
+                      <!-- // manager user - admin order -->
+                    </span>
+
+                    <!-- manager user - admin order -->
+                    <span *ngIf="order.adminOrder">
+                      <span class="zx-text-tiny-tiny zx-text-sm-tiny zx-text-pink fw-bold"
+                        [class.zx-text-white]="isDarkMode">
+                        <span class="zx-100-opp">_</span>
+                        <span>(</span>
+                        <span>
+                          {{ "my-orders.manager-order" | translate }}
+                        </span>
+                        <span>)</span>
+                      </span>
+                    </span>
+                    <!-- // manager user - admin order -->
+
+                  </div>
+                  <!-- // files and price -->
+
+                  <!-- place -->
+                  <article class="d-flex col-12 col-lg-3 align-items-center gap-2 py-2">
+                    <img *ngIf="!order.branchID.is_express" [src]="'assets/images/plotter-icon.svg'"
+                      alt="choosen printing system icon" class="zx-small-icon-size c-pointer">
+                    <img *ngIf="order.branchID.is_express" [src]="'assets/images/express-icon.svg'"
+                      alt="choosen printing system icon" class="zx-small-icon-size c-pointer">
+                    <img *ngIf="!order.branchID.is_express"
+                      [src]="'assets/images/branches/' + order.branchID.serial_name + '.png'"
+                      alt="choosen printing system icon" class="zx-small-icon-size c-pointer">
+                    <img *ngIf="order.branchID.is_express"
+                      [src]="'assets/images/branches/' + order.printerID.serial_name + '.png'"
+                      alt="choosen printing system icon" class="zx-small-icon-size c-pointer">
+                    <div class="d-flex align-items-center">
+                      <span class="zx-text-small c-pointer" *ngIf="!order.branchID.is_express">
+                        {{ "choose-system.title-short-short-plotter" | translate }}
+                      </span>
+                      <span class="zx-text-small c-pointer" *ngIf="order.branchID.is_express">
+                        {{ "choose-system.title-short-short-express" | translate }}
+                      </span>
+                      <span class="zx-text-small c-pointer">,</span>
+                      <span class="zx-text-small zx-100-opp">,</span>
+                      <span class="zx-text-small c-pointer" *ngIf="!order.branchID.is_express">
+                        <span>
+                          {{ ("choose-branch.naming." + order.branchID.serial_name | translate) | slice:0:12 }}
+                        </span>
+                        <span *ngIf="('choose-branch.naming.' + order.branchID.serial_name | translate).length > 12">
+                          ...
+                        </span>
+                      </span>
+                      <span class="zx-text-small c-pointer" *ngIf="order.branchID.is_express">
+                        <span>
+                          {{ ("choose-branch.naming." + order.printerID.serial_name | translate) | slice:0:12 }}
+                        </span>
+                        <span *ngIf="('choose-branch.naming.' + order.printerID.serial_name | translate).length > 12">
+                          ...
+                        </span>
+                      </span>
+                    </div>
+                  </article>
+                  <!-- // place -->
+
+                  <!-- status and times -->
+                  <div class="d-flex col-12 col-lg-6 align-items-center px-3">
+                    <div class="d-flex align-items-center w-100 rounded-pill zx-border-gray-v-light">
+
+                      <!-- created -->
+                      <div class="d-flex justify-content-center zx-status-con-30-p">
+                        <div class="d-flex flex-column">
+                          <b class="zx-text-tiny text-green">
+                            {{ "my-orders.created" | translate }}
+                          </b>
+                          <div class="d-flex flex-column flex-sm-row gap-sm-2 opacity-50">
+                            <span class="zx-text-tiny">
+                              {{ order.created | date:'dd/MM/yy' }}
+                            </span>
+                            <span class="zx-text-tiny">
+                              {{ order.created | date:'HH:mm' }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- // created -->
+
+                      <!-- >>> -->
+                      <img class="object-fit-cover zx-seperation-arrow zx-status-con-10-p" [class.mirror]="!isRTL"
+                        src="../../assets/images/seperation-arrow.svg">
+
+                      <!-- sent to print? -->
+                      <!-- NO, BUT POSSIBLE! (sent to print?) -->
+                      <div *ngIf="!order.addedToQueue &&
+                              (order.status === 'PENDING' ||
+                               order.status === 'QR' ||
+                               order.status === 'NOT_PAID') &&
+                             (!order.files || order.files.length > 0) &&
+                             !order.isDeleted" class="d-flex flex-column flex-shrink-0 zx-status-con-70-p px-3">
+                        <!-- [print btn] -->
+                        <button mat-raised-button color="primary" class="print-button rounded-pill d-flex"
+                          (click)="openOrderSummaryDialog($event, order)">
+                          <span class="zx-text-sm-small text-white">
+                            {{ "printing-table.send-to-print" | translate }}
+                          </span>
+                        </button>
+                      </div>
+
+                      <!-- NO, BUT NOT POSSIBLE! NO FILES! (sent to print?) -->
+                      <div *ngIf="!order.addedToQueue &&
+                              (order.status === 'PENDING' ||
+                               order.status === 'QR' ||
+                               order.status === 'NOT_PAID') &&
+                              !(!order.files || order.files.length > 0)" class="d-flex flex-column zx-status-con-70-p">
+                        <!-- [whatsup btn] -->
+                        <div class="d-flex flex-column gap-1 align-items-center pb-3 px-2">
+                          <b class="text-red zx-text-tiny-tiny zx-text-sm-tiny" [class.zx-text-white]="isDarkMode">
+                            {{'my-orders.contact-us-no-files-order' | translate}}
+                          </b>
+                          <button mat-raised-button (click)="openWhatsApp()"
+                            class="rounded-pill zx-text-tiny zx-text-sm-small">
+                            <div class="w-100 h-100 d-flex align-items-center gap-2">
+                              <div class="whatsup-logo-container-small">
+                                <img src="assets/images/whatsup-logo.svg" alt="WhatsUp Logo" class="whatsup-logo-small">
+                              </div>
+                              <span class="zx-text-tiny-tiny">
+                                {{'main-nav.contact-us' | translate}}
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- YES (sent to print?) -->
+                      <div *ngIf="order.addedToQueue" class="d-flex justify-content-center zx-status-con-30-p">
+                        <div class="d-flex flex-column">
+                          <b class="zx-text-tiny text-green">
+                            {{ "my-orders.added-to-queue" | translate }}
+                          </b>
+                          <div class="d-flex flex-column flex-sm-row gap-sm-2 opacity-50">
+                            <span class="zx-text-tiny">
+                              {{ order.addedToQueue | date:'dd/MM/yy' }}
+                            </span>
+                            <span class="zx-text-tiny">
+                              {{ order.addedToQueue | date:'HH:mm' }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- // YES (sent to print?) -->
+
+                      <!-- >>> -->
+                      <img *ngIf="order.addedToQueue && (order.status === 'DONE'|| order.status === 'REFUNDED')"
+                        class="object-fit-cover zx-seperation-arrow zx-status-con-10-p" [class.mirror]="!isRTL"
+                        src="../../assets/images/seperation-arrow.svg">
+
+                      <!-- printed? -->
+                      <!-- NO, AND NOT POSSIBLE! (EXPIRED or REFUNDED) (printed?) -->
+                      <div *ngIf="order.status === 'EXPIRED' ||
+                          order.status === 'REFUNDED' ||
+                          order.isDeleted" class="d-flex flex-column zx-status-con-30-p"
+                        [class.zx-status-con-70-p]="!order.addedToQueue">
+                        <!-- EXPIRED -->
+                        <div *ngIf="order.status === 'EXPIRED' && !order.isDeleted"
+                          class="d-flex flex-column align-items-center justify-content-center gap-1">
+                          <b class="zx-text-tiny text-red text-center" [class.zx-text-white]="isDarkMode">
+                            {{ "my-orders.order-expired" | translate }}
+                          </b>
+                          <span class="zx-text-tiny-tiny text-red text-center" [class.zx-text-white]="isDarkMode">
+                            {{ "my-orders.order-expired-explain" | translate }}
+                          </span>
+                        </div>
+                        <!-- REFUNDED -->
+                        <div *ngIf="order.status === 'REFUNDED' || order.isDeleted"
+                          class="d-flex flex-column align-items-center justify-content-center gap-1">
+                          <b class="zx-text-tiny text-green text-center">
+                            {{ "my-orders.order-refunded" | translate }}
+                          </b>
+                          <span class="zx-text-tiny-tiny text-green text-center" *ngIf="order.status === 'REFUNDED'">
+                            {{ "my-orders.order-refunded-explain" | translate }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- YES (printed?) -->
+                      <div *ngIf="order.addedToQueue && order.status === 'DONE'"
+                        class="d-flex justify-content-center zx-status-con-30-p">
+                        <div class="d-flex flex-column">
+                          <b class="zx-text-tiny text-green">
+                            {{ "my-orders.printed" | translate }}
+                          </b>
+                          <div class="d-flex flex-column flex-sm-row gap-sm-2 opacity-50">
+                            <!-- [plotter] -->
+                            <span *ngIf="!order.branchID.is_express" class="zx-text-tiny">
+                              {{ order.print_end | date:'dd/MM/yy' }}
+                            </span>
+                            <!-- [express] -->
+                            <span *ngIf="order.branchID.is_express" class="zx-text-tiny">
+                              {{ order.addedToQueue | date:'dd/MM/yy' }}
+                            </span>
+                            <!-- [plotter] -->
+                            <span *ngIf="!order.branchID.is_express" class="zx-text-tiny">
+                              {{ order.print_end | date:'HH:mm' }}
+                            </span>
+                            <!-- [express] -->
+                            <span *ngIf="order.branchID.is_express" class="zx-text-tiny">
+                              {{ addSecondsToDate(order.addedToQueue, order.files.length) | date:'HH:mm' }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- // YES (printed?) -->
+
+                    </div>
+                  </div>
+                  <!-- // status and times -->
+                </div>
+
+                <!-- ERROR row -->
+                <!-- NOT ALL IMAGES HAVE PAPER [whatsup btn] -->
+                <div *ngIf="!isAllFilesHavePaperSet(order)" class="d-flex w-100 py-1 px-2">
+                  <div class="d-flex flex-column gap-1 align-items-center">
+                    <b class="text-red zx-text-tiny-tiny zx-text-sm-tiny" [class.zx-text-white]="isDarkMode">
+                      {{ "my-orders.contact-us-no-paper-on-order" | translate }}
+                    </b>
+                    <button mat-raised-button (click)="openWhatsApp()"
+                      class="rounded-pill zx-text-tiny zx-text-sm-small px-3">
+                      <div class="w-100 h-100 d-flex align-items-center gap-2">
+                        <div class="whatsup-logo-container-small">
+                          <img src="assets/images/whatsup-logo.svg" alt="WhatsUp Logo" class="whatsup-logo-small">
+                        </div>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny whatsup-logo-text">
+                          {{'main-nav.contact-us' | translate}}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+              </article>
+            </article>
+          </article>
+        </mat-expansion-panel-header>
+        <!-- // order header -->
+
+
+
+
+
+
+
+
+        <!-- SENT order content ============================= SENT order content ============================= SENT order content -->
+        <div class="d-flex flex-column w-100 flex-grow-1">
+
+          <div class="zx-bg-order px-4 pb-2">
+            <span class="zx-text-small text-green">
+              <span>{{ "my-orders.order-num" | translate }}</span>
+              <span class="zx-100-opp">-</span>
+              <span>{{ order._id.slice(0, 8) }}</span>
+              <span>:</span>
+            </span>
+          </div>
+
+          <!-- files [plotter] ---------- files [plotter] ---------- files [plotter]  -->
+          <div *ngIf="order.branchID && !order.branchID.is_express && order.files && order.files.length > 0"
+            class="d-flex flex-grow-1 w-100 position-relative">
+            <div
+              class="d-flex flex-column align-items-center flex-grow-1 w-100 gap-1 gap-lg-2 overflow-auto p-1 p-lg-2 zx-bg-order rounded-2"
+              [class.zx-choosen-order-action]="
+              (order.status !== 'PENDING' && 
+              order.status !== 'QR' &&
+              order.status !== 'NOT_PAID') ||
+              order.isDeleted" [class.zx-border-gray-25-pr]="isDarkMode">
+              <!-- file -->
+              <section
+                ngClass="d-flex w-100 row p-2 zx-border-gray-v-v-light zx-bg-light shadow-85 rounded-2 gap-2 gap-md-0"
+                [class.zx-bg-dark-no-border]="isDarkMode" [class.align-items-end]="!isRTL"
+                *ngFor="let file of order.files; index as i" class="d-flex w-100">
+                <!-- name - multi page -->
+                <span *ngIf="file.images.length > 1" class="zx-text-small zx-text-pink col-12 w-100 p-0 pb-lg-2 px-lg-2"
+                  [class.text-start]="!isRTL" [class.fw-bold]="!isDarkMode" [class.zx-text-white]="isDarkMode"
+                  [class.zx-ltr]="!isRTL">
+                  <span class="d-sm-none">
+                    <span>
+                      {{file.fileName.split('-')[1] | slice:0:17}}
+                    </span>
+                    <span *ngIf="file.fileName.split('-')[1].length > 17">
+                      ...
+                    </span>
+                    <span class="zx-100-opacity">--</span>
+                    <span class="fw-normal zx-text-tiny text-green">
+                      <span>(</span>
+                      <span>
+                        {{ file.images.length }}
+                      </span>
+                      <span class="zx-text-tiny-tiny">
+                        {{ "printing-table.pages-short" | translate }}
+                      </span>
+                      <span>)</span>
+                    </span>
+                  </span>
+                  <span class="d-none d-sm-flex">
+                    <span>
+                      {{file.fileName.split('-')[1] | slice:0:40}}
+                    </span>
+                    <span *ngIf="file.fileName.split('-')[1].length > 40">
+                      ...
+                    </span>
+                    <span class="zx-100-opacity">--</span>
+                    <span class="fw-normal text-green">
+                      <span>(</span>
+                      <span>
+                        {{ file.images.length }}
+                      </span>
+                      <span class="zx-text-tiny">
+                        {{ "printing-table.pages-short" | translate }}
+                      </span>
+                      <span>)</span>
+                    </span>
+                  </span>
+                </span>
+                <!-- 1st line -->
+                <article *ngFor="let image of file.images; index as j"
+                  class="d-flex align-items-center gap-2 gap-lg-3 p-0"
+                  [class.zx-border-gray-top-25-pr]="file.images.length > 1"
+                  [class.zx-border-gray-left-25-pr-md]="j % 2 === 0 && file.images.length > 1"
+                  [class.flex-row-reverse]="!isRTL" [class.col-12]="file.images.length === 1"
+                  [class.py-1]="file.images.length > 1" [class.py-lg-2]="file.images.length > 1"
+                  [class.ps-md-2]="file.images.length > 1 && j % 2 === 0"
+                  [class.pe-md-2]="file.images.length > 1 && j % 2 !== 0" [class.col-12]="file.images.length > 1"
+                  [class.col-md-6]="file.images.length > 1">
+                  <!-- image -->
+                  <article
+                    class="zx-order-summery-image-con d-flex flex-column justify-content-between align-items-center position-relative p-1 p-lg-2 rounded-1 bg-white zx-border-gray-v-v-light shadow-85-light">
+                    <!-- -----===----- thumbnail 1/1 [plotter] -----===----- -->
+                    <div class="d-flex zx-medium-plus-icon-size rounded-1">
+
+                      <!-- thumbnail 1/1 [plotter] -->
+                      <img *ngIf="!plotterImageErrors[o][i][j]" (error)="plotterImageErrors[o][i][j] = true"
+                        class="w-100 h-100 object-fit-contain" [src]="image.thumbnailPath">
+                      <!-- error finding image src? -->
+                      <div *ngIf="plotterImageErrors[o][i][j]" class="d-flex flex-column align-items-center"
+                        matTooltip="{{ 'my-orders.no-img-src-explain' | translate }}" matTooltipPosition="below"
+                        matTooltipClass="centered-tooltip">
+                        <img class="zx-small-plus-icon-size" src="assets/images/negative-icon.svg">
+                        <b class="zx-text-tiny-tiny text-red text-center zx-lh-tiny-tiny"
+                          [class.zx-text-white]="isDarkMode">
+                          {{ "my-orders.no-img-src" | translate }}
+                        </b>
+                      </div>
+                      <!-- // error finding image src? -->
+                    </div>
+                    <!-- -----===----- // thumbnail 1/1 [plotter] -----===----- -->
+
+                    <div class="d-flex w-100 align-items-center justify-content-center pt-1 pt-lg-2">
+                      <span class="zx-text-tiny" [class.zx-ltr]="!isRTL">
+                        <span>{{roundDownTowDecimal(image.imageHeight * (2.54 / 300)) }}</span>
+                        <span> × </span>
+                        <span>{{roundDownTowDecimal(image.imageWidth * (2.54 / 300)) }}</span>
+                        <span class="zx-text-tiny-tiny">
+                          {{ "printing-table.dimensions-cm" | translate }}
+                        </span>
+                      </span>
+                    </div>
+                    <article *ngIf="file.images.length > 1" class="position-absolute d-flex w-100 top-0">
+                      <span class="p-1 p-lg-2 zx-bg-light">
+                        <div class="d-flex align-items-center text-green zx-text-tiny" [class.flex-row-reverse]="isRTL">
+                          <span>
+                            {{ j + 1 }}
+                          </span>
+                          <span>/</span>
+                          <span>
+                            {{ file.images.length }}
+                          </span>
+                        </div>
+                      </span>
+                    </article>
+                  </article>
+
+                  <!-- file date -->
+                  <article class="d-flex flex-column gap-1 gap-sm-2 flex-grow-1">
+
+                    <!-- [up container] - for more then 1 copy in 1 image files -->
+                    <div class="d-flex d-sm-none w-100"
+                      *ngIf="file.images.length === 1 && image.printSettings.numOfCopies > 1"
+                      [class.flex-row-reverse]="!isRTL">
+                      <!-- name - single page -->
+                      <span class="zx-text-small zx-text-pink" [class.zx-ltr]="!isRTL" [class.fw-bold]="!isDarkMode"
+                        [class.zx-text-white]="isDarkMode">
+                        <span class="d-sm-none" [class.zx-ltr]="!isRTL">
+                          <span>
+                            {{file.fileName.split('-')[1] | slice:0:12}}
+                          </span>
+                          <span *ngIf="file.fileName.split('-')[1].length > 12">
+                            ...
+                          </span>
+                        </span>
+                        <span class="d-none d-sm-flex" [class.zx-ltr]="!isRTL">
+                          <span>
+                            {{file.fileName.split('-')[1] | slice:0:30}}
+                          </span>
+                          <span *ngIf="file.fileName.split('-')[1].length > 30">
+                            ...
+                          </span>
+                        </span>
+                      </span>
+                    </div>
+
+                    <!-- [up container] -->
+                    <div class="d-flex w-100 justify-content-between align-items-center"
+                      [class.pb-1]="file.images.length === 1" [class.flex-row-reverse]="!isRTL">
+                      <!-- name placeholder - milti page -->
+                      <span *ngIf="file.images.length > 1" class="zx-100-opacity">-</span>
+                      <!-- name - single page -->
+                      <span *ngIf="file.images.length === 1 " class="zx-text-small zx-text-pink" [class.zx-ltr]="!isRTL"
+                        [class.fw-bold]="!isDarkMode" [class.zx-text-white]="isDarkMode">
+                        <span *ngIf="image.printSettings.numOfCopies === 1" class="d-sm-none" [class.zx-ltr]="!isRTL">
+                          <span>
+                            {{file.fileName.split('-')[1] | slice:0:12}}
+                          </span>
+                          <span *ngIf="file.fileName.split('-')[1].length > 12">
+                            ...
+                          </span>
+                        </span>
+                        <span class="d-none d-sm-flex" [class.zx-ltr]="!isRTL">
+                          <span>
+                            {{file.fileName.split('-')[1] | slice:0:30}}
+                          </span>
+                          <span *ngIf="file.fileName.split('-')[1].length > 30">
+                            ...
+                          </span>
+                        </span>
+                      </span>
+                      <!-- total file price -->
+                      <span *ngIf="image.price" class="px-1 px-lg-3" [class.fw-bold]="!isDarkMode"
+                        [class.zx-ltr]="!isRTL" [class.zx-text-white]="isDarkMode">
+                        <span *ngIf="image.printSettings.numOfCopies > 1" class="zx-text-tiny fw-normal"
+                          [class.zx-ltr]="!isRTL">
+                          <span>
+                            {{
+                            roundDownTowDecimal(
+                            image.price
+                            ) }}
+                          </span>
+                          <span class="zx-text-tiny-tiny">
+                            {{ "printing-table.nis" | translate }}
+                          </span>
+                          <span>×</span>
+                          <span>
+                            {{ image.printSettings.numOfCopies }}
+                          </span>
+                          <span class="zx-text-tiny-tiny">
+                            {{ "printing-table.copies-short" | translate }}
+                          </span>
+                          <span>=</span>
+                        </span>
+                        <span class="zx-text-small">
+                          {{
+                          roundDownTowDecimal(
+                          image.printSettings.numOfCopies *
+                          image.price
+                          )
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.nis" | translate }}
+                        </span>
+                      </span>
+                    </div>
+
+                    <!-- [settings] -->
+                    <div class="d-flex flex-column gap-1 gap-lg-2">
+                      <!-- paper & bw & resize -->
+                      <div class="d-flex gap-1 gap-lg-2 align-items-center" [class.flex-row-reverse]="!isRTL">
+                        <!-- paper -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <b *ngIf="getPaperSerialName(image.printSettings.paperType, order.printerID.inputBins)"
+                            class="zx-text-tiny" [class.zx-text-white]="isDarkMode">
+                            {{ 'paper-type.name-short.' +
+                            getPaperSerialName(image.printSettings.paperType, order.printerID.inputBins)
+                            | translate }}
+                          </b>
+                          <b *ngIf="!getPaperSerialName(image.printSettings.paperType, order.printerID.inputBins)"
+                            class="zx-text-tiny text-red" [class.zx-text-white]="isDarkMode">
+                            {{ 'printing-table.image-no-paper' | translate }}
+                          </b>
+                        </div>
+                        <!-- bw -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny" [class.zx-text-white]="isDarkMode">
+                            <span *ngIf="!image.printSettings.bw">
+                              {{ "printing-table.color-color" | translate }}
+                            </span>
+                            <span *ngIf="image.printSettings.bw">
+                              {{ "printing-table.color-bandw" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                        <!-- resize -->
+                        <div *ngIf="file.images.length === 1"
+                          class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny" [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+                            <span *ngIf="image.scale > 1">
+                              {{ "order-summary-resize-bigger" | translate }}
+                            </span>
+                            <span *ngIf="image.scale < 1">
+                              {{ "order-summary-resize-smaller" | translate }}
+                            </span>
+                            <span *ngIf="image.scale === 1">
+                              {{ "order-summary-resize-original" | translate }}
+                            </span>
+                            <span *ngIf="image.scale !== 1" [class.zx-ltr]="!isRTL">
+                              <span *ngIf="isRTL">%</span>
+                              <span>
+                                {{
+                                roundDownTowDecimal(
+                                image.scale * 100
+                                )
+                                }}
+                              </span>
+                              <span *ngIf="!isRTL">%</span>
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                      <!-- center & borders & copies -->
+                      <div class="d-flex gap-1 gap-lg-2 align-items-center" [class.flex-row-reverse]="!isRTL">
+                        <!-- center -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny" [class.zx-text-white]="isDarkMode">
+                            <span *ngIf="!image.printSettings.centered">
+                              {{ "order-summary-not-centered" | translate }}
+                            </span>
+                            <span *ngIf="image.printSettings.centered">
+                              {{ "order-summary-is-centered" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                        <!-- borders -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny" [class.zx-text-white]="isDarkMode">
+                            <span *ngIf="!image.printSettings.cmFromTop">
+                              {{ "order-summary-not-borders" | translate }}
+                            </span>
+                            <span *ngIf="image.printSettings.cmFromTop">
+                              {{ "order-summary-is-borders" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                        <!-- copies -->
+                        <div *ngIf="image.printSettings.numOfCopies !== 1"
+                          class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny" [class.zx-text-white]="isDarkMode">
+                            <span>{{ image.printSettings.numOfCopies }}</span>
+                            <span>
+                              {{ "printing-table.copies-short" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- resize -->
+                      <div class="d-flex gap-1 gap-lg-2 align-items-center" [class.flex-row-reverse]="!isRTL">
+                        <div *ngIf="file.images.length > 1" class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny" [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+                            <span *ngIf="image.scale > 1">
+                              {{ "order-summary-resize-bigger" | translate }}
+                            </span>
+                            <span *ngIf="image.scale < 1">
+                              {{ "order-summary-resize-smaller" | translate }}
+                            </span>
+                            <span *ngIf="image.scale === 1">
+                              {{ "order-summary-resize-original" | translate }}
+                            </span>
+                            <span *ngIf="image.scale !== 1" [class.zx-ltr]="!isRTL">
+                              <span *ngIf="isRTL">%</span>
+                              <span>
+                                {{
+                                roundDownTowDecimal(
+                                image.scale * 100
+                                )
+                                }}
+                              </span>
+                              <span *ngIf="!isRTL">%</span>
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </article>
+                  <!-- // file date -->
+                </article>
+                <!-- // 1st line -->
+              </section>
+            </div>
+          </div>
+          <!-- // files [plotter] ---------- files [plotter] ---------- files [plotter]  -->
+
+
+
+
+
+
+
+
+          <!-- files [express] ---------- files [express] ---------- files [express]  -->
+          <div *ngIf="order.branchID && order.branchID.is_express && order.files && order.files.length > 0"
+            class="d-flex flex-grow-1 w-100 position-relative">
+            <div
+              class="d-flex flex-column align-items-center flex-grow-1 w-100 gap-1 gap-lg-2 overflow-auto p-1 p-lg-2 zx-bg-order rounded-2"
+              [class.zx-choosen-order-action]="
+              (order.status !== 'PENDING' && 
+              order.status !== 'QR' &&
+              order.status !== 'NOT_PAID') ||
+              order.isDeleted" [class.zx-border-gray-25-pr]="isDarkMode">
+              <!-- file -->
+              <section ngClass="w-100 flex-column p-2 zx-border-gray-v-v-light zx-bg-light shadow-85 rounded-2"
+                [class.zx-bg-dark-no-border]="isDarkMode" [class.align-items-end]="!isRTL"
+                *ngFor="let file of order.files; index as i" class="d-flex w-100">
+                <!-- 1st line -->
+                <article class="d-flex align-items-center gap-2 gap-lg-3 w-100" [class.flex-row-reverse]="!isRTL">
+                  <!-- first image -->
+                  <article
+                    class="zx-order-summery-image-con d-flex flex-column justify-content-between align-items-center position-relative p-1 p-lg-2 rounded-1 bg-white zx-border-gray-v-v-light shadow-85-light">
+
+                    <!-- -----===----- thumbnail 1/2 [express] -----===----- -->
+                    <div class="d-flex zx-medium-plus-icon-size rounded-1">
+                      <!-- thumbnail 1/2 [express] -->
+                      <img *ngIf="!expressImageErrors1[o][i][0]" (error)="expressImageErrors1[o][i][0] = true"
+                        class="w-100 h-100 object-fit-contain"
+                        [src]="getImgExpress(order, file.images[0].thumbnailPath)" alt="File Page Image">
+                      <!-- error finding image src? -->
+                      <div *ngIf="expressImageErrors1[o][i][0]" class="d-flex flex-column align-items-center"
+                        matTooltip="{{ 'my-orders.no-img-src-explain' | translate }}" matTooltipPosition="below"
+                        matTooltipClass="centered-tooltip">
+                        <img class="zx-small-plus-icon-size" src="assets/images/negative-icon.svg">
+                        <b class="zx-text-tiny-tiny text-red text-center zx-lh-tiny-tiny"
+                          [class.zx-text-white]="isDarkMode">
+                          {{ "my-orders.no-img-src" | translate }}
+                        </b>
+                      </div>
+                      <!-- // error finding image src? -->
+                    </div>
+                    <!-- -----===----- // thumbnail 1/2 [express] -----===----- -->
+
+                    <div class="d-flex w-100 align-items-center justify-content-center pt-1 pt-lg-2">
+                      <span class="zx-text-tiny" [class.zx-ltr]="!isRTL">
+                        <span>
+                          {{
+                          getExpressDimensions('h', file.images[0].imageHeight, file.images[0].imageWidth,
+                          file.printSettings, order.printerID.consumables.papers, file.images[0].origImageDPI)
+                          }}
+                        </span>
+                        <span>×</span>
+                        <span>
+                          {{
+                          getExpressDimensions('w', file.images[0].imageHeight, file.images[0].imageWidth,
+                          file.printSettings, order.printerID.consumables.papers, file.images[0].origImageDPI)
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny">
+                          {{ "printing-table.dimensions-cm" | translate }}
+                        </span>
+                      </span>
+                    </div>
+                    <article *ngIf="file.images.length > 1" class="position-absolute d-flex w-100 top-0"
+                      [class.flex-row-reverse]="!isRTL">
+                      <span class="p-1 p-lg-2 zx-bg-light">
+                        <div class="d-flex align-items-center text-green zx-text-tiny" [class.flex-row-reverse]="isRTL">
+                          <span>1</span>
+                          <span>/</span>
+                          <span>
+                            {{file.images.length}}
+                          </span>
+                        </div>
+                      </span>
+                    </article>
+                  </article>
+                  <!-- file date -->
+                  <article class="d-flex flex-column gap-1 gap-sm-2 flex-grow-1">
+
+                    <!-- [up container] -->
+                    <div class="d-flex w-100 justify-content-between align-items-center pb-1"
+                      [class.flex-row-reverse]="!isRTL">
+                      <!-- name -->
+                      <span class="zx-text-small zx-text-pink" [class.fw-bold]="!isDarkMode"
+                        [class.zx-text-white]="isDarkMode">
+                        <span class="d-sm-none">
+                          <span>
+                            {{file.fileName.split('-')[1] | slice:0:17}}
+                          </span>
+                          <span *ngIf="file.fileName.split('-')[1].length > 17">
+                            ...
+                          </span>
+                        </span>
+                        <span class="d-none d-sm-flex">
+                          <span>
+                            {{file.fileName.split('-')[1] | slice:0:40}}
+                          </span>
+                          <span *ngIf="file.fileName.split('-')[1].length > 40">
+                            ...
+                          </span>
+                        </span>
+                      </span>
+                      <!-- total file price -->
+                      <span class="px-1 px-lg-3" [class.fw-bold]="!isDarkMode" [class.zx-text-white]="isDarkMode">
+                        <span class="zx-text-small">
+                          {{ roundDownTowDecimal(file.price) }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.nis" | translate }}
+                        </span>
+                      </span>
+                    </div>
+
+                    <!-- [settings] -->
+                    <div class="d-flex flex-column gap-1 gap-lg-2" [class.flex-sm-row]="isRTL"
+                      [class.flex-sm-row-reverse]="!isRTL">
+                      <!-- paper & bw & copies-->
+                      <div class="d-flex gap-1 gap-lg-2 align-items-center" [class.flex-row-reverse]="!isRTL">
+                        <!-- paper -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <b *ngIf="getPaperSerialNameExpress(file.printSettings.paperType, order.printerID.consumables.papers)"
+                            class="zx-text-tiny zx-text-sm-small" [class.zx-text-white]="isDarkMode">
+                            {{ 'paper-type.name-short.' +
+                            getPaperSerialNameExpress(file.printSettings.paperType,
+                            order.printerID.consumables.papers)
+                            | translate }}
+                          </b>
+                          <b *ngIf="!getPaperSerialNameExpress(file.printSettings.paperType, order.printerID.consumables.papers)"
+                            class="zx-text-tiny zx-text-sm-small text-red" [class.zx-text-white]="isDarkMode">
+                            {{ 'printing-table.image-no-paper' | translate }}
+                          </b>
+                        </div>
+                        <!-- bw -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny zx-text-sm-small" [class.zx-text-white]="isDarkMode">
+                            <span *ngIf="!file.printSettings.bw">
+                              {{ "printing-table.color-color" | translate }}
+                            </span>
+                            <span *ngIf="file.printSettings.bw">
+                              {{ "printing-table.color-bandw" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                        <!-- copies -->
+                        <div *ngIf="file.printSettings.numOfCopies !== 1"
+                          class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny" [class.zx-text-white]="isDarkMode">
+                            <span>{{ file.printSettings.numOfCopies }}</span>
+                            <span>
+                              {{ "printing-table.copies-short" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                      <!-- doubleSided & fit -->
+                      <div class="d-flex gap-1 gap-lg-2 align-items-center" [class.flex-row-reverse]="!isRTL">
+                        <!-- doubleSided -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny zx-text-sm-small" [class.zx-text-white]="isDarkMode">
+                            <span *ngIf="!file.printSettings.doubleSided">
+                              {{ "printing-table.sides-one" | translate }}
+                            </span>
+                            <span *ngIf="file.printSettings.doubleSided">
+                              {{ "printing-table.sides-two" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                        <!-- fit -->
+                        <div class="d-flex px-2 px-sm-3 py-lg-1 rounded-pill zx-bg-gray"
+                          [class.zx-bg-gray-v-light-opacity]="isDarkMode">
+                          <span class="zx-text-tiny zx-text-sm-small" [class.zx-text-white]="isDarkMode">
+                            <span *ngIf="!file.printSettings.fit && !file.printSettings.cropRatio">
+                              {{ "order-summary-resize-original" | translate }}
+                            </span>
+                            <span *ngIf="file.printSettings.fit && !file.printSettings.cropRatio">
+                              {{ "order-summary-resize-maximal" | translate }}
+                            </span>
+                            <span *ngIf="file.printSettings.cropRatio">
+                              {{ "order-summary-resize-crop" | translate }}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- calc file price -->
+                    <span [class.text-start]="!isRTL" [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+                      <!-- pages -->
+                      <span *ngIf="file.images.length > 1">
+                        <span class="zx-text-tiny zx-text-sm-small">
+                          {{
+                          file.images.length
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.pages-short" | translate }}
+                        </span>
+                      </span>
+                      <!-- , -->
+                      <span *ngIf="file.price?.pages > 1 && file.printSettings?.numOfCopies > 1">
+                        <!-- <span class="zx-100-opacity">_</span> -->
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">, </span>
+                      </span>
+                      <span *ngIf="file.printSettings.numOfCopies > 1">
+                        <!-- copies -->
+                        <span class="zx-text-tiny zx-text-sm-small">
+                          {{
+                          file.printSettings.numOfCopies
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.copies-short" | translate }}
+                        </span>
+                        <!-- , -->
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">, </span>
+                        <!-- price per page -->
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.price-per-copy" | translate }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">:</span>
+                        <span class="zx-text-tiny zx-text-sm-small">
+                          {{
+                          roundDownTowDecimal(
+                          file.price /
+                          file.printSettings.numOfCopies)
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.nis" | translate }}
+                        </span>
+                      </span>
+                      <span class="zx-100-opacity">_</span>
+                    </span>
+                    <!-- // calc file price -->
+
+                    <!-- [down container] -->
+                    <!-- calc file price -->
+                    <span [class.text-start]="!isRTL" [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+                      <!-- pages -->
+                      <span *ngIf="file.price?.pages > 1">
+                        <span class="zx-text-tiny zx-text-sm-small">
+                          {{
+                          file.price.pages
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.pages-short" | translate }}
+                        </span>
+                      </span>
+                      <!-- , -->
+                      <span *ngIf="file.price?.pages > 1 && file.price?.copies > 1">
+                        <!-- <span class="zx-100-opacity">_</span> -->
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">, </span>
+                      </span>
+                      <span *ngIf="file.price?.copies > 1">
+                        <!-- copies -->
+                        <span class="zx-text-tiny zx-text-sm-small">
+                          {{
+                          file.price.copies
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.copies-short" | translate }}
+                        </span>
+                        <!-- , -->
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">, </span>
+                        <!-- price per page -->
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.price-per-copy" | translate }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">:</span>
+                        <span class="zx-text-tiny zx-text-sm-small">
+                          {{
+                          roundDownTowDecimal(
+                          file.price.pricePerPage *
+                          file.price.pages)
+                          }}
+                        </span>
+                        <span class="zx-text-tiny-tiny zx-text-sm-tiny">
+                          {{ "printing-table.nis" | translate }}
+                        </span>
+                      </span>
+                      <span class="zx-100-opacity">_</span>
+                    </span>
+
+                  </article>
+                  <!-- // file date -->
+                </article>
+                <!-- // 1st line -->
+
+                <!-- 2nd line -->
+                <article *ngIf="file.images.length > 1" class="d-flex row w-100 pt-1" [class.zx-ltr]="!isRTL"
+                  [class.flex-row-reverse]="!isRTL">
+                  <article *ngFor="let image of file.images; let j = index"
+                    [class.d-flex]="!(j === 0 || (!isAllImagesShowen && j > 11))"
+                    [class.d-none]="j === 0 || (!isAllImagesShowen && j > 11)" class="col-4 col-sm-3 col-md-2 pb-1"
+                    style="max-width: max-content;">
+                    <!-- 2 + image -->
+                    <article
+                      class="zx-order-summery-image-con d-flex flex-column justify-content-between align-items-center position-relative p-1 p-lg-2 rounded-1 bg-white zx-border-gray-v-v-light shadow-85-light">
+                      <!-- -----===----- thumbnail 2/2 [express] -----===----- -->
+                      <div class="d-flex zx-medium-plus-icon-size rounded-1">
+                        <!-- thumbnail 2/2 [express] -->
+                        <img *ngIf="!expressImageErrors2[o][i][j]" (error)="expressImageErrors2[o][i][j] = true"
+                          class="w-100 h-100 object-fit-contain"
+                          [src]="getImgExpress(order, file.images[j].thumbnailPath)" alt="File Page Image">
+                        <!-- error finding image src? -->
+                        <div *ngIf="expressImageErrors2[o][i][j]" class="d-flex flex-column align-items-center"
+                          matTooltip="{{ 'my-orders.no-img-src-explain' | translate }}" matTooltipPosition="below"
+                          matTooltipClass="centered-tooltip">
+                          <img class="zx-small-plus-icon-size" src="assets/images/negative-icon.svg">
+                          <b class="zx-text-tiny-tiny text-red text-center zx-lh-tiny-tiny"
+                            [class.zx-text-white]="isDarkMode">
+                            {{ "my-orders.no-img-src" | translate }}
+                          </b>
+                        </div>
+                        <!-- // error finding image src? -->
+                      </div>
+                      <!-- -----===----- // thumbnail 2/2 [express] -----===----- -->
+
+                      <div class="d-flex w-100 align-items-center justify-content-center pt-1 pt-lg-2">
+                        <span class="zx-text-tiny">
+                          <span>
+                            {{
+                            getExpressDimensions('h', file.images[j].imageHeight, file.images[j].imageWidth,
+                            file.printSettings, order.printerID.consumables.papers, file.images[j].origImageDPI)
+                            }}
+                          </span>
+                          <span>×</span>
+                          <span>
+                            {{
+                            getExpressDimensions('w', file.images[j].imageHeight, file.images[j].imageWidth,
+                            file.printSettings, order.printerID.consumables.papers, file.images[j].origImageDPI)
+                            }}
+                          </span>
+                          <span class="zx-text-tiny-tiny">
+                            {{ "printing-table.dimensions-cm" | translate }}
+                          </span>
+                        </span>
+                      </div>
+                      <article class="position-absolute d-flex w-100 top-0" [class.flex-row-reverse]="!isRTL">
+                        <span class="p-1 p-lg-2 zx-bg-light">
+                          <div class="d-flex align-items-center text-green zx-text-tiny"
+                            [class.flex-row-reverse]="isRTL">
+                            <span>
+                              {{j + 1}}
+                            </span>
+                            <span>/</span>
+                            <span>
+                              {{file.images.length}}
+                            </span>
+                          </div>
+                        </span>
+                      </article>
+                    </article>
+                    <!-- // 2 + image -->
+                  </article>
+                  <!-- BTN - SHOWW more images... -->
+                  <article *ngIf="!isAllImagesShowen && file.images.length > 11"
+                    class="col-4 col-sm-3 col-md-2 pb-1 c-pointer" style="max-width: max-content;"
+                    (click)="showMoreImages()">
+                    <article mat-ripple
+                      class="zx-order-summery-image-con d-flex flex-column gap-1 align-items-center justify-content-center p-1 p-lg-2 c-pointer rounded-1 bg-white zx-border-gray-v-v-light shadow-85-light step-item-hover">
+                      <span class="zx-text-tiny text-center text-green c-pointer" style="max-width: 90px;">
+                        <b>
+                          {{ "my-orders.show" | translate }}
+                        </b>
+                        <b>
+                          {{ file.images.length - 12 }}
+                        </b>
+                      </span>
+                      <b class="zx-text-tiny text-center text-green c-pointer">
+                        {{ "my-orders.more-pages" | translate }}
+                      </b>
+                    </article>
+                  </article>
+                  <!-- BTN - HIDE more images... -->
+                  <article *ngIf="isAllImagesShowen && file.images.length > 11"
+                    class="col-4 col-sm-3 col-md-2 pb-1 c-pointer" style="max-width: max-content;"
+                    (click)="hideMoreImages()">
+                    <article mat-ripple
+                      class="zx-order-summery-image-con d-flex flex-column gap-1 align-items-center justify-content-center p-1 p-lg-2 c-pointer rounded-1 bg-white zx-border-gray-v-v-light shadow-85-light step-item-hover">
+                      <span class="zx-text-tiny text-center text-green c-pointer" style="max-width: 90px;">
+                        <b>
+                          {{ "my-orders.hide" | translate }}
+                        </b>
+                        <b>
+                          {{ file.images.length - 10 }}
+                        </b>
+                      </span>
+                      <b class="zx-text-tiny text-center text-green c-pointer">
+                        {{ "my-orders.more-pages" | translate }}
+                      </b>
+                    </article>
+                  </article>
+                </article>
+                <!-- // 2nd line -->
+
+              </section>
+            </div>
+          </div>
+          <!-- // files [express] ---------- files [express] ---------- files [express]  -->
+
+        </div>
+        <!-- // SENT order content ============================= SENT order content ============================= SENT order content -->
+
+        <mat-action-row *ngIf="(
+          order.status === 'PENDING' || 
+          order.status === 'QR' ||
+          order.status === 'NOT_PAID') &&
+          !order.isDeleted" class="align-items-center justify-content-center d-flex zx-choosen-order-action px-2">
+          <!-- NO, BUT POSSIBLE! (sent to print?) -->
+          <div *ngIf="order.files && order.files.length > 0">
+            <button mat-raised-button color="primary" class="print-button rounded-pill d-flex"
+              (click)="openOrderSummaryDialog($event, order)">
+              <span class="zx-text-tiny zx-text-sm-small px-3 px-lg-5">
+                <span class="text-white">{{ "my-orders.send-to-print-this-order-1" | translate }}</span>
+                <span class="zx-100-opp">-</span>
+                <span class="text-white">{{ order._id.slice(0, 8) }}</span>
+                <span class="zx-100-opp">-</span>
+                <span class="text-white">{{ "my-orders.send-to-print-this-order-2" | translate }}</span>
+              </span>
+            </button>
+          </div>
+          <!-- NO, BUT NOT POSSIBLE! NO FILES! (sent to print?) -->
+          <div *ngIf="!order.files || order.files.length === 0"
+            class="d-flex w-100 flex-column flex-lg-row gap-2 gap-lg-0 align-items-center justify-content-lg-between">
+            <b class="text-red zx-text-tiny px-lg-3" [class.zx-text-white]="isDarkMode">
+              {{'my-orders.contact-us-no-files-order' | translate}}
+            </b>
+            <b class="text-green zx-text-tiny px-lg-3">
+              {{'my-orders.contact-us-for-help-explain' | translate}}
+            </b>
+            <!-- [whatsup btn] -->
+            <button mat-raised-button (click)="openWhatsApp()" class="rounded-pill zx-text-tiny zx-text-sm-small">
+              <div class="w-100 h-100 d-flex align-items-center gap-2">
+                <div class="whatsup-logo-container-small">
+                  <img src="assets/images/whatsup-logo.svg" alt="WhatsUp Logo" class="whatsup-logo-small">
+                </div>
+                <span class="zx-text-tiny-tiny">
+                  {{'my-orders.contact-us-for-help' | translate}}
+                </span>
+              </div>
+            </button>
+          </div>
+        </mat-action-row>
+      </mat-expansion-panel>
+
+    </mat-accordion>
+    <!-- // orders accordion -->
+
+    <!-- NO orders -->
+    <div *ngIf="orders.length <= 0 && !isLoading"
+      class="d-flex flex-column align-items-center justify-content-center gap-1 gap-sm-2 flex-grow-1">
+      <p class="info-text mat-body-1">
+        {{ "my-orders.no-orders" | translate }}
+      </p>
+      <button class="rounded-pill zx-text-white" mat-raised-button color="primary" type="button"
+        (click)="goToNewOrder()">
+        {{ "main-nav.new-order" | translate }}
+      </button>
+    </div>
+    <!-- // NO orders -->
+
+    <span class="d-flex" style="min-height: 20px;"></span>
+
+  </section>
+  <!-- // orders -------------------------------------------------------------------------------------------------------- // orders -->
+</div>
+
+<div class="p-2 d-flex flex-column" *ngIf="!(orders.length <= 0 && !isLoading)">
+  <mat-paginator class="m-0" [length]="totalOrders" [pageSize]="ordersPerPage" [pageSizeOptions]="pageSizeOptions"
+    (page)="onChangedPage($event)" *ngIf="orders.length > 0"></mat-paginator>
+  <div class="pt-2">
+    <button *ngIf="!isManigmentView" class="w-100 rounded-pill" mat-stroked-button color="primary" type="button"
+      (click)="goToNewOrder()">
+      {{ "main-nav.new-order" | translate }}
+    </button>
+    <div *ngIf="isManigmentView" class="d-flex flex-grow-1 justify-content-between">
+      <button class="rounded-pill" mat-stroked-button color="primary" type="button" (click)="goToNewOrder()">
+        {{ "su-management.users.edit-user" | translate }}
+      </button>
+      <button class="rounded-pill" mat-stroked-button color="primary" type="button" (click)="goToUsersManagement()">
+        {{ "su-management.users-management" | translate }}
+      </button>
+    </div>
+  </div>
+</div>

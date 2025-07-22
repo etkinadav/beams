@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title style="display: none;">eazix - choose printing type</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.rtl.min.css"
+        integrity="sha384-T5m5WERuXcjgzF8DAb7tRkByEZQGcpraRTinjpywg37AO96WoYN9+hrhDVoM6CaT" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="home.css">
+</head>
+
+<body class="d-flex flex-column vh-100">
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= DEV -->
+    <div class="position-absolute z-index-10000">
+        <div class="position-relative border-gray-v-v-light size-21-px z-index-10000 c-pointer bg-hover-green-v-light"
+            onclick="DEV()"></div>
+    </div>
+    <div id="dev-manu" class="position-absolute bg-white" style="z-index: 10000">
+        <div class="position-relative d-flex w-100 justify-content-start flex-column align-items-start">
+            <div class="border-gray-v-light bg-hover-green-v-light c-pointer" onclick="DEV()">X</div>
+
+            <h3 class="fw-bold text-14-px m-0 p-10-15-px">פעולות</h3>
+
+            <div class="w-100">
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer fw-bold"
+                    onclick="fPlotterOrExpress(), DEV()">החלף
+                    סוג הדפסה - פלוטר | מסמכים</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fAddPendingOrders(), DEV()">
+                    הוסף/הסר הזמנות ממתינות</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fLogInOut(), DEV()">התחבר/התנתק
+                </div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fAddRemoveLastPlaces(), DEV()">
+                    הוסף/הסר מיקומים אחרונים</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fFieldsErrors(), DEV()">הוסף/הסר
+                    שגיאות שדה</div>
+            </div>
+
+            <h3 class="fw-bold text-14-px m-0 p-10-15-px">מודלים</h3>
+
+            <div class="w-100">
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer" data-bs-toggle="modal"
+                    data-bs-target="#byPrinterNoModal" onclick="DEV()">
+                    איתור ע"פ מס' מדפסת</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer" data-bs-toggle="modal"
+                    data-bs-target="#LogInModal" onclick="FLogInModalNormal(), DEV()">
+                    התחבר/הרשם - רגיל</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer" data-bs-toggle="modal"
+                    data-bs-target="#LogInModal" onclick="FLogInModalLogInMail(), DEV()">
+                    התחבר/הרשם - התחבר דרך מייל</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer" data-bs-toggle="modal"
+                    data-bs-target="#LogInModal" onclick="FLogInModalNewUserMail(), DEV()">
+                    התחבר/הרשם - הרשם דרך מייל</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer" data-bs-toggle="modal"
+                    data-bs-target="#LogInModal" onclick="FLogInModalResetPassword(), DEV()">
+                    התחבר/הרשם - איפוס סיסמא</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer" onclick="DEV()"
+                    data-bs-toggle="modal" data-bs-target="#rightPlaceModal">
+                    וידוא המקום הנכון</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= @@@@@@@@@@ HEADER @@@@@@@@@@ -->
+
+    <header
+        class="w-100 d-flex justify-content-between p-5-10-px p-lg-10-20-px align-items-center border-b-gray-v-v-light">
+        <div class="hamburger-icon svg size-31-px d-lg-none c-pointer" data-bs-toggle="offcanvas"
+            data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions"></div>
+        <div class="small-logo svg size-33-37-px d-lg-none"></div>
+        <article class="d-none d-lg-flex align-items-center gap-25-px">
+            <div class="full-logo size-76-50-px c-pointer"></div>
+            <div class="p-10-15-px rounded-3-px c-pointer bg-hover-green-v-light">צור הזמנה חדשה</div>
+            <div class="d-flex align-items-center gap-10-px p-10-15-px rounded-3-px c-pointer bg-hover-green-v-light">
+                <div class="f-add-pending-orders-pink-bold c-pointer">ההזמנות שלי</div>
+                <div
+                    class="d-none f-add-pending-orders-show size-24-px text-white fw-bold rounded-circle bg-pink justify-content-center align-items-center c-pointer">
+                    5</div>
+            </div>
+            </div>
+        </article>
+        <div class="f-log-in-show d-flex btn-e c-pointer btn-avalble rounded-pill">כניסה למערכת</div>
+        <!-- MY PROFILE IMG -->
+        <article class="f-log-in-show d-none gap-10-px c-pointer align-items-center position-relative"
+            onclick="fMyProfilManu()">
+            <div class="size-8-px svg profile-default-arrow c-pointer"></div>
+            <div class="size-39-px size-lg-50-px rounded-circle svg profile-default c-pointer position-relative">
+                <div
+                    class="position-absolute w-100 h-100 d-flex d-lg-none justify-content-start align-items-end c-pointer">
+                    <div
+                        class="d-none f-add-pending-orders-show size-24-px text-white fw-bold rounded-circle bg-pink justify-content-center align-items-center c-pointer scale-80-trans-3-e">
+                        5</div>
+                </div>
+            </div>
+            <!-- MY PROFILE DROPDOWN -->
+            <article
+                class="f-my-prifile-manu top-left-my-prifile-manu d-none position-absolute z-index-3-e w-240-px p-10-px flex-column gap-5-px bg-white border-gray-v-v-light shadow-85 rounded-5-px">
+                <div class="d-flex align-items-center p-15-px c-pointer bg-hover-green-v-light rounded-3-px">צור
+                    הזמנה חדשה</div>
+                <div
+                    class="f-log-in-show d-none align-items-center gap-10-px p-15-px c-pointer bg-hover-green-v-light rounded-3-px">
+                    <div class="f-add-pending-orders-pink-bold c-pointer">ההזמנות שלי</div>
+                    <div
+                        class="d-none f-add-pending-orders-show size-24-px text-white fw-bold rounded-circle bg-pink justify-content-center align-items-center c-pointer">
+                        5</div>
+                </div>
+                <div class="d-flex align-items-center p-15-px c-pointer bg-hover-green-v-light rounded-3-px">פרופיל
+                </div>
+                <div class="d-flex align-items-center p-15-px c-pointer bg-hover-green-v-light rounded-3-px">אמצעי
+                    תשלום</div>
+                <div class="d-none d-lg-flex align-items-center p-15-px c-pointer bg-hover-green-v-light rounded-3-px">
+                    שאלות
+                    ותשובות</div>
+                <div class="d-none d-lg-flex align-items-center p-15-px c-pointer bg-hover-green-v-light rounded-3-px">
+                    צור קשר
+                </div>
+
+                <div class="d-lg-flex w-100 border-b-gray-light-opacity"></div>
+
+                <div class="d-flex align-items-center p-15-px c-pointer bg-hover-green-v-light rounded-3-px text-red">
+                    התנתקות
+                </div>
+
+            </article>
+            <!-- - -->
+        </article>
+        <!-- @@@ -->
+    </header>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= @@@@@@@@@@ HAMBURDER MANU (MOBILE) @@@@@@@@@@ -->
+
+    <div class="offcanvas offcanvas-start hamburger-manu position-absolute" data-bs-scroll="true" tabindex="-1"
+        id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
+        <!-- X BTN -->
+        <article class="btn-close-container justify-content-end">
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </article>
+        <!-- CONTENT -->
+        <article class="d-flex w-100 h-100 flex-column justify-content-between p-10-20-px">
+            <!-- MAIN OPTIONS -->
+            <article class="w-100">
+                <div class="full-logo size-76-50-px h-58-px c-pointer"></div>
+                <div class="w-100 border-b-gray-light-opacity"></div>
+                <div class="d-flex h-58-px align-items-center">שאלות ותשובות</div>
+                <div class="f-log-in-show d-none align-items-center gap-10-px h-58-px">
+                    <div class="f-add-pending-orders-pink-bold c-pointer">ההזמנות שלי</div>
+                    <div
+                        class="d-none f-add-pending-orders-show size-24-px text-white fw-bold rounded-circle bg-pink justify-content-center align-items-center c-pointer">
+                        5</div>
+                </div>
+                <div class="d-flex align-items-center gap-10-px h-58-px">
+                    <div class="size-43-px p-8-px bg-whatsup rounded-circle">
+                        <div class="whatsup-logo w-100 h-100 svg"></div>
+                    </div>
+                    <div class="fw-bold c-pointer">צרו קשר</div>
+                </div>
+            </article>
+            <!-- T&C -->
+            <article class="d-flex w-100 gap-15-px justify-content-center">
+                <div class="text-12-px p-5-px opacity-75 c-pointer">תנאי שימוש</div>
+                <div class="h-100 border-l-dark"></div>
+                <div class="text-12-px p-5-px opacity-75 c-pointer">מדיניות פרטיות</div>
+            </article>
+            <!-- - -->
+        </article>
+        <!-- - -->
+    </div>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= @@@@@@@@@@ WHATSUP (DESKTOP) @@@@@@@@@@ -->
+
+    <div
+        class="d-none d-lg-flex p-12-px size-65-px p-8-px bg-whatsup rounded-circle position-fixed bottom-left-10-px z-index-3-e c-pointer">
+        <div class="whatsup-logo w-100 h-100 svg c-pointer"></div>
+    </div>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= @@@@@@@@@@ MAIN @@@@@@@@@@ -->
+
+    <main class="d-flex flex-grow-1 w-100 overflow-hidden">
+
+        <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= @@@@@ MAIN CONTROLL AREA (RIGHT) @@@@@ -->
+
+        <main class="w-100-pr w-lg-565-px h-100 d-flex flex-column border-l-gray-v-v-v-light">
+
+            <!-- MAIN CONTROLL AREA (RIGHT) => TOP -->
+            <article
+                class="w-100 d-flex flex-column flex-grow-1 flex-shrink-1 p-5-15-15-15-px bg-gray-v-v-v-light overflow-auto">
+                <article class="w-100 d-flex flex-column gap-10-px m-10-0-40-0-px">
+                    <!-- MAIN CONTROLL AREA (RIGHT) => TOP => NAV -->
+                    <article class="w-100 d-flex justify-content-between align-items-center">
+                        <div class="fw-bold">בחר סוג הדפסה</div>
+                        <div class="d-flex gap-10-px p-5-px align-items-center c-pointer" data-bs-toggle="tooltip"
+                            data-bs-placement="bottom" title="לכל מדפסת שלנו יש מספר סידורי המופיע על מסך עמדת ההדפסה.
+                            כך, אם אתם עומדים מול עמדת הדפסה שלנו תוכלי לאתר את המדפסת
+                            בקלות ע”י הקלדת מספר מדפסת.">
+                            <div class="text-14-px text-green fw-bold c-pointer">איתור ע"פ מס' מדפסת</div>
+                            <div class="by-p-no-arrow svg size-10-px c-pointer"></div>
+                        </div>
+                    </article>
+                    <!-- STEP ITEM 1 === EXPRESS -->
+                    <article
+                        class="d-flex align-items-center express-button step-item step-item-empty flex-column flex-lg-row position-relative rounded-5-px w-100 shadow-85 border-gray-v-v-light c-pointer"
+                        onmouseenter="hoverExpress()" onmouseleave="hoverEmptyExpress()" onclick="chooseExpress()">
+                        <div class="size-110-px m-26-20-px svg express-icon c-pointer"></div>
+                        <div
+                            class="m-0-20-26-20-px m-xl-26-20-26-20-px flex-column gap-10-px d-flex align-items-lg-start c-pointer">
+                            <div class="lh-30-px fw-bold text-22-px text-center text-lg-start c-pointer">הדפסת מסמכים
+                                ותמונות</div>
+                            <div class="opacity-75 text-center text-lg-start c-pointer">
+                                הדפסת מסמכים על גבי דפים רגילים במידות A4 ו- A3, ופיתוח תמונות “סטילס” במידות A5.
+                            </div>
+                        </div>
+                        <div class="d-flex express top-left-5-px size-29-px p-4-px position-absolute d-lg-none c-pointer"
+                            onclick="iExplainExpress()">
+                            <div class="i-explain-icon svg w-100 h-100 c-pointer" data-bs-toggle="offcanvas"
+                                data-bs-target="#offcanvasPrintingSystemData"
+                                aria-controls="offcanvasPrintingSystemData">
+                            </div>
+                        </div>
+                    </article>
+                    <!-- STEP ITEM 2 === PLOTTER -->
+                    <article
+                        class="d-flex align-items-center plotter-button step-item step-item-empty flex-column flex-lg-row position-relative rounded-5-px w-100 shadow-85 border-gray-v-v-light c-pointer"
+                        onmouseenter="hoverPlotter()" onmouseleave="hoverEmptyPlotter()" onclick="choosePlotter()">
+                        <div class="size-110-px m-26-20-px svg plotter-icon c-pointer"></div>
+                        <div
+                            class="m-0-20-26-20-px m-xl-26-20-26-20-px flex-column gap-10-px d-flex align-items-lg-start c-pointer">
+                            <div class="lh-30-px fw-bold text-22-px text-center text-lg-start c-pointer">הדפסת פלוטר
+                            </div>
+                            <div class="opacity-75 text-center text-lg-start c-pointer">
+                                הדפסת תמונות, שרטוטים ועבודות גרפיות בפורמט רחב (על גליונות נייר רחבים).
+                            </div>
+                        </div>
+                        <div class="d-flex plotter top-left-5-px size-29-px p-4-px position-absolute d-lg-none c-pointer"
+                            onclick="iExplainPlotter()">
+                            <div class="i-explain-icon svg w-100 h-100 c-pointer" data-bs-toggle="offcanvas"
+                                data-bs-target="#offcanvasPrintingSystemData"
+                                aria-controls="offcanvasPrintingSystemData">
+                            </div>
+                        </div>
+                    </article>
+                    <!-- - -->
+                </article>
+                <!-- - -->
+                <div class="w-100 border-t-gray-opacity m-10-0-40-0-px"></div>
+                <!-- MAIN CONTROLL AREA (RIGHT) => TOP => STEP 1 -->
+                <article class="w-100 d-flex fw-bold opacity-25">בחר
+                    סניף
+                </article>
+                <!-- - -->
+                <div class="w-100 border-t-gray-opacity m-10-0-40-0-px"></div>
+                <!-- MAIN CONTROLL AREA (RIGHT) => TOP => STEP 2 -->
+                <article class="w-100 d-flex fw-bold opacity-25">בחר
+                    קבצים והזמנה
+                </article>
+                <!-- - -->
+                <div class="w-100 border-t-gray-opacity m-10-0-40-0-px"></div>
+                <!-- - -->
+            </article>
+            <!-- MAIN CONTROLL AREA (RIGHT) => MAIN BUTTOM -->
+            <article class="w-100 d-flex p-15-px border-t-gray-light-opacity shadow-85 shadow-lg-none">
+                <div class="f-btn-avalble-on-choose w-100 text-22-px justify-content-center d-flex btn-e c-pointer btn-unavalble rounded-pill"
+                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="בכדי להדפיס יש לבחור סוג הדפסה">
+                    המשך</div>
+            </article>
+            <!-- - -->
+
+        </main>
+
+        <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= OFFCANVAS (I EXPLAIN) => PRINTING TYPE -->
+
+        <div class="offcanvas offcanvas-bottom h-unset" tabindex="-1" id="offcanvasPrintingSystemData"
+            aria-labelledby="offcanvasBottomLabel">
+            <!-- title + X btn -->
+            <div class="offcanvas-header w-100">
+                <h5 class="offcanvas-title f-offcanvas-title-p-system-data i-explain-title fw-bold text-pink"
+                    id="offcanvasBottomLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"
+                    onclick="StepAvailable()"></button>
+            </div>
+            <!-- content -->
+            <div class="offcanvas-body f-offcanvas-body-p-system-data i-explain-content opacity-75"></div>
+        </div>
+
+        <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= @@@@@ MAIN CANVAS AREA (LEFT) @@@@@ -->
+
+        <main class="flex-grow-1 h-100 d-none d-lg-flex flex-column justify-content-around align-items-center">
+
+            <!-- CANVAS -->
+            <div
+                class="h-90-pr w-430-px w-xl-565-px bg-white border-gray-v-light shadow-85 rounded-5-px d-flex justify-content-center align-items-center position-relative">
+                <article
+                    class="d-flex align-items-center justify-content-between z-index-1-e flex-column h-55-pr mw-80">
+                    <div class="f-canvas-title text-22-px fw-bold p-15-px rounded-5-px bg-white-90-pr">
+                        ברוכים הבאים
+                    </div>
+                    <div
+                        class="f-canvas-title-system text-center w-100 text-22-px fw-bold p-15-px justify-content-center bg-white-90-pr">
+                    </div>
+                    <div class="f-printing-type-empty printing-type-empty-icon size-213-167-px m-23-0-px svg"></div>
+                    <div
+                        class="f-canvas-footer lh-30-px h-50-px text-22-px text-center p-15-px rounded-5-px bg-white-90-pr">
+                        התחילו בלבחור את סוג
+                        ההדפסה
+                        :)
+                    </div>
+                    <div class="f-canvas-footer-system w-100 lh-30-px text-22-px text-center p-15-px bg-white-90-pr">
+                    </div>
+                </article>
+                <div class="canvas-video-container w-100 h-100 position-absolute bottom-0">
+                    <video class="canvas-video object-fit-cover-e h-100 w-100 rounded-5-px" muted autoplay loop>
+                        <source src="express-video.mp4" type="video/mp4">
+                    </video>
+                </div>
+            </div>
+            <!-- T&C -->
+            <article class="d-flex w-100 gap-15-px justify-content-center">
+                <div class="text-12-px p-5-px opacity-75 c-pointer hover-underline">תנאי שימוש</div>
+                <div class="h-100 border-l-dark"></div>
+                <div class="text-12-px p-5-px opacity-75 c-pointer hover-underline">מדיניות פרטיות</div>
+            </article>
+            <!-- - -->
+
+        </main>
+
+        <!-- @@@@@ -->
+    </main>
+    <!-- @@@@@@@@@@ -->
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= MODAL => BY P NO -->
+
+    <div class="modal fade" id="byPrinterNoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div
+            class="modal-dialog modal-dialog-centered vh-100 d-flex align-items-end align-items-sm-center m-0 m-sm-auto">
+            <div class="modal-content border-sm-o-none min-w-content">
+                <!-- X BTN -->
+                <article class="btn-close-container justify-content-end">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </article>
+                <!-- title -->
+                <div class="p-modal-title fw-bold text-22-px flex-grow-1 text-center lh-37-px" id="exampleModalLabel">
+                    איתור
+                    ע"פ
+                    מס'
+                    מדפסת</div>
+                <!-- content -->
+                <div class="modal-body opacity-75 text-center p-0-15-px min-w-content lh-30-px">
+                    במידה ואתם ליד המדפסת הזינו את מספר המדפסת המופיע על מסך העמדה :)
+                </div>
+                <!-- footer -->
+                <div class="modal-footer w-100">
+                    <!-- INPUT (P NO) -->
+                    <form class="flex-grow-1 m-0 position-relative" role="search">
+                        <input class="form-control f-by-printer-no-input c-text" type="search"
+                            oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');" /
+                            maxlength="3" placeholder="הזן מספר מדפסת ממסך עמדת ההדפסה" aria-label="Search">
+                        <div class="search-icon size-28-px top-left-6-px svg position-absolute"></div>
+                    </form>
+                    <!-- OPTIONS -->
+                    <section class="f-p-no-search-res m-10-0-px bg-white d-flex flex-column gap-10-px w-100">
+                        <!-- OPTION - 1 -->
+                        <div
+                            class="bg-hover-green-vivid-v-v-light d-flex justify-content-start align-items-center w-100 border-gray-v-v-light rounded-5-px c-pointer">
+                            <img src="example-branch-logo.png" alt=""
+                                class="m-10-17-10-0-px size-55-px rounded-5-px flex-shrink-0 shadow-85 border-gray-v-light c-pointer object-fit-cover-e">
+                            </img>
+                            <div class="m-10-px size-27-px svg plotter-icon c-pointer"></div>
+                            <div class="fw-bold c-pointer">הדפסת פלוטר, אונ' ת"א - ת"א - #413
+                            </div>
+                            <!-- i explain branch -->
+                            <div class="d-none d-sm-flex flex-grow-1 justify-content-end d-lg-flex p-0-17-px c-pointer"
+                                onmouseenter="FIExplainHtmlBranchData()" onmouseleave="FIExplainHtmlBranchData()">
+                                <div class="size-29-px p-4-px c-pointer">
+                                    <div class="i-explain-icon svg w-100 h-100 c-pointer">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- - -->
+                        </div>
+                        <!-- OPTION - 2 -->
+                        <div
+                            class="bg-hover-green-vivid-v-v-light d-flex justify-content-start align-items-center w-100 border-gray-v-v-light rounded-5-px c-pointer">
+                            <img src="example-branch-logo.png" alt=""
+                                class="m-10-17-10-0-px size-55-px rounded-5-px flex-shrink-0 shadow-85 border-gray-v-light c-pointer object-fit-cover-e">
+                            </img>
+                            <div class="m-10-px size-27-px svg plotter-icon c-pointer"></div>
+                            <div class="fw-bold c-pointer">הדפסת פלוטר, אונ' ת"א - ת"א - #413
+                            </div>
+                            <!-- i explain branch -->
+                            <div class="d-none d-sm-flex flex-grow-1 justify-content-end d-lg-flex p-0-17-px c-pointer"
+                                onmouseenter="FIExplainHtmlBranchData()" onmouseleave="FIExplainHtmlBranchData()">
+                                <div class="size-29-px p-4-px c-pointer">
+                                    <div class="i-explain-icon svg w-100 h-100 c-pointer">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- - -->
+                        </div>
+                        <!-- - -->
+                    </section>
+                    <!-- - -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= TOOLTIP WITH HTML => BRANCH DATA -->
+
+    <article class="i-explain-html f-i-explain-html-branch-data d-none">
+
+        <section class="w-400-px d-flex flex-column gap-10-px bg-white">
+            <!-- branch data -->
+            <div class="w-100 p-5-px d-flex flex-column align-items-start gap-5-px">
+                <div class="fw-bold min-h-28-px d-flex align-items-center">תל חיי - קרית שמונה</div>
+                <div class="opacity-75 text-14-px min-h-28-px d-flex align-items-center">ז'בוטינסקי 8, רמת גן</div>
+                <div class="opacity-75 text-14-px min-h-28-px d-flex align-items-center">בנין עלית: המחלקה לאמנות
+                    רב-תחומית
+                </div>
+            </div>
+            <!-- - -->
+            <div class="w-100 border-b-gray-light-opacity"></div>
+            <!-- opening times -->
+            <div class="w-100 p-5-px d-flex flex-column align-items-start gap-5-px">
+                <div class="fw-bold min-h-28-px d-flex align-items-center">שעות פתיחה</div>
+                <div class="w-100 d-flex justify-content-between align-items-center min-h-28-px">
+                    <div class="opacity-75 text-14-px">א' - ה'</div>
+                    <div class="opacity-75 text-14-px">8:00-18:00</div>
+                </div>
+                <div class="w-100 d-flex justify-content-between align-items-center min-h-28-px">
+                    <div class="opacity-75 text-14-px">ו'</div>
+                    <div class="opacity-75 text-14-px">8:00-12:00</div>
+                </div>
+            </div>
+            <!-- - -->
+            <div class="w-100 border-b-gray-light-opacity"></div>
+            <!-- paper pypes - express -->
+            <div class="f-express-show w-100 p-5-px flex-column align-items-start gap-5-px">
+                <div class="fw-bold min-h-28-px">סוגי נייר</div>
+                <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                    <div class="d-flex align-items-center gap-10-px">
+                        <div class="opacity-75 text-14-px">A4</div>
+                        <div
+                            class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                            90 ג'</div>
+                    </div>
+                    <div class="opacity-75 text-14-px">מידות: 29.7 * 21 סמ</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                    <div class="d-flex align-items-center gap-10-px">
+                        <div class="opacity-75 text-14-px">A3</div>
+                        <div
+                            class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                            90 ג'</div>
+                    </div>
+                    <div class="opacity-75 text-14-px">מידות: 42 * 29.7 סמ</div>
+                </div>
+            </div>
+            <!-- paper pypes - plotter -->
+            <div class="f-plotter-show w-100 p-5-px flex-column align-items-start gap-5-px">
+                <div class="fw-bold min-h-28-px">סוגי נייר</div>
+                <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                    <div class="d-flex align-items-center gap-10-px">
+                        <div class="opacity-75 text-14-px">נייר פשוט</div>
+                        <div
+                            class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                            90 ג'</div>
+                    </div>
+                    <div class="opacity-75 text-14-px">רוחב: 91.44 סמ</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                    <div class="d-flex align-items-center gap-10-px">
+                        <div class="opacity-75 text-14-px">נייר מצופה</div>
+                        <div
+                            class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                            180 ג'</div>
+                    </div>
+                    <div class="opacity-75 text-14-px">רוחב: 106.68 סמ</div>
+                </div>
+            </div>
+            <!-- - -->
+        </section>
+
+    </article>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= MODAL => LOG IN MODALS -->
+
+    <div class="modal fade overflow-hidden" id="LogInModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered max-w-log-in-modal m-0 m-xl-auto">
+            <div class="modal-content vh-100-e h-xl-unset d-xl-flex overflow-auto">
+                <!-- X BTN -->
+                <article class="btn-close-container justify-content-end z-index-1-e">
+                    <button type="button" class="btn-close size-xl-34-px rounded-circle bg-white-50-pr"
+                        data-bs-dismiss="modal" aria-label="Close"></button>
+                </article>
+                <!-- - -->
+                <article class="d-flex w-100">
+                    <!-- log in area (right side) -->
+                    <article class="log-in-area w-100 d-flex flex-column align-items-center">
+                        <div class="full-logo size-76-50-px h-30-px m-30-0-10-0-px d-flex d-xl-none"></div>
+
+                        <!-- VERTION 1 = "NORMAL"  (LOG IN MODALS CONTENT) -->
+                        <section
+                            class="f-log-in-modal-normal p-10-15-px p-xl-40-px w-100 h-100 flex-column justify-content-start gap-20-px">
+                            <!-- title -->
+                            <div
+                                class="gap-10-px w-100 d-flex align-items-center justify-content-start justify-content-xl-center">
+                                <div class="right-v-icon svg size-35-px d-xl-none"></div>
+                                <div class="text-22-px fw-bold">התחברו או הירשמו למערכת</div>
+                            </div>
+                            <!-- text -->
+                            <div class="opacity-75 text-right text-xl-center align-self-start">השתמשו באימייל או
+                                בשאר
+                                השירותים כדי להתחבר או לפתוח חשבון, זה בחינם
+                                ומשלמים רק כאשר מדפיסים, מה יש לכם להפסיק :)</div>
+                            <!-- log in btns -->
+                            <!-- google -->
+                            <div
+                                class="h-47-px border-dark rounded-5-px rounded-xl-23-px bg-hover-gray-v-light-opacity d-flex justify-content-center align-items-center position-relative w-100 c-pointer">
+                                <div class="size-35-px google-icon svg right-15-px position-absolute c-pointer"></div>
+                                <div class="text-xl-24-px c-pointer">המשיכו עם Google</div>
+                            </div>
+                            <!-- fb -->
+                            <div
+                                class="h-47-px border-dark rounded-5-px rounded-xl-23-px bg-hover-gray-v-light-opacity d-flex justify-content-center align-items-center position-relative w-100 c-pointer">
+                                <div class="size-35-px fb-icon svg right-15-px position-absolute c-pointer"></div>
+                                <div class="text-xl-24-px c-pointer">המשיכו עם Facebook</div>
+                            </div>
+                            <!-- mail -->
+                            <div
+                                class="h-47-px border-dark rounded-5-px rounded-xl-23-px bg-hover-gray-v-light-opacity d-flex justify-content-center align-items-center position-relative w-100 c-pointer">
+                                <div class="size-35-px mail-icon svg right-15-px position-absolute c-pointer"></div>
+                                <div class="text-xl-24-px c-pointer">המשיכו עם המייל</div>
+                            </div>
+                            <!-- t&c agreement -->
+                            <div class="text-right text-xl-center align-self-start">בכך שאני ממשיך, אני
+                                מסכים
+                                ל<a class="fw-bold c-pointer text-dark">תנאי השימוש</a>
+                                ול<a class="fw-bold c-pointer text-dark">מדיניות
+                                    הפרטיות</a> של איזיקס בע"מ.
+                            </div>
+                            <!-- - -->
+                        </section>
+                        <!-- --- -->
+
+                        <!-- VERTION 2 = "LOG IN MAIL"  (LOG IN MODALS CONTENT) -->
+                        <section
+                            class="f-log-in-modal-log-in-mail p-10-15-px p-xl-40-px w-100 h-100 flex-column justify-content-start gap-20-px">
+                            <!-- title -->
+                            <div
+                                class="gap-10-px w-100 d-flex align-items-center justify-content-start justify-content-xl-center">
+                                <div class="right-v-icon svg size-35-px d-xl-none"></div>
+                                <div class="text-22-px fw-bold">כניסה למערכת</div>
+                            </div>
+                            <!-- text -->
+                            <div class="opacity-75 text-right text-start align-self-start">
+                                אנו נכנסים למשתמש
+                                <b class="">Moshe@gmail.com </b>- ניתן
+                                להחליף מייל על ידי חזרה אחורה, ובמידה שכחתם סיסמא - תוכלו לאפס אותה.
+                            </div>
+                            <!-- email input -->
+                            <div class="w-100 flex-column justify-content-start align-items-start gap-5-px">
+                                <div class="text-12-px fw-bold">סיסמה</div>
+                                <div class="modal-footer w-100 p-0">
+                                    <form class="w-100" role="search">
+                                        <input class="f-field-error-red form-control c-text" type="search"
+                                            placeholder="לפחות 8 תווים בלועזית, אות מיוחדת וסיפרה..."
+                                            aria-label="Search">
+                                    </form>
+                                </div>
+                                <div class="f-field-error-show d-none text-12-px text-red">סיסמה הינה שדה חובה
+                                </div>
+                            </div>
+                            <!-- btn -->
+                            <div
+                                class="w-100 text-22-px justify-content-center d-flex btn-e c-pointer btn-unavalble rounded-pill">
+                                המשך</div>
+                            <!-- forget password? -->
+                            <div class="opacity-75 text-right">שכחנו סיסמא? לא נורא קורה
+                                לטובים
+                                ביותר <a class="fw-bold text-pink fw-400 c-pointer">איפוס סיסמא</a></div>
+                            <!-- - -->
+                        </section>
+                        <!-- --- -->
+
+                        <!-- VERTION 3 = "NEW USER MAIL"  (LOG IN MODALS CONTENT) -->
+                        <section
+                            class="f-log-in-modal-new-user-mail p-10-15-px p-xl-40-px w-100 h-100 flex-column justify-content-start gap-20-px">
+                            <!-- title -->
+                            <div
+                                class="gap-10-px w-100 d-flex align-items-center justify-content-start justify-content-xl-center">
+                                <div class="right-v-icon svg size-35-px d-xl-none"></div>
+                                <div class="text-22-px fw-bold">המשיכו עם המייל</div>
+                            </div>
+                            <!-- text -->
+                            <div class="opacity-75 text-right text-xl-center align-self-start">הזינו את המייל להתחברות
+                                או הרשמה ונמשיך ביחד :)
+                            </div>
+                            <!-- email input -->
+                            <div class="w-100 flex-column justify-content-start align-items-start gap-5-px">
+                                <div class="text-12-px fw-bold">מייל</div>
+                                <div class="modal-footer w-100 p-0">
+                                    <form class="w-100" role="search">
+                                        <input class="f-field-error-red form-control c-text" type="search"
+                                            placeholder="הזן כתובת מייל" aria-label="Search">
+                                    </form>
+                                </div>
+                                <div class="f-field-error-show d-none text-12-px text-red">כתובת מייל הינה שדה חובה
+                                </div>
+                            </div>
+                            <!-- btn -->
+                            <div
+                                class="w-100 text-22-px justify-content-center d-flex btn-e c-pointer btn-unavalble rounded-pill">
+                                המשך</div>
+                            <!-- - -->
+                        </section>
+                        <!-- --- -->
+
+                        <!-- VERTION 4 = "RESET PASSWORD"  (LOG IN MODALS CONTENT) -->
+                        <section
+                            class="f-log-in-modal-reset-password p-10-15-px p-xl-40-px w-100 h-100 flex-column justify-content-start gap-20-px">
+                            <!-- title -->
+                            <div
+                                class="gap-10-px w-100 d-flex align-items-center justify-content-start justify-content-xl-center">
+                                <div class="right-v-icon svg size-35-px d-xl-none"></div>
+                                <div class="text-22-px fw-bold">איפוס סיסמה</div>
+                            </div>
+                            <!-- text -->
+                            <div class="opacity-75 text-right text-start align-self-start">
+                                נשלח מייל למשתמש
+                                <b class="">Moshe@gmail.com </b>- כנסו למייל ועיקבו אחר ההוראות, זה די קל :)
+                            </div>
+                            <!-- svg -->
+                            <div class="reset-pass-icon size-147-128-px"></div>
+                            <!-- forget password? -->
+                            <div class="opacity-75 text-right">לא קיבלתם את המייל? חפשו בספאם או <a
+                                    class="fw-bold text-pink fw-400 c-pointer">שלחו מייל נוסף</a></div>
+                            <!-- - -->
+                        </section>
+                        <!-- --- -->
+
+                    </article>
+                    <!-- log in video (left side) -->
+                    <article
+                        class="size-290-477-px rounded-left-7-px d-none d-xl-flex flex-shrink-0 position-relative overflow-x-hidden">
+                        <div class="logo-white svg size-137-40-px left-bottom-14-20-px position-absolute"></div>
+                        <video class="object-fit-contain h-100" muted autoplay loop>
+                            <source src="plotter-video.mp4" type="video/mp4">
+                        </video>
+                    </article>
+                    <!-- - -->
+                </article>
+                <!-- - -->
+            </div>
+        </div>
+    </div>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= MODAL => RIGHT PALCE -->
+
+    <div class="modal fade" id="rightPlaceModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div
+            class="modal-dialog modal-dialog-centered vh-100 d-flex align-items-end align-items-sm-center m-0 m-sm-auto justify-content-center">
+            <div
+                class="modal-content overflow-e border-sm-o-none min-w-content vh-100-e h-sm-auto d-flex align-items-center justify-content-start">
+                <!-- X BTN -->
+                <article class="btn-close-container justify-content-end d-none d-sm-flex">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </article>
+                <!-- - -->
+                <div
+                    class="w-100 mw-100 d-flex justify-content-sm-center align-items-center gap-5-px bg-pink bg-sm-white m-sm-20-0-px p-20-10-px p-sm-0">
+                    <div class="position-relative d-flex d-sm-none align-items-center justify-content-center">
+                        <button type="button" class="btn-close rounded-circle size-25-px rounded-circle bg-white-50-pr"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div
+                        class="fw-bold text-22-px d-flex flex-grow-1 text-center justify-content-center max-w-90-pr text-white-e text-sm-dark lh-30-px">
+                        חשוב לנו לוודא שאתם במדפיסים מקום הנכון :)</div>
+                </div>
+                <div class="modal-body opacity-75 text-center max-w-90-pr p-10 flex-grow-0">לפני שמעלים קובץ להדפסה חשוב
+                    לנו
+                    לוודא שבחרת במדפסת הנכונה.</div>
+                <!-- current option -->
+                <section
+                    class="m-8-20-px min-w-sm-550-px w-95-pr border-gray-v-v-light rounded-10-px p-10-15-px d-flex flex-column justify-content-start align-items-start gap-5-px bg-green-v-light bg-sm-white">
+                    <div class="w-100 d-flex position-relative">
+                        <div class="position-absolute top-left-1-px gap-10-px p-2-8-px border-green-light rounded-pill bg-hover-green-v-light c-pointer d-none d-sm-flex"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom"
+                            title="לחץ כאן בכדי לשנות סוג הדפסה או להחליף סניף">
+                            <div class="text-18-px text-green c-pointer">שינוי סוג הדפסה וסניף</div>
+                            <div class="chainge-icon-green svg size-25-px c-pointer"></div>
+                        </div>
+                    </div>
+                    <div class="w-100 h-100 d-flex gap-13-px align-items-center gap-sm-20-px">
+                        <img src="example-branch-logo.png" alt=""
+                            class="object-fit-cover-e size-45-px size-sm-110-px rounded-5-px border-gray-v-light shadow-85 m-sm-10-px">
+                        </img>
+                        <div class="w-100 h-100 d-flex flex-column align-items-start gap-5-px">
+                            <div
+                                class="gap-13-px d-flex justify-content-between justify-content-sm-start align-items-center w-100 h-100">
+                                <div class="gap-13-px d-flex align-items-center">
+                                    <div class="size-37-px size-sm-55-px svg plotter-icon"></div>
+                                    <div class="fw-bold">הדפסת פלוטר, אוניברסיטת ת"א - ת"א</div>
+                                </div>
+                                <!-- i explain right place -->
+                                <!-- mobile -->
+                                <div class="h-100 d-flex align-items-start d-sm-none">
+                                    <div class="i-explain-icon svg size-21-px c-pointer" data-bs-toggle="offcanvas"
+                                        data-bs-target="#offcanvasBranchData" aria-controls="offcanvasBranchData">
+                                    </div>
+                                </div>
+                                <!-- desktop -->
+                                <div class="h-100 align-items-start d-none d-sm-flex">
+                                    <div class="i-explain-icon svg size-21-px c-pointer"
+                                        onmouseenter="FIExplainHtmlBranchData()"
+                                        onmouseleave="FIExplainHtmlBranchData()">
+                                    </div>
+                                </div>
+                                <!-- --- -->
+                            </div>
+                            <div class="opacity-75 d-none d-sm-flex">סוגי נייר: פשוט 90 ג', מצופה 180 ג'</div>
+                        </div>
+                    </div>
+                    <div class="text-14 opacity-75 d-sm-none">סוגי נייר: פשוט 90 ג', מצופה 180 ג'</div>
+                </section>
+                <!-- my last locations -->
+                <section
+                    class="f-add-remove-last-places-show d-flex m-8-20-px min-w-sm-550-px w-95-pr border-gray-v-v-light rounded-10-px p-10-px flex-column gap-10-px last-place-show">
+                    <div class="f-drop-down-title bg-hover-gray-v-v-light w-100 h-100 rounded-5-px d-flex justify-content-between align-items-center c-pointer"
+                        onclick="rightPlaceDropDown()">
+                        <div class="fw-bold m-10-px c-pointer">המיקומים האחרונים שלי</div>
+                        <div class="f-drop-down-arrow drop-down-arrow svg size-15-px m-10-px c-pointer"></div>
+                    </div>
+                    <!-- my last locations - options -->
+                    <div class="f-right-place-options d-none w-100 h-100 flex-column gap-5-px">
+                        <!-- option 1 -->
+                        <div
+                            class="w-100 d-flex flex-column justify-content-start align-items-start gap-5-px bg-hover-green-vivid-v-v-light c-pointer">
+                            <div class="w-100 h-100 d-flex gap-13-px gap-sm-20-px align-items-center c-pointer">
+                                <img src="example-branch-logo.png" alt=""
+                                    class="size-45-px size-sm-55-px rounded-5-px border-gray-v-light shadow-85 m-sm-10-px c-pointer object-fit-cover-e">
+                                </img>
+                                <div class="w-100 h-100 d-flex flex-column align-items-start gap-5-px c-pointer">
+                                    <div
+                                        class="gap-13-px d-flex justify-content-center justify-content-sm-start align-items-center w-100 h-100 c-pointer">
+                                        <div class="gap-13-px d-flex align-items-center c-pointer">
+                                            <div class="size-37-px size-sm-27-px svg express-icon c-pointer"></div>
+                                            <div class="fw-bold c-pointer">הדפסת מסמכים ותמונות, אוניברסיטת ת"א -
+                                                ת"א
+                                            </div>
+                                        </div>
+                                        <!-- i explain right place -->
+                                        <!-- mobile -->
+                                        <div class="h-100 d-flex align-items-start d-sm-none">
+                                            <div class="right-place-i-explain i-explain-icon size-21-px svg c-pointer"
+                                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasBranchData"
+                                                aria-controls="offcanvasBranchData">
+                                            </div>
+                                        </div>
+                                        <!-- desktop -->
+                                        <div class="h-100 align-items-start d-none d-sm-flex">
+                                            <div class="right-place-i-explain i-explain-icon size-21-px svg c-pointer"
+                                                onmouseenter="FIExplainHtmlBranchData()"
+                                                onmouseleave="FIExplainHtmlBranchData()">
+                                            </div>
+                                        </div>
+                                        <!-- --- -->
+                                    </div>
+                                    <div class="opacity-75 d-none d-sm-flex c-pointer">סוגי נייר: A4, תמונות סטילס
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-14-px opacity-75 d-flex d-sm-none c-pointer">סוגי נייר: A4, תמונות סטילס
+                            </div>
+                        </div>
+                        <!-- - -->
+                        <div class="w-100 border-b-gray-v-v-light"></div>
+                        <!-- option 2 -->
+                        <div
+                            class="w-100 d-flex flex-column justify-content-start align-items-start gap-5-px bg-hover-green-vivid-v-v-light c-pointer">
+                            <div class="w-100 h-100 d-flex gap-13-px gap-sm-20-px align-items-center c-pointer">
+                                <img src="example-branch-logo.png" alt=""
+                                    class="size-45-px size-sm-55-px rounded-5-px border-gray-v-light shadow-85 m-sm-10-px c-pointer object-fit-cover-e">
+                                </img>
+                                <div class="w-100 h-100 d-flex flex-column align-items-start gap-5-px c-pointer">
+                                    <div
+                                        class="gap-13-px d-flex justify-content-center justify-content-sm-start align-items-center w-100 h-100 c-pointer">
+                                        <div class="gap-13-px d-flex align-items-center c-pointer">
+                                            <div class="size-37-px size-sm-27-px svg express-icon c-pointer"></div>
+                                            <div class="fw-bold c-pointer">הדפסת מסמכים ותמונות, אוניברסיטת ת"א -
+                                                ת"א
+                                            </div>
+                                        </div>
+                                        <!-- i explain right place -->
+                                        <!-- mobile -->
+                                        <div class="h-100 d-flex align-items-start d-sm-none">
+                                            <div class="right-place-i-explain i-explain-icon size-21-px svg c-pointer"
+                                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasBranchData"
+                                                aria-controls="offcanvasBranchData">
+                                            </div>
+                                        </div>
+                                        <!-- desktop -->
+                                        <div class="h-100 align-items-start d-none d-sm-flex">
+                                            <div class="right-place-i-explain i-explain-icon size-21-px svg c-pointer"
+                                                onmouseenter="FIExplainHtmlBranchData()"
+                                                onmouseleave="FIExplainHtmlBranchData()">
+                                            </div>
+                                        </div>
+                                        <!-- --- -->
+                                    </div>
+                                    <div class="opacity-75 d-none d-sm-flex c-pointer">סוגי נייר: A4, תמונות סטילס
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-14-px opacity-75 d-flex d-sm-none c-pointer">סוגי נייר: A4, תמונות סטילס
+                            </div>
+                        </div>
+                        <!-- - -->
+                        <div class="w-100 border-b-gray-v-v-light"></div>
+                        <!-- option 3 -->
+                        <div
+                            class="w-100 d-flex flex-column justify-content-start align-items-start gap-5-px bg-hover-green-vivid-v-v-light c-pointer">
+                            <div class="w-100 h-100 d-flex gap-13-px gap-sm-20-px align-items-center c-pointer">
+                                <img src="example-branch-logo.png" alt=""
+                                    class="size-45-px size-sm-55-px rounded-5-px border-gray-v-light shadow-85 m-sm-10-px c-pointer object-fit-cover-e">
+                                </img>
+                                <div class="w-100 h-100 d-flex flex-column align-items-start gap-5-px c-pointer">
+                                    <div
+                                        class="gap-13-px d-flex justify-content-center justify-content-sm-start align-items-center w-100 h-100 c-pointer">
+                                        <div class="gap-13-px d-flex align-items-center c-pointer">
+                                            <div class="size-37-px size-sm-27-px svg express-icon c-pointer"></div>
+                                            <div class="fw-bold c-pointer">הדפסת מסמכים ותמונות, אוניברסיטת ת"א -
+                                                ת"א
+                                            </div>
+                                        </div>
+                                        <!-- i explain right place -->
+                                        <!-- mobile -->
+                                        <div class="h-100 d-flex align-items-start d-sm-none">
+                                            <div class="right-place-i-explain i-explain-icon size-21-px svg c-pointer"
+                                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasBranchData"
+                                                aria-controls="offcanvasBranchData">
+                                            </div>
+                                        </div>
+                                        <!-- desktop -->
+                                        <div class="h-100 align-items-start d-none d-sm-flex">
+                                            <div class="right-place-i-explain i-explain-icon size-21-px svg c-pointer"
+                                                onmouseenter="FIExplainHtmlBranchData()"
+                                                onmouseleave="FIExplainHtmlBranchData()">
+                                            </div>
+                                        </div>
+                                        <!-- --- -->
+                                    </div>
+                                    <div class="opacity-75 d-none d-sm-flex c-pointer">סוגי נייר: A4, תמונות סטילס
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-14-px opacity-75 d-flex d-sm-none c-pointer">סוגי נייר: A4, תמונות סטילס
+                            </div>
+                        </div>
+                        <!-- @ -->
+                    </div>
+                </section>
+                <!-- footer modal -->
+                <div class="p-10-15-px w-100 gap-15-px d-flex flex-grow-1 flex-column justify-content-end">
+                    <div
+                        class="d-flex d-sm-none m-0 rounded-pill p-8-15-px border-green-light gap-10-px w-100 justify-content-center align-items-center c-pointer">
+                        <div class="text-18-px text-green c-pointer lh-0">שינוי סוג הדפסה וסניף</div>
+                        <div class="chainge-icon-green svg size-25-px c-pointer"></div>
+                    </div>
+                    <div
+                        class="w-100 m-0 text-22-px justify-content-center d-flex btn-e c-pointer btn-avalble rounded-pill">
+                        אישור
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= OFFCANVAS (I EXPLAIN) => BRANCH DATA -->
+
+    <div class="offcanvas offcanvas-bottom h-unset" tabindex="-1" id="offcanvasBranchData"
+        aria-labelledby="offcanvasBottomLabel">
+        <!-- title + X btn -->
+        <div class="offcanvas-header w-100">
+            <h5 class="offcanvas-title fw-bold text-pink" id="offcanvasBottomLabel">אונ' ת"א</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close">
+        </div>
+        <!-- body -->
+        <div class="offcanvas-body w-100">
+            <section class="w-100 flex-column gap-10-px bg-white">
+                <!-- branch data -->
+                <div class="w-100 p-5-px d-flex flex-column align-items-start gap-5-px">
+                    <div class="opacity-75 text-14-px min-h-28-px d-flex align-items-center">ז'בוטינסקי 8, רמת גן</div>
+                    <div class="opacity-75 text-14-px min-h-28-px d-flex align-items-center">בנין עלית: המחלקה לאמנות
+                        רב-תחומית
+                    </div>
+                </div>
+                <!-- - -->
+                <div class="w-100 border-b-gray-light-opacity"></div>
+                <!-- opening times -->
+                <div class="w-100 p-5-px d-flex flex-column align-items-start gap-5-px">
+                    <div class="fw-bold min-h-28-px d-flex align-items-center">שעות פתיחה</div>
+                    <div class="w-100 d-flex justify-content-between align-items-center min-h-28-px">
+                        <div class="opacity-75 text-14-px">א' - ה'</div>
+                        <div class="opacity-75 text-14-px">8:00-18:00</div>
+                    </div>
+                    <div class="w-100 d-flex justify-content-between align-items-center min-h-28-px">
+                        <div class="opacity-75 text-14-px">ו'</div>
+                        <div class="opacity-75 text-14-px">8:00-12:00</div>
+                    </div>
+                </div>
+                <!-- - -->
+                <div class="w-100 border-b-gray-light-opacity"></div>
+                <!-- paper pypes - express -->
+                <div class="f-express-show w-100 p-5-px flex-column align-items-start gap-5-px">
+                    <div class="fw-bold min-h-28-px">סוגי נייר</div>
+                    <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                        <div class="d-flex align-items-center gap-10-px">
+                            <div class="opacity-75 text-14-px">A4</div>
+                            <div
+                                class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                                90 ג'</div>
+                        </div>
+                        <div class="opacity-75 text-14-px">מידות: 29.7 * 21 סמ</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                        <div class="d-flex align-items-center gap-10-px">
+                            <div class="opacity-75 text-14-px">A3</div>
+                            <div
+                                class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                                90 ג'</div>
+                        </div>
+                        <div class="opacity-75 text-14-px">מידות: 42 * 29.7 סמ</div>
+                    </div>
+                </div>
+                <!-- paper pypes - plotter -->
+                <div class="f-plotter-show w-100 p-5-px flex-column align-items-start gap-5-px">
+                    <div class="fw-bold min-h-28-px">סוגי נייר</div>
+                    <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                        <div class="d-flex align-items-center gap-10-px">
+                            <div class="opacity-75 text-14-px">נייר פשוט</div>
+                            <div
+                                class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                                90 ג'</div>
+                        </div>
+                        <div class="opacity-75 text-14-px">רוחב: 91.44 סמ</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center w-100 min-h-28-px">
+                        <div class="d-flex align-items-center gap-10-px">
+                            <div class="opacity-75 text-14-px">נייר מצופה</div>
+                            <div
+                                class="opacity-75 text-14-px p-2-8-px rounded-pill bg-gray-v-v-light border-gray-v-light opacity-75">
+                                180 ג'</div>
+                        </div>
+                        <div class="opacity-75 text-14-px">רוחב: 106.68 סמ</div>
+                    </div>
+                </div>
+                <!-- - -->
+            </section>
+        </div>
+    </div>
+
+    <!-- @@@@@ bootstrap @@@@@ -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+        integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
+        integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
+        crossorigin="anonymous"></script>
+
+    <!-- @@@@@ eazix js @@@@@ -->
+
+    <script src="choose-printing-type.js"></script>
+
+</body>
+
+</html>

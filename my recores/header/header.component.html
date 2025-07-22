@@ -1,0 +1,43 @@
+<mat-toolbar [ngClass]="{'transparent-toolbar': isHomePage()}">
+  <div class="page-container">
+    <button mat-button class="menu-button" (click)="sidenav.toggle()">
+      <mat-icon class="hamburger-icon">{{ isMenuOpen ? 'menu_open' : 'menu' }}</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container" style="height: 300px;">
+  <mat-sidenav #sidenav autoFocus="false" mode="over" [(opened)]="isMenuOpen" class="sidenav">
+    <a mat-button routerLink="/page1">Page 1</a>
+    <a mat-button routerLink="/page2">Page 2</a>
+    <a mat-button routerLink="/page3">Page 3</a>
+    <a mat-button routerLink="/page4">Page 4</a>
+    <a mat-button routerLink="/page5">{{'main-nav.q-and-a' | translate}}</a>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <main>
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+
+
+<!-- <span>
+    <a routerLink="/">MyMessages</a>
+  </span>
+  <span class="spacer"></span>
+  <ul>
+    <li *ngIf="userIsAuthenticated">
+      <a mat-button routerLink="/create" routerLinkActive="mat-accent">New Post</a>
+    </li>
+    <li *ngIf="!userIsAuthenticated">
+      <a mat-button routerLink="/auth/login" routerLinkActive="mat-accent">Login</a>
+    </li>
+    <li *ngIf="!userIsAuthenticated">
+      <a mat-button routerLink="/auth/signup" routerLinkActive="mat-accent">Signup</a>
+    </li>
+    <li *ngIf="userIsAuthenticated">
+      <button mat-button (click)="onLogout()">Logout</button>
+    </li>
+  </ul> -->

@@ -1,0 +1,265 @@
+[33mcommit 94aeeb1e767c61c71e0a9daa2d216cbd0a556b01[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32meazix-01-branch[m[33m, [m[1;31morigin/eazix-01-branch[m[33m)[m
+Author: etkin <nadav@eazix.io>
+Date:   Sat Jan 27 23:42:21 2024 +0200
+
+    eazix.v.043 eazix fake DB 36 - img preview 02
+
+[33mcommit 924a0721f038b86b48c73b12d58b6b69170326b9[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 17 17:38:44 2024 +0200
+
+    eazix.v.040 eazix fake DB 33 - fix right place prob.
+
+[33mcommit d13387d7516fd50cba8e793234d3954004508872[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 17 17:38:18 2024 +0200
+
+    eazix.v.039 eazix fake DB 32 - fix right place prob.
+
+[33mcommit 0ce1a1ee5e0321b9c8a19b5a8107350bba2e826a[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 17 14:41:20 2024 +0200
+
+    eazix.v.038 eazix fake DB 31 - fix right place prob.
+
+[33mcommit 4636ba2e217f591b2e29c532876a5cce5d62d495[m
+Author: etkin <nadav@eazix.io>
+Date:   Tue Jan 16 09:42:21 2024 +0200
+
+    eazix.v.037 eazix fake DB 30 - fix right place prob.
+
+[33mcommit 001f0064df8f6655d90a98f7e2b3b2d456e671dd[m
+Author: etkin <nadav@eazix.io>
+Date:   Mon Jan 15 17:20:26 2024 +0200
+
+    eazix.v.036 eazix fake DB 29 - start P table 03 !
+
+[33mcommit 4e309826aa0fce0bff7613cf566c352279975ab7[m
+Author: etkin <nadav@eazix.io>
+Date:   Sun Jan 14 15:16:15 2024 +0200
+
+    eazix.v.035 eazix fake DB 28 - start P table 02 !
+
+[33mcommit 8f7de8cf20c1666b3a74b1f2af8df8ef34bc57a3[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 10 22:29:45 2024 +0200
+
+    eazix.v.034 eazix fake DB 27 - start P table !
+
+[33mcommit 90f2ee0b8e7655d733585f9c3f0fd9cdb3bb0ab9[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 10 19:26:29 2024 +0200
+
+    eazix.v.034 eazix fake DB 27 - printing table dropdown FIXED FIXED!!
+
+[33mcommit d349f0b4cbd9b00289a8c322dd9fab0cd25e2c4f[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 10 17:30:51 2024 +0200
+
+    eazix.v.033 eazix fake DB 26 - printing table dropdown FIXED!!
+
+[33mcommit 604e6ddd995c5a0fb4fa3b4afc21e098267b0eb1[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 10 16:50:41 2024 +0200
+
+    eazix.v.032 eazix fake DB 25 - branches IMGs in Backend + printing table dropdown FIXED!!
+
+[33mcommit ebbb0f84807202ef2b6022fcfa1bbe84272b6dae[m
+Author: etkin <nadav@eazix.io>
+Date:   Mon Jan 8 19:31:09 2024 +0200
+
+    eazix.v.031 eazix fake DB 24 - branches IMGs in Backend
+
+[33mcommit 1beba7409f9f48a0d643fe188f30e20976fccbff[m
+Author: etkin <nadav@eazix.io>
+Date:   Sun Jan 7 19:07:52 2024 +0200
+
+    eazix.v.030 eazix fake DB 23 -finish right place!!! FIXED!
+
+[33mcommit a6cfc19237898f3d121e0e515b25a8bc304ef75f[m
+Author: etkin <nadav@eazix.io>
+Date:   Sat Jan 6 22:52:13 2024 +0200
+
+    eazix.v.029 eazix fake DB 22 -finish right place!!! FIXED!
+
+[33mcommit 042101a45c3b7faa723a964aade908a5cf125c6f[m
+Author: etkin <nadav@eazix.io>
+Date:   Fri Jan 5 15:43:44 2024 +0200
+
+    eazix.v.028 eazix fake DB 21 -continue right place component 01
+
+[33mcommit 1f9a15ae84f4f431ba52460343c45df6e7a0d32d[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Jan 3 08:39:03 2024 +0200
+
+    eazix.v.027 eazix fake DB 20 -papers in branches 02 - paper object getBranch only
+
+[33mcommit 6abf93afaa3633bc7a93fba781a5c7aae231ae49[m
+Author: etkin <nadav@eazix.io>
+Date:   Mon Jan 1 21:57:30 2024 +0200
+
+    eazix.v.026 eazix fake DB 19 -papers in branches 01 - paper by ID works
+
+[33mcommit 7428eae782d8eeeac38e31ab384ba89ed64d762b[m
+Author: etkin <nadav@eazix.io>
+Date:   Sun Dec 31 19:21:36 2023 +0200
+
+    eazix.v.025 eazix fake DB 18 -papers finished!!!
+
+[33mcommit dcfc429444bd2e684cd1b6c28226a70e27baa750[m
+Author: etkin <nadav@eazix.io>
+Date:   Sun Dec 31 12:51:11 2023 +0200
+
+    eazix.v.024 eazix fake DB 17 -papers finished!!!
+
+[33mcommit 90d8959381aa230aff6ccb1a8a00133daa25501a[m
+Author: etkin <nadav@eazix.io>
+Date:   Sun Dec 31 09:26:15 2023 +0200
+
+    eazix.v.023 eazix fake DB 16 -papers finished!!!
+
+[33mcommit b4d832e98d99d827e8e3a0cff2b2c705b07e07b3[m
+Author: etkin <nadav@eazix.io>
+Date:   Sat Dec 30 21:24:51 2023 +0200
+
+    eazix.v.022 eazix fake DB 15 - start papers3
+
+[33mcommit bac18d4c018542c06df5b412e993e9abeccd5f22[m
+Author: etkin <nadav@eazix.io>
+Date:   Sat Dec 30 10:49:36 2023 +0200
+
+    eazix.v.021 eazix fake DB 14 - start papers2
+
+[33mcommit b8b9dfe3f72ca2383583145d244cc0f28d06357e[m
+Author: etkin <nadav@eazix.io>
+Date:   Thu Dec 28 20:42:23 2023 +0200
+
+    eazix.v.020 eazix fake DB 13 - start papers
+
+[33mcommit 54ef2f32baeadc47afe6bada4121ea0b51bccaff[m
+Author: etkin <nadav@eazix.io>
+Date:   Thu Dec 28 15:23:14 2023 +0200
+
+    eazix.v.019 eazix fake DB 12 - move language to diractionservice - FIX!
+
+[33mcommit dd9205d9ab70b174aca1a878e23c3a01aeb29fd1[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Dec 27 15:21:36 2023 +0200
+
+    eazix.v.018 eazix fake DB 11 - move language to diractionservice
+
+[33mcommit ec511721c306461bf85b77358ffd84599f027adf[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Dec 27 11:06:23 2023 +0200
+
+    eazix.v.017 eazix fake DB 10 - ps+br in ARRAY2 delete duplications
+
+[33mcommit 2c0efd3427110f5096692f54f9e31e8f6ef70db2[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Dec 27 09:58:04 2023 +0200
+
+    eazix.v.016 eazix fake DB 09 - ps+br in ARRAY1
+
+[33mcommit 25a9673c914159d1a8bad667f5f6ec286e4f16fc[m
+Author: etkin <nadav@eazix.io>
+Date:   Tue Dec 26 17:59:10 2023 +0200
+
+    eazix.v.015 eazix fake DB 08 - updating user Pservice & branch
+
+[33mcommit 737fb9bf244e3564afe35871dc7e38e7c8584e8d[m
+Author: etkin <nadav@eazix.io>
+Date:   Tue Dec 26 15:08:36 2023 +0200
+
+    eazix.v.014 eazix fake DB 07 - updating user Pservice & branch
+
+[33mcommit c0e6d1a287ebab7f6efb9423ef62241ef7f85b32[m
+Author: etkin <nadav@eazix.io>
+Date:   Tue Dec 26 09:32:28 2023 +0200
+
+    eazix.v.013 eazix fake DB 06 - Login/Signup Mail finished
+
+[33mcommit fcd27db55e13c47ba6572c4739ad9cb4e43e89b1[m
+Author: etkin <nadav@eazix.io>
+Date:   Mon Dec 25 00:01:53 2023 +0200
+
+    eazix.v.012 eazix fake DB 05 - Login/Signup Mail finished
+
+[33mcommit 6a41f95f234b20214871b893e2c9e81c8d73bf3c[m
+Author: etkin <nadav@eazix.io>
+Date:   Mon Dec 18 11:07:11 2023 +0200
+
+    eazix.v.011 eazix fake DB 04 - Login1/2
+
+[33mcommit 23f5b41acb52e39fd169e35d4bb90272e5792671[m
+Author: etkin <nadav@eazix.io>
+Date:   Thu Dec 14 23:14:06 2023 +0200
+
+    eazix.v.010 eazix fake DB 03 - after FRONT
+
+[33mcommit 7015b992d76dc85b2f936af3f2958a6e0c667bbc[m
+Author: etkin <nadav@eazix.io>
+Date:   Thu Dec 14 09:56:59 2023 +0200
+
+    eazix.v.009 eazix fake DB 02 - before FRONT
+
+[33mcommit 606cb88de7c13758dc5b472e2c99d443f7039661[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Dec 13 12:02:34 2023 +0200
+
+    eazix.v.008 recreate eazix DB with GUI 01
+
+[33mcommit b7c0c133edcc4ab3aad0dd90be88da493eb45e56[m
+Author: etkin <nadav@eazix.io>
+Date:   Tue Dec 12 08:44:02 2023 +0200
+
+    eazix.v.007 (CRASHED-02) try to add eazix back+ DB
+
+[33mcommit e18627fd12302769ad7c85b802b8c5645a518933[m
+Author: etkin <nadav@eazix.io>
+Date:   Mon Dec 11 09:23:05 2023 +0200
+
+    eazix.v.006 (CRASHED-01) try to add eazix back+ DB
+
+[33mcommit 2c8b5707c8cb3be095087cbd006e3f3b953fb6ac[m
+Author: etkin <nadav@eazix.io>
+Date:   Sat Dec 9 19:17:38 2023 +0200
+
+    eazix.v.005 - login + tandc
+
+[33mcommit cf7b2690eb517ceeb09e7356b68f4beb21e76453[m
+Author: etkin <nadav@eazix.io>
+Date:   Thu Dec 7 16:34:55 2023 +0200
+
+    eazix.v.004 - login dialog in prog2
+
+[33mcommit 56fbad3ff4c3bc55f6e0f94661b6ead85ac586dc[m
+Author: etkin <nadav@eazix.io>
+Date:   Thu Dec 7 12:56:56 2023 +0200
+
+    eazix.v.003 - login dialog in prog
+
+[33mcommit c7f953b0f51824e55c0c122b6270ca4cb2a5502e[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Dec 6 16:03:23 2023 +0200
+
+    eazix.v.002
+
+[33mcommit 62136205ca961fe0ebeeaeffb8ea86d161f3f222[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Dec 6 14:06:30 2023 +0200
+
+    eazix.v.001
+
+[33mcommit e8c274b12c15c1623fda2a5b71c49cca7c63ab81[m
+Author: etkin <nadav@eazix.io>
+Date:   Wed Dec 6 13:38:10 2023 +0200
+
+    eazix-v-011 fixed v - with eazix database 01
+
+[33mcommit 5452f92c98c7b44a8ce72fde3a6c91c864eb4f1a[m
+Author: etkin <nadav@eazix.io>
+Date:   Tue Dec 5 20:30:49 2023 +0200
+
+    eazix-v-018 fixed v - navigatie-area + dropdown2
+
+[33

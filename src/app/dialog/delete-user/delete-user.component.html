@@ -1,0 +1,53 @@
+<div class="h-100 w-100 d-flex flex-column flex-grow-1 overflow-auto">
+
+    <div class="position-absolute w-100 d-flex" [class.justify-content-end]="isRTL">
+        <button type="button" mat-icon-button aria-label="Toggle sidenav" (click)="closeDeleteUserDialog()"
+            class="close-icon d-flex align-items-center justify-content-center" [class.text-white]="isDarkMode">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <div class="d-flex flex-grow-1 flex-column align-items-center px-3 pt-4 pb-3 px-md-4 pt-md-5 gap-3 w-100">
+        <h4 class="text-center fw-bold m-0 pt-3 pt-lg-0" [class.zx-ltr]="!isRTL" [class.text-white]="isDarkMode"
+            [class.zx-ltr]="!isRTL">
+            <span *ngIf="!isLoadingUpdates">
+                <span>{{ "delete-user.title" | translate }}</span>
+                <span class="zx-100-opp">-</span>
+                <span>{{ user.email }}</span>
+            </span>
+            <span *ngIf="isLoadingUpdates" class="text-green">
+                {{ "delete-user.success" | translate }}
+            </span>
+        </h4>
+
+        <div class="d-flex flex-column gap-3 align-items-center w-100 pt-3" style="min-height: 210px;">
+
+            <span [class.zx-100-opp]="isLoadingUpdates" class="text-center pt-2 pt-lg-5" [class.zx-ltr]="!isRTL">
+                <span>{{ "delete-user.explain" | translate }}</span>
+                <span class="zx-100-opp">-</span>
+                <span>{{ user.email }}</span>
+                <span class="zx-100-opp">-</span>
+                <span>?</span>
+            </span>
+
+            <span class="spacer"></span>
+
+            <div [class.zx-100-opp]="isLoadingUpdates"
+                class="d-flex flex-column flex-lg-row flex-grow-lg-1 justify-content-center align-items-end w-100 gap-3">
+                <button color="warn" mat-raised-button (click)="onDeleteUser(user)"
+                    class="text-white rounded-pill zx-btn-single col-12 col-lg-6 fw-bold">
+                    {{ "delete-user.title" | translate }}
+                </button>
+                <button (click)="closeDeleteUserDialog()" color="primary" mat-button
+                    class="rounded-pill zx-btn-single col-12 col-lg-6 fw-bold">
+                    {{ "su-management.branches_cancel" | translate }}
+                </button>
+            </div>
+
+            <img [class.zx-100-opp]="!isLoadingUpdates" src="assets/images/success-icon.svg"
+                class="svg zx-success-icon position-absolute" alt="successfull order">
+
+        </div>
+
+    </div>
+</div>

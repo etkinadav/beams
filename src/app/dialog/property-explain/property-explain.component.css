@@ -1,0 +1,22 @@
+.close-icon {
+    opacity: 50%;
+    outline: none;
+}
+
+@media only screen and (min-width: 992px) {
+    .close-icon {
+        margin: 15px;
+    }
+}
+
+.close-icon.mat-mdc-icon-button ::ng-deep .mat-mdc-button-persistent-ripple {
+    display: none;
+}
+
+::ng-deep div.mat-expansion-panel-body {
+    padding: 0;
+}
+
+::ng-deep div.mat-mdc-dialog-surface {
+    flex-grow: 1;
+}

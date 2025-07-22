@@ -1,0 +1,413 @@
+<div class="h-100 w-100 d-flex flex-column flex-grow-1 overflow-auto">
+
+    <!-- ----- HHEADER ----- -->
+    <div class="position-absolute w-100 d-flex justify-content-between" [class.justify-content-end]="isRTL">
+
+        <!-- =================== header NAVIGATE.CLOSE ===================  -->
+        <div class="d-flex align-items-center gap-1 gap-md-2 flex-shrink-0">
+            <button type="button" mat-icon-button aria-label="Toggle sidenav" (click)="closeCopyScanDialog()"
+                class="close-icon d-flex align-items-center justify-content-center" [class.zx-text-white]="isDarkMode">
+                <mat-icon>close</mat-icon>
+            </button>
+            <button *ngIf="currentStage !== 'scanOrCopy'" type="button" mat-icon-button aria-label="Toggle sidenav"
+                (click)="toStage('scanOrCopy')" class="close-icon d-flex align-items-center justify-content-center"
+                [class.zx-text-white]="isDarkMode">
+                <mat-icon>{{ isRTL ? 'keyboard_arrow_right' : 'keyboard_arrow_left' }}</mat-icon>
+            </button>
+        </div>
+        <!-- // =================== header NAVIGATE.CLOSE ===================  -->
+
+        <!-- =================== header OCCUPIED ===================  -->
+        <div *ngIf="scanningScatusUpdated === 'occupied' && !isWaitingForOtherUser"
+            class="d-flex flex-grow-1 justify-content-center align-items-center">
+            <b class="text-center m-0 p-0 text-red zx-text-tiny" [class.zx-ltr]="!isRTL"
+                [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+                {{ "copy-scan.alert.occupied" | translate }}
+            </b>
+        </div>
+        <!-- // =================== header OCCUPIED ===================  -->
+
+        <!-- =================== header SCENNING ===================  -->
+        <div *ngIf="scanningScatusUpdated === 'scanning' &&
+             (currentStage === 'scanOrCopy' ||
+              currentStage === 'copy-1' ||
+              currentStage === 'scan-1')" class="d-flex flex-grow-1 justify-content-center align-items-center">
+            <b class="text-center m-0 p-0 text-red zx-text-tiny" [class.zx-ltr]="!isRTL"
+                [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+                {{ "copy-scan.alert.scanning" | translate }}
+            </b>
+        </div>
+        <!-- // =================== header SCENNING ===================  -->
+
+        <!-- =================== header PLACE ===================  -->
+        <div
+            class="d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 gap-lg-2 p-2 px-lg-3 flex-shrink-0">
+            <span *ngIf="expressBranch.serial_name" [class.zx-text-white]="isDarkMode">
+                <span class="d-none d-lg-flex zx-text-tiny">
+                    {{ "choose-branch.naming." + expressBranch.serial_name | translate }}
+                </span>
+                <span class="d-flex d-lg-none zx-text-tiny-tiny">
+                    <span>
+                        {{ "choose-branch.naming." + expressBranch.serial_name | translate | slice:0:8 }}
+                    </span>
+                    <span>
+                        ...
+                    </span>
+                </span>
+            </span>
+            <img [src]="'assets/images/branches/' +  expressBranch.serial_name + '.png'" alt="Branchs Logo"
+                class="zx-small-icon-size">
+        </div>
+        <!-- // =================== header PLACE ===================  -->
+
+    </div>
+    <!-- // ----- HHEADER ----- -->
+
+    <!-- ----- MAIN ----- -->
+    <div class="d-flex flex-grow-1 flex-column align-items-center px-3 pt-4 pb-3 pb-lg-3 px-lg-4 pt-lg-5 gap-1 w-100">
+
+        <!-- =================== spaces OCCUPIED ===================  -->
+        <div *ngIf="scanningScatusUpdated === 'occupied'" style="height: 15px;"></div>
+        <!-- // =================== spaces OCCUPIED ===================  -->
+
+        <!-- =================== title stage: scanOrCopy NORMAL ===================  -->
+        <h4 *ngIf="currentStage === 'scanOrCopy'" class="text-center fw-bold m-0 py-3 pt-lg-0 text-green"
+            [class.zx-ltr]="!isRTL" [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+            {{ "copy-scan.title" | translate }}
+        </h4>
+        <!-- // =================== title stage: scanOrCopy NORMAL ===================  -->
+
+        <!-- =================== title stage: copy-1 ===================  -->
+        <article *ngIf="currentStage === 'copy-1' || currentStage === 'copy-2'"
+            class="d-flex row flex-lg-row-reverse gap-5 gap-lg-0 w-100 px-3 px-lg-0 pb-lg-0 pt-lg-1 zx-border-bottom-gray-v-light-mid"
+            [class.py-4]="scanningScatusUpdated !== 'occupied'" [class.zx-text-white]="isDarkMode"
+            [class.zx-ltr]="!isRTL">
+            <div class="d-flex flex-column gap-1 gap-lg-2 justify-content-center justify-content-lg-end align-items-center px-lg-2 m-0 text-green"
+                [class.zx-text-white]="isDarkMode">
+                <div class="d-flex gap-3 gap-lg-2 align-items-end align-items-lg-center justify-content-center position-relative"
+                    style="max-width: fit-content;">
+                    <mat-icon class="zx-medium-icon-size zx-fs-icon-big">scanner</mat-icon>
+                    <div class="d-flex flex-column gap-1 gap-md-2" [class.text-start]="!isRTL">
+                        <h6 class="fw-bold m-0 p-0">
+                            {{ "copy-scan.copy-title" | translate }}
+                        </h6>
+                        <span class="zx-min-h-desktop-explain zx-text-tiny zx-text-sm-small">
+                            {{ "copy-scan.copy-explain" | translate }}
+                        </span>
+                    </div>
+                    <div class="position-absolute w-100 d-flex align-items-center gap-1">
+                        <mat-icon class="zx-small-icon-size zx-scan-icon"
+                            [class.zx-scan-icon-not-rtl]="!isRTL">print</mat-icon>
+                    </div>
+                </div>
+            </div>
+        </article>
+        <!-- // =================== title stage: copy-1 ===================  -->
+
+        <!-- =================== title stage: scan-1 ===================  -->
+        <article *ngIf="currentStage === 'scan-1' || currentStage === 'scan-2'"
+            class="d-flex row flex-lg-row-reverse gap-5 gap-lg-0 w-100 px-3 px-lg-0 pb-lg-0 pt-lg-1 zx-border-bottom-gray-v-light-mid"
+            [class.py-4]="scanningScatusUpdated !== 'occupied'" [class.zx-text-white]="isDarkMode"
+            [class.zx-ltr]="!isRTL">
+            <div
+                class="d-flex flex-column gap-1 gap-lg-2 justify-content-center justify-content-lg-end align-items-center px-lg-2 m-0">
+                <div class="d-flex gap-3 gap-lg-2 align-items-end align-items-lg-center justify-content-center position-relative"
+                    style="max-width: fit-content;">
+                    <mat-icon class="zx-medium-icon-size zx-fs-icon-big">scanner</mat-icon>
+                    <div class="d-flex flex-column gap-1 gap-md-2" [class.text-start]="!isRTL">
+                        <h6 class="fw-bold m-0 p-0">
+                            {{ "copy-scan.scan-title" | translate }}
+                        </h6>
+                        <span class="zx-min-h-desktop-explain zx-text-tiny zx-text-sm-small">
+                            {{ "copy-scan.scan-explain" | translate }}
+                        </span>
+                    </div>
+                    <div class="position-absolute w-100 d-flex align-items-center gap-1">
+                        <mat-icon class="zx-small-icon-size zx-scan-icon"
+                            [class.zx-scan-icon-not-rtl]="!isRTL">alternate_email</mat-icon>
+                    </div>
+                </div>
+            </div>
+        </article>
+        <!-- // =================== title stage: scan-1 ===================  -->
+
+        <span class="d-flex spacer"></span>
+
+        <div class="position-relative d-flex align-items-center flex-column"
+            [class.mt-5]="currentStage === 'copy-1' || currentStage === 'scan-1'">
+            <img *ngIf="!((currentStage === 'copy-2' || currentStage === 'scan-2') && scanningScatusUpdated === 'scanning')"
+                class="object-fit-contain scan-copy-illustration" alt="Scannner Illustration"
+                [class.scan-copy-illustration-put]="currentStage !== 'scanOrCopy'"
+                [class.scan-copy-illustration-small]="currentStage === 'scan-1' && !isEmailConfirmed"
+                [src]="isDarkMode ? 'assets/images/copy-scan-illustration-dark.png' : 'assets/images/copy-scan-illustration.png'">
+            <img *ngIf="(currentStage === 'copy-2' || currentStage === 'scan-2') && scanningScatusUpdated === 'scanning'"
+                class="object-fit-contain scan-copy-illustration scan-copy-illustration-put"
+                alt="Scanning now Illustration"
+                [src]="isDarkMode ? 'assets/images/copy-scan-illustration-scanning-dark.gif' : 'assets/images/copy-scan-illustration-scanning.gif'">
+            <!-- put paper addition to illustration -->
+            <div *ngIf="currentStage === 'copy-1' || (currentStage === 'scan-1' && isEmailConfirmed)"
+                class="w-100 position-absolute top-0 d-flex">
+                <img class="object-fit-contain open-scanner-illustration position-absolute"
+                    [src]="'assets/images/open-scanner-illustration.png'" alt="Put document in scanner illustration">
+            </div>
+            <!-- =================== title stage: copy-2 + scan-2 ===================  -->
+            <div *ngIf="currentStage === 'scan-2' || currentStage === 'copy-2'"
+                class="d-flex flex-column flex-grow-1 justify-content-end align-items-end text-green px-2 zx-min-h-stage-2-con">
+                <div class="d-flex flex-column flex-grow-1 align-items-center" [class.zx-ltr]="!isRTL">
+
+                    <!-- WAITING FOR SCANNER UPDATE = 1 -->
+                    <div class="d-flex flex-column align-items-center flex-grow-1 gap-1"
+                        *ngIf="(scanningScatusUpdated === 'ready' && !isStartedScanning && !isFinishedScanning) && !isWaitingForOtherUser">
+                        <h4 class="fw-bold m-0 p-0 opacity-trans text-center">
+                            {{ "copy-scan.status.waiting" | translate }}
+                        </h4>
+                        <span class="m-0 p-0 opacity-trans text-center">
+                            {{ "copy-scan.status.waiting.sub" | translate }}
+                        </span>
+                        <span class="spacer"></span>
+                        <div class="w-100 d-flex justify-content-center">
+                            <mat-spinner class="zx-small-icon-size zx-medium-big-icon-size-lg"></mat-spinner>
+                        </div>
+                        <span class="spacer"></span>
+                        <button type="button" mat-stroked-button color="warn" [class.zx-text-white]="isDarkMode"
+                            class="zx-small-tiny-btn rounded-pill w-100" (click)="toStage('scanOrCopy')">
+                            {{ "su-management.branches_cancel" | translate }}
+                        </button>
+                    </div>
+                    <!-- // WAITING FOR SCANNER UPDATE = 1 -->
+
+                    <!-- SCANNING YOUR DOCS = 2 -->
+                    <div class="d-flex flex-column align-items-center flex-grow-1 gap-1"
+                        *ngIf="(scanningScatusUpdated === 'scanning' && isStartedScanning && !isFinishedScanning) && !isWaitingForOtherUser">
+                        <h4 class="fw-bold m-0 p-0 opacity-trans text-center">
+                            {{ "copy-scan.status.scanning" | translate }}
+                        </h4>
+                        <span class="m-0 p-0 opacity-trans text-center">
+                            {{ "copy-scan.status.scanning.sub" | translate }}
+                        </span>
+                        <b class="zx-text-tiny zx-text-sm-small zx-text-pink text-center pt-1 pt-lg-2"
+                            [class.zx-text-white]="isDarkMode">
+                            {{ "copy-scan.status.scanning.sub.explain" | translate }}
+                        </b>
+                        <span class="spacer"></span>
+                        <div class="w-100 d-flex justify-content-center">
+                            <mat-spinner class="zx-small-icon-size zx-medium-big-icon-size-lg"></mat-spinner>
+                        </div>
+                        <span class="spacer"></span>
+                        <button type="button" mat-stroked-button color="warn" [class.zx-text-white]="isDarkMode"
+                            class="zx-small-tiny-btn rounded-pill w-100" (click)="toStage('scanOrCopy')">
+                            {{ "su-management.branches_cancel" | translate }}
+                        </button>
+                    </div>
+                    <!-- // SCANNING YOUR DOCS = 2 -->
+
+                    <!-- FINISHED SCANNING YOUR DOCS = 3 -->
+                    <div class="d-flex flex-column align-items-center flex-grow-1 gap-1"
+                        *ngIf="(scanningScatusUpdated !== 'scanning' && isStartedScanning && isFinishedScanning) && !isWaitingForOtherUser">
+                        <h4 class="fw-bold m-0 p-0 text-center">
+                            {{ "copy-scan.status.finished" | translate }}
+                        </h4>
+                        <span *ngIf="currentStage === 'copy-2'" class="m-0 p-0 text-center text-green">
+                            {{ "copy-scan.status.finished.copy" | translate }}
+                        </span>
+                        <b *ngIf="currentStage === 'copy-2'"
+                            class="zx-text-tiny zx-text-sm-small zx-text-pink text-center pt-1 pt-lg-2"
+                            [class.zx-text-white]="isDarkMode">
+                            {{ "copy-scan.status.finished.copy-sub" | translate }}
+                        </b>
+                        <b *ngIf="currentStage === 'scan-2'"
+                            class="zx-text-tiny zx-text-sm-small zx-text-pink text-center pt-1 pt-lg-2"
+                            [class.zx-text-white]="isDarkMode">
+                            {{ "copy-scan.status.finished.scan" | translate }}
+                        </b>
+                        <span class="spacer"></span>
+                        <div class="d-flex flex-column gap-2 gap-lg-3 w-100">
+                            <button *ngIf="currentStage === 'copy-2'" type="button" mat-stroked-button color="primary"
+                                class="rounded-pill w-100 px-3 w-100" (click)="toStage('scanOrCopy')">
+                                {{ "copy-scan.status.finished.abother-scan" | translate }}
+                            </button>
+                            <button *ngIf="currentStage === 'copy-2'" type="button" mat-raised-button color="primary"
+                                class="rounded-pill w-100 px-3 w-100 text-white" (click)="closeCopyScanDialog()">
+                                {{ "copy-scan.status.finished.copy.to-table" | translate }}
+                            </button>
+                            <button *ngIf="currentStage === 'scan-2'" type="button" mat-stroked-button
+                                class="rounded-pill w-100 px-3 w-100" (click)="closeCopyScanDialog()">
+                                {{ "copy-scan.status.finished.scan.to-table" | translate }}
+                            </button>
+                            <button *ngIf="currentStage === 'scan-2'" type="button" mat-raised-button color="primary"
+                                class="rounded-pill w-100 px-3 w-100 text-white" (click)="toStage('scanOrCopy')">
+                                {{ "copy-scan.status.finished.abother-scan" | translate }}
+                            </button>
+                        </div>
+                    </div>
+                    <!-- // FINISHED SCANNING YOUR DOCS = 3 -->
+
+                    <!-- OCCUPIED = 4 -->
+                    <div class="d-flex flex-column align-items-center flex-grow-1 gap-1"
+                        *ngIf="((scanningScatusUpdated === 'ready' && ((isStartedScanning && !isFinishedScanning) || (!isStartedScanning && isFinishedScanning))) ||
+                    (scanningScatusUpdated === 'scanning' && !(isStartedScanning && !isFinishedScanning)) ||
+                    (scanningScatusUpdated === 'occupied'  && !(isStartedScanning && isFinishedScanning))) || isWaitingForOtherUser">
+                        <!-- occupied title -->
+                        <h4 *ngIf="scanningScatusUpdated !== 'ready'" class="fw-bold m-0 p-0 text-red text-center"
+                            [class.zx-text-white]="isDarkMode">
+                            {{ "copy-scan.alert.occupied" | translate }}
+                        </h4>
+                        <span *ngIf="scanningScatusUpdated !== 'ready'" class="m-0 p-0 opacity-trans text-center">
+                            {{ "copy-scan.status.waiting.sub" | translate }}
+                        </span>
+                        <!-- not occupied title -->
+                        <h4 *ngIf="scanningScatusUpdated === 'ready'" class="fw-bold m-0 p-0 text-green text-center">
+                            {{ "copy-scan.status.not-occupied" | translate }}
+                        </h4>
+                        <span class="spacer"></span>
+                        <div *ngIf="scanningScatusUpdated !== 'ready'" class="w-100 d-flex justify-content-center">
+                            <mat-spinner class="zx-small-icon-size zx-medium-big-icon-size-lg"></mat-spinner>
+                        </div>
+                        <span class="spacer"></span>
+                        <div class="d-flex flex-column gap-2 gap-lg-3 w-100">
+                            <button *ngIf="scanningScatusUpdated !== 'ready'" type="button" mat-stroked-button
+                                class="rounded-pill w-100 px-3 w-100" (click)="closeCopyScanDialog()">
+                                {{ "copy-scan.status.finished.scan.to-table" | translate }}
+                            </button>
+                            <button [disabled]="scanningScatusUpdated !== 'ready'" type="button" mat-raised-button
+                                color="primary" class="rounded-pill w-100 px-3 w-100 text-white"
+                                (click)="toStage('previous')">
+                                <span *ngIf="scanningScatusUpdated !== 'ready'">
+                                    {{ "copy-scan.status.waiting.sub" | translate }}
+                                </span>
+                                <span *ngIf="scanningScatusUpdated === 'ready' && currentStage === 'copy-2'">
+                                    {{ "copy-scan.copy-btn" | translate }}
+                                </span>
+                                <span *ngIf="scanningScatusUpdated === 'ready' && currentStage === 'scan-2'">
+                                    {{ "copy-scan.scan-btn" | translate }}
+                                </span>
+                            </button>
+                        </div>
+
+                    </div>
+                    <!-- // OCCUPIED = 4 -->
+
+                </div>
+            </div>
+            <!-- // =================== title stage: copy-2 + scan-2 =================== -->
+        </div>
+
+        <span *ngIf="currentStage === 'scanOrCopy'" class="d-flex spacer"></span>
+
+        <!-- =================== content stage: scanOrCopy ===================  -->
+        <article *ngIf="currentStage === 'scanOrCopy'"
+            class="d-flex row flex-lg-row-reverse gap-3 gap-lg-0 w-100 px-3 px-lg-0" [class.zx-text-white]="isDarkMode"
+            [class.zx-ltr]="!isRTL">
+            <!-- SCAN  -->
+            <div class="col-12 col-lg-6 d-flex p-0 m-0">
+                <div
+                    class="d-flex flex-column gap-1 gap-lg-2 justify-content-center justify-content-lg-end px-lg-2 m-0 flex-grow-1 position-relative">
+                    <div class="d-flex gap-3 gap-lg-2 align-items-end align-items-lg-center">
+                        <mat-icon class="zx-medium-icon-size zx-fs-icon-big">scanner</mat-icon>
+                        <div class="d-flex flex-column gap-1 gap-md-2" [class.text-start]="!isRTL"
+                            [class.zx-ltr]="!isRTL">
+                            <h4 class="fw-bold m-0 p-0">
+                                {{ "copy-scan.scan-title" | translate }}
+                            </h4>
+                            <span class="zx-min-h-desktop-explain">
+                                {{ "copy-scan.scan-explain" | translate }}
+                            </span>
+                        </div>
+                        <div class="position-absolute w-100 d-flex align-items-center gap-1">
+                            <mat-icon class="zx-small-icon-size zx-scan-icon"
+                                [class.zx-scan-icon-not-rtl]="!isRTL">alternate_email</mat-icon>
+                        </div>
+                    </div>
+                    <button mat-stroked-button class="rounded-pill w-100" (click)="toStage('scan-1')">
+                        {{ "copy-scan.scan-btn" | translate }}
+                    </button>
+                </div>
+            </div>
+            <!-- // SCAN  -->
+            <span class="w-100 zx-border-gray-top-v-v-light d-lg-none"></span>
+            <!-- COPY  -->
+            <div class="col-12 col-lg-6 d-flex p-0 m-0">
+                <div
+                    class="d-flex flex-column gap-1 gap-lg-2 justify-content-center justify-content-lg-end px-lg-2 m-0 flex-grow-1 position-relative">
+                    <div class="d-flex gap-3 gap-lg-2 align-items-end align-items-lg-center">
+                        <mat-icon class="zx-medium-icon-size text-green zx-fs-icon-big"
+                            [class.zx-text-white]="isDarkMode">scanner</mat-icon>
+                        <div class="d-flex flex-column gap-1 gap-md-2" [class.text-start]="!isRTL"
+                            [class.zx-ltr]="!isRTL">
+                            <h4 class="fw-bold m-0 p-0 text-green" [class.zx-text-white]="isDarkMode">
+                                {{ "copy-scan.copy-title" | translate }}
+                            </h4>
+                            <span class="zx-min-h-desktop-explain text-green" [class.zx-text-white]="isDarkMode">
+                                {{ "copy-scan.copy-explain" | translate }}
+                            </span>
+                        </div>
+                        <div class="position-absolute w-100 d-flex align-items-center gap-1 text-green"
+                            [class.zx-text-white]="isDarkMode">
+                            <mat-icon class="zx-small-icon-size zx-scan-icon"
+                                [class.zx-scan-icon-not-rtl]="!isRTL">print</mat-icon>
+                        </div>
+                    </div>
+                    <button color="primary" mat-stroked-button class="rounded-pill w-100"
+                        [class.zx-text-white]="isDarkMode" (click)="toStage('copy-1')">
+                        {{ "copy-scan.copy-btn" | translate }}
+                    </button>
+                </div>
+            </div>
+            <!-- // COPY  -->
+        </article>
+        <!-- // =================== content stage: scanOrCopy ===================  -->
+
+        <!-- =================== content stage: copy-1 + scan-1 ===================  -->
+        <article *ngIf="currentStage === 'copy-1' || currentStage === 'scan-1'" class="d-flex w-100 px-3 flex-grow-1"
+            [class.zx-text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+
+            <!-- PUT your docs in scanner -->
+            <div *ngIf="currentStage !== 'scan-1' || (currentStage === 'scan-1' && isEmailConfirmed)"
+                class="d-flex flex-column gap-1 gap-lg-2 justify-content-between align-items-center px-lg-2 m-0">
+                <span class="text-center zx-text-big">
+                    {{ "copy-scan.put-paper-in-scanner" | translate }}
+                </span>
+                <button [disabled]="scanningScatusUpdated !== 'ready'" color="primary" mat-raised-button
+                    class="rounded-pill w-100 text-white" (click)="toStage('next')">
+                    {{ "error-content-ok-btn" | translate }}
+                </button>
+            </div>
+            <!-- // PUT your docs in scanner -->
+
+            <!-- enter EMAIL -->
+            <div *ngIf="currentStage === 'scan-1' && !isEmailConfirmed" class="d-flex gap-1 flex-column w-100"
+                [class.zx-ltr-container]="!isRTL">
+                <span class="text-center zx-text-big">
+                    {{ "copy-scan.scan-enter-email" | translate }}
+                </span>
+                <form class="d-flex flex-column flex-grow-1" (submit)="onConfirmMail(enterMailForm)"
+                    #enterMailForm="ngForm">
+                    <span class="spacer"></span>
+                    <mat-form-field class="px-4 py-2" [ngClass]="isRTL ? 'zx-rtl' : 'zx-ltr'">
+                        <input matInput name="email" [(ngModel)]="email" type="email"
+                            [ngClass]="isRTL ? 'zx-rtl' : 'zx-ltr'"
+                            [placeholder]="'log-in-dialog-withmail-email' | translate" #emailInput="ngModel" required
+                            email>
+                        <mat-error *ngIf="emailInput.invalid"
+                            [ngClass]="isRTL ? 'text-end zx-rtl' : 'text-start zx-ltr'">
+                            {{ "log-in-dialog-mailexist-mail-not-valid" | translate }}
+                        </mat-error>
+                    </mat-form-field>
+                    <span class="spacer"></span>
+                    <div class="d-flex justify-content-center w-100 pt-1 pt-lg-3">
+                        <button [disabled]="emailInput.invalid" color="primary" mat-raised-button
+                            class="rounded-pill w-100 text-white" type="submit">
+                            {{ "error-content-ok-btn" | translate }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- // enter EMAIL -->
+
+        </article>
+        <!-- ..=================== content stage: copy-1 + scan-1 ===================  -->
+
+    </div>
+    <!-- ----- // MAIN ----- -->
+
+</div>

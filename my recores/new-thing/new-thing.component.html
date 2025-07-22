@@ -1,0 +1,17 @@
+<div class="fill-height p-2 d-flex justify-content-center">
+  <div *ngIf="isLoading" class="d-flex h-100 align-items-center justify-content-center">
+    <mat-spinner class="zx-small-icon-size"></mat-spinner>
+  </div>
+  <!-- orders -------------------------------------------------------------------------------------------------------- orders -->
+  <mat-card *ngIf="!isLoading" class="w-100 flex-grow-1">
+    <span>NEW THING!</span>
+  </mat-card>
+</div>
+
+<div class="p-2 d-flex flex-column">
+  <div class="pt-2">
+    <button class="w-100 rounded-pill" mat-stroked-button color="primary" type="button">
+      {{ "_______________r" | translate }}
+    </button>
+  </div>
+</div>
