@@ -65,15 +65,11 @@ import { PrinterComponent } from "./super-management/printer/printer.component";
 import { SuCloseBranchComponent } from "./dialog/su-close-branch/su-close-branch.component";
 import { SuEditUserComponent } from "./dialog/su-edit-user/su-edit-user.component";
 
-// import { SocialLoginModule, SocialAuthServiceConfig, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
-// import {
-//   GoogleLoginProvider,
-//   FacebookLoginProvider
-// } from '@abacritt/angularx-social-login';
-// import { SignupComponent } from "./auth/signup/signup.component";
-// import { LoginComponent } from "./auth/login/login.component";
+
 import { FileUploadModule } from 'ng2-file-upload';
 import { MatProgressBarModule } from "@angular/material/progress-bar";
+import { ThreejsBoxComponent } from './threejs-box/threejs-box.component';
+import { ThreejsBoxModule } from './threejs-box/threejs-box.module';
 
 @NgModule({
   declarations: [
@@ -118,7 +114,7 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     PendingOrderComponent,
     TooltipContentComponent,
     PrinterComponent,
-    SuEditUserComponent,
+    SuEditUserComponent
   ],
   imports: [
     BrowserModule,
@@ -146,6 +142,7 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     MatProgressBarModule,
     // SocialLoginModule,
     // GoogleSigninButtonModule
+    ThreejsBoxModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

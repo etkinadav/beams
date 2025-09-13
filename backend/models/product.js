@@ -6,37 +6,14 @@ const productsSchema = new Schema({
         type: String,
         required: true
     },
-    textures: {
-        type: Map,
-        of: String,
-        required: true
+    matirials: {
+        type: Object,
+        required: false
     },
-    aspect: {
-        type: Number,
-        required: true
-    },
-    price: {
-        type: Number,
-        required: true
-    },
-    types: [{
-        name: {
-            type: String,
-            required: true
-        },
-        price: {
-            type: Number,
-            required: true
-        },
-        width: {
-            type: Number,
-            required: true
-        },
-        height: {
-            type: Number,
-            required: true
-        }
-    }]
+    params: {
+        type: Array,
+        required: false
+    }
 });
 
-module.exports = mongoose.model("Product", productsSchema);
+module.exports = mongoose.model("Product", productsSchema, "products");

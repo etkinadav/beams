@@ -1,8 +1,8 @@
 import {
-  HttpErrorResponse,
-  HttpHandler,
-  HttpInterceptor,
-  HttpRequest
+    HttpErrorResponse,
+    HttpHandler,
+    HttpInterceptor,
+    HttpRequest
 } from "@angular/common/http";
 import { catchError } from "rxjs/operators";
 import { throwError, of } from "rxjs";
@@ -25,11 +25,12 @@ export class ErrorInterceptor implements HttpInterceptor {
         return next.handle(req).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 0 && error.statusText === 'Unknown Error') {
-                  console.error('Ignored error:', error);
-                  return of(null); // Ignore the error and return null
+                    console.error('Ignored error:', error);
+                    return of(null); // Ignore the error and return null
                 }
 
                 let errorMessage = "unknowen_error"
+                console.log("error from interceptor", error);
                 if (error.error.message) {
                     errorMessage = error.error.message;
                 }

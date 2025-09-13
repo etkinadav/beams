@@ -120,6 +120,8 @@ mat-sidenav-container {
 mat-sidenav-content {
   display: flex !important;
   flex-direction: column;
+  max-height: 100vh !important;
+  overflow-y: hidden !important;
 }
 
 .close-icon {

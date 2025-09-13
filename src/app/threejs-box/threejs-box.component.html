@@ -1,0 +1,66 @@
+<div class="threejs-box-wrapper">
+    <div class="main-flex-row">
+        <div class="controls" [class.closed]="!drawerOpen">
+            <button class="drawer-toggle" (click)="toggleDrawer()">
+                <svg width="12" height="12" viewBox="0 0 12 12" style="display:block;margin:auto;">
+                    <polyline points="4,2 8,6 4,10" stroke="#666" stroke-width="2" fill="none"
+                        [attr.transform]="drawerOpen ? 'rotate(180 6 6)' : ''" />
+                </svg>
+            </button>
+            <ng-container *ngIf="drawerOpen">
+                <div class="shelf-controls">
+                    <label style="font-weight:bold;">מדפים:</label>
+                    <div *ngFor="let shelf of shelves.slice().reverse(); let i = index" class="shelf-row">
+                        <mat-form-field appearance="outline" class="shelf-gap-field">
+                            <mat-label>רווח מהמדף הקודם {{(shelves.length-1-i) === 0 ? '(מהקרקע, מינימום קורות)' :
+                                ''}}</mat-label>
+                            <input matInput type="number"
+                                [min]="(shelves.length-1-i) === 0 ? frameHeight + beamHeight : 0" max="1000" step="1"
+                                [value]="shelf.gap"
+                                (input)="updateShelfGap(shelves.length-1-i, $any($event.target).valueAsNumber)">
+                        </mat-form-field>
+                        <button mat-raised-button color="warn" (click)="removeShelf(shelves.length-1-i)"
+                            [disabled]="(shelves.length-1-i) === 0">הסר</button>
+                    </div>
+                    <button mat-raised-button color="primary" (click)="addShelf()">הוסף מדף</button>
+                </div>
+                <mat-form-field appearance="outline">
+                    <mat-label>רוחב קורה</mat-label>
+                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="beamWidth"
+                        (input)="updateBeams()">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>גובה קורה</mat-label>
+                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="beamHeight"
+                        (input)="updateBeams()">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>רוחב משטח</mat-label>
+                    <input matInput type="number" min="1" max="1000" step="1" [(ngModel)]="surfaceWidth"
+                        (input)="updateBeams()">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>אורך משטח</mat-label>
+                    <input matInput type="number" min="1" max="1000" step="1" [(ngModel)]="surfaceLength"
+                        (input)="updateBeams()">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>רווח מינימלי</mat-label>
+                    <input matInput type="number" min="0" max="100" step="0.1" [(ngModel)]="minGap"
+                        (input)="updateBeams()">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>רוחב קורת מסגרת</mat-label>
+                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="frameWidth"
+                        (input)="updateBeams()">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>גובה קורת מסגרת</mat-label>
+                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="frameHeight"
+                        (input)="updateBeams()">
+                </mat-form-field>
+            </ng-container>
+        </div>
+        <div #rendererContainer class="renderer-container" [class.expanded]="!drawerOpen"></div>
+    </div>
+</div>

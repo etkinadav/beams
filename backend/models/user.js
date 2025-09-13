@@ -188,7 +188,8 @@ userSchema.methods.hashPassword = function (password) {
 
 // userSchema.plugin(uniqueValidator);
 
-module.exports = mongoose.model("User", userSchema);
+// ייצוא המודל עם שם קולקשן מפורש 'users' (כמו ב-MongoDB)
+module.exports = mongoose.model("User", userSchema, "users");
 
 
 

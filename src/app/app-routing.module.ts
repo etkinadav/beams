@@ -1,3 +1,4 @@
+import { ThreejsBoxComponent } from './threejs-box/threejs-box.component';
 import { NgModule } from "@angular/core";
 import { RouterModule, Routes } from "@angular/router";
 import { ChoosePrintingSystemComponent } from "./main-section/choose-printing-system/choose-printing-system.component"
@@ -36,6 +37,8 @@ import { PrinterComponent } from "./super-management/printer/printer.component";
 
 const routes: Routes = [
     { path: "", component: ChoosePrintingSystemComponent },
+
+    { path: "beams", component: ThreejsBoxComponent },
 
     { path: "branch", component: ChooseBranchComponent },
     { path: "product", component: ChooseProductComponent },

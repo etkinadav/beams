@@ -4,9 +4,9 @@ const https = require("https");
 const fs = require("fs");
 
 const credentials = {
-    key: fs.readFileSync('certs/key.key'),
-    cert: fs.readFileSync('certs/cert.crt')
-}
+    key: fs.readFileSync(__dirname + '/../certs/key.key'),
+    cert: fs.readFileSync(__dirname + '/../certs/cert.crt')
+};
 
 const normalizePort = val => {
     var port = parseInt(val, 10);
@@ -49,10 +49,10 @@ const onListening = () => {
     debug("Listening on " + bind);
 };
 
-const port = normalizePort(process.env.PORT || "3000");
+const port = process.env.PORT || 3000;
 app.set("port", port);
 
 const server = https.createServer(credentials, app);
-server.on("error", onError);
-server.on("listening", onListening);
-server.listen(port);
+server.listen(port, () => {
+    console.log(`HTTPS server running on port ${port}`);
+});
