@@ -16,6 +16,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     private isUserAuthenticated = false;
     private authToken: string | null = null;
     
+    // Validation messages
+    validationMessage: string = '';
+    showValidationMessage: boolean = false;
+    
     // Helper for numeric step
     getStep(type: number): number {
         return 1 / Math.pow(10, type);
@@ -81,6 +85,46 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     // Helper: get param by name
     getParam(name: string) {
         return this.params.find(p => p.name === name);
+    }
+
+    // Validate parameter value and show message if needed
+    validateParameterValue(param: any, value: number): number {
+        let validatedValue = value;
+        let message = '';
+
+        if (value < param.min) {
+            validatedValue = param.min;
+            message = `מידה מינימלית - ${param.min} ס"מ`;
+        } else if (value > param.max) {
+            validatedValue = param.max;
+            message = `מידה מקסימלית - ${param.max} ס"מ`;
+        }
+
+        if (message) {
+            this.showValidationMessage = true;
+            this.validationMessage = message;
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                this.showValidationMessage = false;
+                this.validationMessage = '';
+            }, 3000);
+        }
+
+        return validatedValue;
+    }
+
+    // Update parameter value with validation
+    updateParameterValue(param: any, value: number) {
+        const validatedValue = this.validateParameterValue(param, value);
+        param.default = validatedValue;
+        this.updateBeams();
+    }
+
+    // Update shelf parameter value with validation (for array values)
+    updateShelfParameterValue(param: any, value: number, index: number) {
+        const validatedValue = this.validateParameterValue(param, value);
+        param.default[index] = validatedValue;
+        this.updateBeams();
     }
 
     // Shelves logic based on params

@@ -1,4 +1,18 @@
 <div class="threejs-box-wrapper">
+    <!-- Validation Message -->
+    <div *ngIf="showValidationMessage" class="validation-message" 
+         [style.background-color]="'#ffeb3b'" 
+         [style.color]="'#333'"
+         [style.padding]="'12px 16px'"
+         [style.margin]="'8px 0'"
+         [style.border-radius]="'4px'"
+         [style.font-weight]="'bold'"
+         [style.text-align]="'center'"
+         [style.position]="'relative'"
+         [style.z-index]="'1000'">
+        {{validationMessage}}
+    </div>
+    
     <div class="main-flex-row">
         <div class="controls" [class.closed]="!drawerOpen">
             <button class="drawer-toggle" (click)="toggleDrawer()">
@@ -38,7 +52,8 @@
                                     <mat-label>מידה {{param.default.length - idx}}</mat-label>
                                     <input matInput type="number" [min]="param.min" [max]="param.max" [step]="1"
                                         [(ngModel)]="param.default[param.default.length - 1 - idx]"
-                                        (input)="updateBeams()">
+                                        (blur)="updateShelfParameterValue(param, param.default[param.default.length - 1 - idx], param.default.length - 1 - idx)"
+                                        (keyup.enter)="updateShelfParameterValue(param, param.default[param.default.length - 1 - idx], param.default.length - 1 - idx)">
                                 </mat-form-field>
                                 <button *ngIf="idx !== param.default.length - 1" class="remove-shelf-btn"
                                     (click)="param.default.splice(param.default.length - 1 - idx,1); updateBeams()"
@@ -88,7 +103,9 @@
                             <mat-form-field appearance="outline">
                                 <mat-label>{{param.translatedName}}</mat-label>
                                 <input matInput type="number" [min]="param.min" [max]="param.max"
-                                    [step]="getStep(param.type)" [(ngModel)]="param.default" (input)="updateBeams()">
+                                    [step]="getStep(param.type)" [(ngModel)]="param.default" 
+                                    (blur)="updateParameterValue(param, param.default)"
+                                    (keyup.enter)="updateParameterValue(param, param.default)">
                             </mat-form-field>
                         </div>
                     </div>
