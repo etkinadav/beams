@@ -646,6 +646,52 @@ exports.updateUserPhone = (req, res, next) => {
   }
 }
 
+exports.saveBeamConfiguration = (req, res, next) => {
+    const userId = req.userData.userId;
+    const configuration = req.body.configuration;
+    
+    User.updateOne(
+        { _id: userId },
+        { 
+            $set: { 
+                beamConfigurations: configuration,
+                updated: new Date()
+            }
+        }
+    )
+    .then(result => {
+        if (result.matchedCount > 0) {
+            res.status(200).json({ message: 'Configuration saved successfully!' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    })
+    .catch(error => {
+        console.error('Error saving configuration:', error);
+        res.status(500).json({ message: 'Error saving configuration' });
+    });
+};
+
+exports.getBeamConfiguration = (req, res, next) => {
+    const userId = req.userData.userId;
+    
+    User.findById(userId)
+        .select('beamConfigurations')
+        .then(user => {
+            if (user) {
+                res.status(200).json({ 
+                    configuration: user.beamConfigurations || {}
+                });
+            } else {
+                res.status(404).json({ message: 'User not found' });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading configuration:', error);
+            res.status(500).json({ message: 'Error loading configuration' });
+        });
+};
+
 exports.setCC = function (req, res, next) {
   var cc = req.body.cc;
   if (req.body.id) {

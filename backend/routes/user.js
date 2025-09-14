@@ -47,4 +47,8 @@ router.put("/deleteuserccmaniger/:id", checkAuth, checkSU, UserController.delete
 
 router.post("/update-points/:id", checkAuth, checkSU, UserController.updatePoints);
 
+// Beam configuration endpoints
+router.post("/beam-configuration", checkAuth, UserController.saveBeamConfiguration);
+router.get("/beam-configuration", checkAuth, UserController.getBeamConfiguration);
+
 module.exports = router;

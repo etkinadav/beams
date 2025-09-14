@@ -158,6 +158,10 @@ const userSchema = mongoose.Schema({
         type: String,
         default: "en"
     },
+    beamConfigurations: {
+        type: Object,
+        default: {}
+    },
 });
 
 userSchema.pre('save', function (next) {

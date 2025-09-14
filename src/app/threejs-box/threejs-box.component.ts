@@ -1,6 +1,6 @@
 
 import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import * as THREE from 'three';
 
 interface Shelf {
@@ -13,6 +13,9 @@ interface Shelf {
     styleUrls: ['./threejs-box.component.scss']
 })
 export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
+    private isUserAuthenticated = false;
+    private authToken: string | null = null;
+    
     // Helper for numeric step
     getStep(type: number): number {
         return 1 / Math.pow(10, type);
@@ -29,7 +32,21 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     constructor(private http: HttpClient) { } ת
 
     ngOnInit() {
+        this.checkUserAuthentication();
         this.getProductById('68a186bb0717136a1a9245de');
+    }
+
+    // Check if user is authenticated
+    private checkUserAuthentication() {
+        const token = localStorage.getItem('token');
+        if (token) {
+            this.authToken = token;
+            this.isUserAuthenticated = true;
+            console.log('User is authenticated');
+        } else {
+            this.isUserAuthenticated = false;
+            console.log('User is not authenticated, using localStorage');
+        }
     }
 
     getProductById(id: string) {
@@ -181,7 +198,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         return this.textureLoader.load(texturePath);
     }
 
-    // Save current configuration to localStorage
+    // Save current configuration (user-specific or localStorage)
     private saveConfiguration() {
         const config = {
             params: this.params.map(param => ({
@@ -192,28 +209,97 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             })),
             timestamp: new Date().toISOString()
         };
-        localStorage.setItem('beam-configuration', JSON.stringify(config));
+
+        if (this.isUserAuthenticated && this.authToken) {
+            this.saveConfigurationToServer(config);
+        } else {
+            this.saveConfigurationToLocalStorage(config);
+        }
     }
 
-    // Load saved configuration from localStorage
+    // Save configuration to server (for authenticated users)
+    private saveConfigurationToServer(config: any) {
+        const headers = new HttpHeaders({
+            'Authorization': `Bearer ${this.authToken}`,
+            'Content-Type': 'application/json'
+        });
+
+        this.http.post('/api/user/beam-configuration', { configuration: config }, { headers })
+            .subscribe({
+                next: (response) => {
+                    console.log('Configuration saved to server:', response);
+                },
+                error: (error) => {
+                    console.error('Error saving to server, falling back to localStorage:', error);
+                    this.saveConfigurationToLocalStorage(config);
+                }
+            });
+    }
+
+    // Save configuration to localStorage (fallback)
+    private saveConfigurationToLocalStorage(config: any) {
+        localStorage.setItem('beam-configuration', JSON.stringify(config));
+        console.log('Configuration saved to localStorage');
+    }
+
+    // Load saved configuration (user-specific or localStorage)
     private loadConfiguration() {
+        if (this.isUserAuthenticated && this.authToken) {
+            this.loadConfigurationFromServer();
+        } else {
+            this.loadConfigurationFromLocalStorage();
+        }
+    }
+
+    // Load configuration from server (for authenticated users)
+    private loadConfigurationFromServer() {
+        const headers = new HttpHeaders({
+            'Authorization': `Bearer ${this.authToken}`
+        });
+
+        this.http.get('/api/user/beam-configuration', { headers })
+            .subscribe({
+                next: (response: any) => {
+                    if (response.configuration && Object.keys(response.configuration).length > 0) {
+                        this.applyConfiguration(response.configuration);
+                        console.log('Configuration loaded from server');
+                    } else {
+                        // No server config, try localStorage
+                        this.loadConfigurationFromLocalStorage();
+                    }
+                },
+                error: (error) => {
+                    console.error('Error loading from server, falling back to localStorage:', error);
+                    this.loadConfigurationFromLocalStorage();
+                }
+            });
+    }
+
+    // Load configuration from localStorage (fallback)
+    private loadConfigurationFromLocalStorage() {
         const savedConfig = localStorage.getItem('beam-configuration');
         if (savedConfig) {
             try {
                 const config = JSON.parse(savedConfig);
-                // Apply saved configuration to params
-                config.params.forEach(savedParam => {
-                    const param = this.params.find(p => p.name === savedParam.name);
-                    if (param) {
-                        param.default = savedParam.default;
-                        param.selectedBeamIndex = savedParam.selectedBeamIndex;
-                        param.selectedTypeIndex = savedParam.selectedTypeIndex;
-                    }
-                });
+                this.applyConfiguration(config);
                 console.log('Configuration loaded from localStorage');
             } catch (error) {
-                console.error('Error loading configuration:', error);
+                console.error('Error loading configuration from localStorage:', error);
             }
+        }
+    }
+
+    // Apply configuration to params
+    private applyConfiguration(config: any) {
+        if (config.params) {
+            config.params.forEach(savedParam => {
+                const param = this.params.find(p => p.name === savedParam.name);
+                if (param) {
+                    param.default = savedParam.default;
+                    param.selectedBeamIndex = savedParam.selectedBeamIndex;
+                    param.selectedTypeIndex = savedParam.selectedTypeIndex;
+                }
+            });
         }
     }
 
