@@ -51,6 +51,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 });
                 this.initParamsFromProduct();
                 console.log('Product loaded:', data);
+                // Load saved configuration after product is loaded
+                this.loadConfiguration();
                 this.updateBeams();
             },
             error: (err) => {
@@ -158,11 +160,61 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     private boxMesh!: THREE.Mesh;
     private onResizeBound = this.onResize.bind(this);
     private woodTexture!: THREE.Texture;
+    private textureLoader = new THREE.TextureLoader();
 
     // Initialize other params if needed
     initParamsFromProduct() {
         // Example: set frameWidth/frameHeight if present in params
         // You can extend this to other params as needed
+    }
+
+    // Get wood texture based on beam type
+    private getWoodTexture(beamType: string): THREE.Texture {
+        let texturePath = 'assets/textures/pine.jpg'; // default
+        
+        if (beamType && beamType.toLowerCase().includes('oak')) {
+            texturePath = 'assets/textures/oak.jpg';
+        } else if (beamType && beamType.toLowerCase().includes('pine')) {
+            texturePath = 'assets/textures/pine.jpg';
+        }
+        
+        return this.textureLoader.load(texturePath);
+    }
+
+    // Save current configuration to localStorage
+    private saveConfiguration() {
+        const config = {
+            params: this.params.map(param => ({
+                name: param.name,
+                default: param.default,
+                selectedBeamIndex: param.selectedBeamIndex,
+                selectedTypeIndex: param.selectedTypeIndex
+            })),
+            timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('beam-configuration', JSON.stringify(config));
+    }
+
+    // Load saved configuration from localStorage
+    private loadConfiguration() {
+        const savedConfig = localStorage.getItem('beam-configuration');
+        if (savedConfig) {
+            try {
+                const config = JSON.parse(savedConfig);
+                // Apply saved configuration to params
+                config.params.forEach(savedParam => {
+                    const param = this.params.find(p => p.name === savedParam.name);
+                    if (param) {
+                        param.default = savedParam.default;
+                        param.selectedBeamIndex = savedParam.selectedBeamIndex;
+                        param.selectedTypeIndex = savedParam.selectedTypeIndex;
+                    }
+                });
+                console.log('Configuration loaded from localStorage');
+            } catch (error) {
+                console.error('Error loading configuration:', error);
+            }
+        }
     }
 
     ngAfterViewInit() {
@@ -299,7 +351,33 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     initThree() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xf0f0f0);
+        // Create a subtle gray gradient background
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const context = canvas.getContext('2d')!;
+        const gradient = context.createLinearGradient(0, 0, 0, 256);
+        gradient.addColorStop(0, '#F5F5F5'); // Light gray
+        gradient.addColorStop(1, '#E0E0E0'); // Slightly darker gray
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 256, 256);
+        const texture = new THREE.CanvasTexture(canvas);
+        this.scene.background = texture;
+        
+        // Add infinite floor plane with subtle grid
+        const floorGeometry = new THREE.PlaneGeometry(2000, 2000);
+        const floorMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0xF0F0F0, // Much whiter floor
+            transparent: true,
+            opacity: 0.9
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+        floor.position.y = -0.1; // Slightly below ground level
+        floor.receiveShadow = true;
+        this.scene.add(floor);
+        
+        // Floor without grid lines for clean look
         const container = this.rendererContainer.nativeElement as HTMLElement;
         const width = container.clientWidth;
         const height = container.clientHeight;
@@ -312,8 +390,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.camera.position.set(camX, 200, camZ);
         this.target.set(0, 0, 0);
         this.camera.lookAt(this.target);
+        
+        // Rotate the entire scene by 30 degrees for better default view
+        this.scene.rotation.y = Math.PI / 6; // 30 degrees rotation
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(width, height);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.8; // Increased for higher contrast
         this.renderer.domElement.style.width = '100%';
         this.renderer.domElement.style.height = '100%';
         this.renderer.domElement.style.display = 'block';
@@ -324,12 +409,52 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         container.appendChild(this.renderer.domElement);
         // Load wood texture
         const loader = new THREE.TextureLoader();
-        this.woodTexture = loader.load('assets/textures/light-wood.jpg');
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(50, 100, 75);
-        this.scene.add(light);
-        const ambient = new THREE.AmbientLight(0x888888);
+        this.woodTexture = loader.load('assets/textures/pine.jpg');
+        
+        // Enhanced lighting setup for better visibility and atmosphere
+        // Main directional light (45 degrees from right side) - increased intensity for contrast
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.6);
+        const rightAngle = Math.PI / 4; // 45 degrees
+        const rightDistance = 200;
+        mainLight.position.set(
+            Math.cos(rightAngle) * rightDistance, 
+            150, 
+            Math.sin(rightAngle) * rightDistance
+        );
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 500;
+        mainLight.shadow.camera.left = -200;
+        mainLight.shadow.camera.right = 200;
+        mainLight.shadow.camera.top = 200;
+        mainLight.shadow.camera.bottom = -200;
+        this.scene.add(mainLight);
+        
+        // Secondary directional light (30 degrees from left side, very weak)
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.1);
+        const leftAngle = Math.PI / 6; // 30 degrees
+        const leftDistance = 200;
+        fillLight.position.set(
+            -Math.cos(leftAngle) * leftDistance, 
+            100, 
+            Math.sin(leftAngle) * leftDistance
+        );
+        this.scene.add(fillLight);
+        
+        // Ambient light for overall brightness - reduced for more contrast
+        const ambient = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(ambient);
+        
+        // Hemisphere light for atmospheric gradient
+        const hemisphereLight = new THREE.HemisphereLight(0xF8F8F8, 0xD0D0D0, 0.6);
+        this.scene.add(hemisphereLight);
+        
+        // Point light for accent
+        const pointLight = new THREE.PointLight(0xffffff, 0.5, 200);
+        pointLight.position.set(0, 100, 0);
+        this.scene.add(pointLight);
         this.beamMeshes = [];
     }
 
@@ -344,6 +469,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     }
 
     updateBeams() {
+        // Save current configuration to localStorage
+        this.saveConfiguration();
+        
         this.beamMeshes.forEach(mesh => {
             this.scene.remove(mesh);
             mesh.geometry.dispose();
@@ -369,6 +497,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
             shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedTypeIndex || 0] : null;
         }
+        
+        // Get wood texture for shelf beams
+        const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
         // Always convert beam width/height from mm to cm
         let beamWidth = shelfBeam ? shelfBeam.width / 10 : this.beamWidth;
         let beamHeight = shelfBeam ? shelfBeam.height / 10 : this.beamHeight;
@@ -396,8 +527,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     beam.depth = beam.depth - 2 * this.frameWidth;
                 }
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
-                const material = new THREE.MeshStandardMaterial({ map: this.woodTexture });
+                const material = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
                 const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
                 mesh.position.set(beam.x, currentY + this.frameHeight + beam.height / 2, 0);
                 this.scene.add(mesh);
                 this.beamMeshes.push(mesh);
@@ -411,8 +544,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             );
             for (const beam of frameBeams) {
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
-                const material = new THREE.MeshStandardMaterial({ map: this.woodTexture });
+                const material = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
                 const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
                 mesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
                 this.scene.add(mesh);
                 this.beamMeshes.push(mesh);
@@ -423,6 +558,18 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // לא מעדכן מיקום מצלמה/zoom אחרי עדכון אלמנטים
         // רגליים (legs)
         if (this.shelves.length) {
+            // Get leg beam and type from params
+            const legParam = this.getParam('leg');
+            let legBeam = null;
+            let legType = null;
+            if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+                legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
+                legType = legBeam.types && legBeam.types.length ? legBeam.types[legParam.selectedTypeIndex || 0] : null;
+            }
+            
+            // Get wood texture for leg beams
+            const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
+            
             // Compute total height for legs and camera
             let totalY = 0;
             for (const shelf of this.shelves) {
@@ -437,8 +584,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             );
             for (const leg of legs) {
                 const geometry = new THREE.BoxGeometry(leg.width, leg.height, leg.depth);
-                const material = new THREE.MeshStandardMaterial({ map: this.woodTexture });
+                const material = new THREE.MeshStandardMaterial({ map: legWoodTexture });
                 const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
                 mesh.position.set(leg.x, leg.height / 2, leg.z);
                 this.scene.add(mesh);
                 this.beamMeshes.push(mesh);
@@ -446,6 +595,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             // Focus camera at the vertical center of the structure
             this.target.set(0, totalY / 2, 0);
         }
+        
+        // Ensure scene rotation is maintained after updates
+        this.scene.rotation.y = Math.PI / 6; // 30 degrees rotation
     }
 
     animate() {
