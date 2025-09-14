@@ -1,0 +1,19 @@
+{
+  "env": {
+    "MONGO_ATLAS_PW": "9zhNGaha6sWGuKTe",
+    "FACEBOOK_APP_ID": "415210939050964",
+    "FACEBOOK_APP_SECRET": "00758ce169c3914a0c18006359906684",
+    "GOOGLE_APP_ID": "101384619367-jrfc9unrqatdfnlh5rjre0uu4sl5anc8.apps.googleusercontent.com",
+    "GOOGLE_APP_SECRET": "zNa1cWMNBdZBu6Ish1fwhhGG",
+    "JWT_KEY": "A_VERY_LONG_PASSWORD_FOR_INCRIPTING_USERS",
+    "zCreditTerminalNumber": "2661169011",
+    "zCreditUsername": "ka11",
+    "zCreditPassword": "Z7338830988",
+    "zCreditLang": "he-IL",
+    "zCreditPreUrl": "https://pci.zcredit.co.il/WebControl/RequestToken.aspx",
+    "zCreditPostUrl": "https://pci.zcredit.co.il/WebControl/Transaction.aspx",
+    "zCreditTransactionUrl": "https://pci.zcredit.co.il/ZCreditWS/api/Transaction/CommitFullTransaction",
+    "zCreditRefundUrl": "https://pci.zcredit.co.il/ZCreditWS/api/Transaction/RefundTransaction",
+    "zCreditTokenizeUrl": "https://pci.zcredit.co.il/ZCreditWS/api/Transaction/ValidateCard"
+  }
+}

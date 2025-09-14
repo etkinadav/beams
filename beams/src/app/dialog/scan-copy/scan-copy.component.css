@@ -1,0 +1,203 @@
+::ng-deep .fill-screen-modal-scan-copy {
+    width: 100%;
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    max-height: 90vh !important;
+}
+
+.close-icon {
+    opacity: 50%;
+    outline: none;
+}
+
+@media only screen and (min-width: 992px) {
+    .close-icon {
+        margin: 15px;
+    }
+}
+
+.close-icon.mat-mdc-icon-button ::ng-deep .mat-mdc-button-persistent-ripple {
+    display: none;
+}
+
+::ng-deep div.mat-expansion-panel-body {
+    padding: 0;
+}
+
+::ng-deep div.mat-mdc-dialog-surface {
+    flex-grow: 1;
+}
+
+/* scan copy illustration */
+.scan-copy-illustration {
+    width: 160px;
+    min-width: 160px;
+    height: 160px;
+    min-height: 160px;
+    transition: width 400ms, height 400ms, transform 400ms, nim-width 400ms, min-height 400ms, margin-bottom 400ms;
+}
+
+.scan-copy-illustration-put {
+    width: 230px;
+    min-width: 230px;
+    height: 230px;
+    min-height: 230px;
+    transition: width 400ms, height 400ms, transform 400ms, nim-width 400ms, min-height 400ms, margin-bottom 400ms;
+}
+
+.scan-copy-illustration-small {
+    width: 160px;
+    min-width: 160px;
+    height: 160px;
+    min-height: 160px;
+    margin-bottom: 44px;
+    transition: width 400ms, height 400ms, transform 400ms, nim-width 400ms, min-height 400ms, margin-bottom 400ms;
+}
+
+.open-scanner-illustration {
+    width: 240px;
+    min-width: 240px;
+    height: 240px;
+    min-height: 240px;
+    transform: translate(51px, -80px);
+    transition: width 400ms, height 400ms, transform 400ms, nim-width 400ms, min-height 400ms, margin-bottom 400ms;
+    animation: pulseOpacity 1.3s infinite alternate;
+}
+
+@keyframes pulseOpacity {
+    0% {
+        opacity: 0.6;
+        /* Start with 0% transparency */
+    }
+
+    50% {
+        opacity: 1;
+        /* Reach 100% transparency at 50% of the animation */
+    }
+
+    100% {
+        opacity: 0.6;
+        /* Back to 0% transparency at the end of the animation */
+    }
+}
+
+
+@media only screen and (min-width: 992px) {
+    .scan-copy-illustration {
+        width: 370px;
+        min-width: 370px;
+        height: 370px;
+        min-height: 370px;
+        transition: width 400ms, height 400ms, transform 400ms, nim-width 400ms, min-height 400ms, margin-bottom 400ms;
+    }
+
+    .scan-copy-illustration-put {
+        width: 255px;
+        min-width: 255px;
+        height: 255px;
+        min-height: 255px;
+        transition: width 400ms, height 400ms, transform 400ms, nim-width 400ms, min-height 400ms, margin-bottom 400ms;
+    }
+
+    .open-scanner-illustration {
+        width: 260px;
+        min-width: 260px;
+        height: 260px;
+        min-height: 260px;
+        transform: translate(54px, -87px);
+        transition: width 400ms, height 400ms, transform 400ms, nim-width 400ms, min-height 400ms, margin-bottom 400ms;
+        animation: pulseOpacity 1.3s infinite alternate;
+    }
+}
+
+/* // scan copy illustration */
+
+@media only screen and (min-width: 992px) {
+    .zx-min-h-desktop-explain {
+        min-height: 50px;
+    }
+}
+
+.zx-scan-icon {
+    font-size: 16px;
+    transform: translate(15px, -30px);
+}
+
+.zx-scan-icon-not-rtl {
+    transform: translate(-15px, -30px);
+}
+
+@media only screen and (min-width: 992px) {
+    .zx-scan-icon {
+        font-size: 20px;
+        transform: translate(12px, -25px);
+    }
+
+    .zx-scan-icon-not-rtl {
+        transform: translate(-12px, -25px);
+    }
+}
+
+.zx-fs-icon-big {
+    font-size: 35px;
+}
+
+/* visible animation for illus */
+.visible-animation {
+    animation-name: grow;
+    animation-duration: 1s;
+    animation-timing-function: ease-out;
+}
+
+@keyframes grow {
+    0% {
+        height: 0;
+    }
+
+    100% {
+        height: 230px;
+    }
+}
+
+/* proccessing text style */
+@keyframes gradientWave {
+
+    0% {
+        background-position: right;
+    }
+
+    50% {
+        background-position: left;
+    }
+
+    100% {
+        background-position: right;
+    }
+}
+
+.opacity-trans {
+    background: linear-gradient(-270deg, var(--zx-green-vivid-light-light-no-oppacity), var(--zx-green) 50%), var(--zx-green-vivid-light-light-no-oppacity) 100%;
+    background-size: 200% 100%;
+    animation: gradientWave 2500ms linear infinite;
+    color: white;
+    /* Change this to the color of your text */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+}
+
+
+.zx-min-h-stage-2-con {
+    min-height: 200px;
+}
+
+@media only screen and (min-width: 992px) {
+    .zx-min-h-stage-2-con {
+        min-height: 275px;
+    }
+}
+
+::ng-deep .mat-mdc-form-field-error {
+    color: white !important;
+}

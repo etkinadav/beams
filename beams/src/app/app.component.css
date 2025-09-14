@@ -1,0 +1,5 @@
+.app-main-nav {
+    height: 100vh !important;
+    width: 100% !important;
+    display: flex !important;
+}

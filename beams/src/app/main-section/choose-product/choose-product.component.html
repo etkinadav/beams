@@ -1,0 +1,120 @@
+<div class="full-screen overflow-hidden">
+    <div class="d-flex flex-grow-1">
+
+        <!-- CHOOSE BRANCH SIDE -->
+        <div class="zx-settings-nav flex-shrink h-100 d-flex flex-column overflow-hidden"
+            [class.zx-settings-nav-dark]="isDarkMode">
+            <article class="w-100 h-100 d-flex p-3 flex-column overflow-auto">
+                <article class="w-100 d-flex flex-column gap-2 flex-grow-1">
+
+                    <app-navigation-to-branches></app-navigation-to-branches>
+
+                    <div class="w-100 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 zx-text-small fw-bold zx-text-sm-medium">
+                            {{'choose-system.step-2.product' | translate}}
+                        </h6>
+                    </div>
+
+                    <!-- Loading PRODUCTS BTNS  -->
+                    <div *ngIf="isLoading" class="w-100 d-flex flex-grow-1 justify-content-center align-items-center">
+                        <mat-spinner class="zx-small-icon-size zx-medium-big-icon-size-lg"></mat-spinner>
+                    </div>
+                    <!-- // Loading PRODUCTS BTNS  -->
+
+                    <!-- PRODUCTS BTNS -->
+                    <div *ngIf="products.length > 0 && !isLoading" class="w-100 d-flex flex-column">
+                        <div class="d-flex w-100" *ngFor="let product of products; let i = index">
+                            <div (click)="onChooseProduct(product.name)"
+                                [class.zx-step-choosen]="product === product.name"
+                                [class.zx-step-effect]="product === product.name && isAnimateProductBtn"
+                                class="step-item step-item-hover w-100 mt-2 rounded-3 shadow-85 d-flex flex-row-reverse align-items-center gap-3 p-2"
+                                matRipple [class.step-item-dark]="isDarkMode">
+                                <div class="d-flex rounded-2 zx-big-icon-size mx-1 zx-border-gray-v-light">
+                                    <img *ngIf="products" [src]="'assets/images/products/' + products[i].name + '.png'"
+                                        [alt]="product.name + ' Logo'" class="w-100 h-100 rounded-2">
+                                </div>
+                                <div class="d-flex flex-column h-100 justify-content-between py-2 flex-grow-1 px-2">
+                                    <h6 class="fw-bold mb-0 mb-sm-2 zx-text-big">
+                                        {{ "choose-product.naming." + product.name | translate }}
+                                    </h6>
+                                    <div class="d-flex flex-column align-items-start">
+                                        <span class="opacity-75 zx-text-small"
+                                            [ngClass]="isRTL ? 'text-end' : 'text-start'">
+                                            {{ "choose-product.explain." + product.name | translate }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- // BRANCHES BTNS -->
+
+                </article>
+            </article>
+
+            <!-- action BTN -->
+            <!-- <div *ngIf="branch !== '' && !isLoadingbranch" [class.show-main-btn]="isBranchSet"
+                class="w-100 p-2 shadow-85-strong zx-z-index-1 hide-main-btn">
+                <button type="button" mat-raised-button color="primary"
+                    class="text-white rounded-pill w-100 zx-medium-btn zx-main-btn-effects fw-bold"
+                    (click)="onSetBranch()">
+                    <span class="d-sm-none" *ngIf="continueToServiceText.length < 26">
+                        {{ continueToServiceText }}
+                    </span>
+                    <span class="d-sm-none" *ngIf="continueToServiceText.length >= 26" [class.zx-ltr]="!isRTL">
+                        <span>
+                            {{ continueToServiceText | slice:0:26 }}
+                        </span>
+                        <span>...</span>
+                    </span>
+                    <span class="d-none d-sm-flex justify-content-center">
+                        {{ continueToServiceText }}
+                    </span>
+                </button>
+            </div> -->
+            <!-- // action BTN -->
+
+        </div>
+        <!-- // CHOOSE BRANCH SIDE -->
+
+        <!-- MAP SIDE -->
+        <!-- <div class="d-none d-md-flex h-100 flex-grow-1 justify-content-center align-items-center"
+            [class.bg-white]="!isDarkMode">
+            <article id="map-branch-container"
+                class="zx-canvas d-flex justify-content-center align-items-center position-relative"
+                [class.zx-bg-unset]="isDarkMode">
+                <img class="w-100 h-100 zx-map-image" [src]="'assets/images/israel-map.png'">
+                <div class="position-absolute" *ngFor="let createdBranch of filteredBranches; let i = index"
+                    #mapBranchItem>
+                    <div class="position-relative">
+                        <section class="map-branch-item" [class.map-branch-item-not-rtl]="!isRTL"
+                            (click)="onChooseBranch(createdBranch.name)"
+                            [class.zx-step-choosen]="branch === createdBranch.name"
+                            [class.zx-step-choosen-dark]="branch === createdBranch.name && isDarkMode">
+                            <div class="d-flex rounded-circle zx-small-small-plus-icon-size zx-border-gray-v-light">
+                                <img [src]="'assets/images/branches/' + createdBranch.name + '.png'"
+                                    [alt]="createdBranch.name  + ' Logo'" class="w-100 h-100">
+                            </div>
+                            <div class="d-none d-lg-flex flex-column zx-text-tiny">
+                                <b class="no-rap" [class.zx-text-black]="isDarkMode">
+                                    <span>
+                                        {{ ("choose-branch.naming." + createdBranch.name | translate) | slice:0:12 }}
+                                    </span>
+                                    <span
+                                        *ngIf="('choose-branch.naming.' + createdBranch.name | translate).length > 12">
+                                        ..
+                                    </span>
+                                </b>
+                                <span [class.zx-text-black]="isDarkMode">
+                                    {{ "choose-branch.city." + createdBranch.name | translate }}
+                                </span>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </article>
+        </div> -->
+        <!-- // MAP SIDE -->
+
+    </div>
+</div>

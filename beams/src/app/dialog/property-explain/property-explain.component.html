@@ -1,0 +1,53 @@
+<div class="h-100 w-100 d-flex flex-column flex-grow-1 overflow-auto">
+
+    <div class="position-absolute w-100 d-flex" [class.justify-content-end]="isRTL">
+        <button type="button" mat-icon-button aria-label="Toggle sidenav" (click)="closePropertyExplainDialog()"
+            class="close-icon d-flex align-items-center justify-content-center" [class.text-white]="isDarkMode">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- --------------- NORMAL property -->
+    <div *ngIf="property !== 'paper'" class="d-flex flex-grow-1 flex-column align-items-center px-4 py-3 gap-2 w-100">
+        <!-- title -->
+        <h4 class="text-center fw-bold m-0 pt-3 pt-lg-0 text-green zx-text-big" [class.zx-ltr]="!isRTL"
+            [class.text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+            {{ "printing-table.explain-title-" + property | translate }}
+        </h4>
+        <!-- explain -->
+        <div class="d-flex flex-column gap-3 align-items-center w-100 pt-3">
+            <span class="pb-2 text-center" [class.zx-ltr]="!isRTL" [class.text-start]="!isRTL" [class.zx-ltr]="!isRTL"
+                [class.zx-text-white]="isDarkMode">
+                {{ "printing-table.explain-" + property | translate }}
+            </span>
+        </div>
+    </div>
+    <!-- // --------------- NORMAL property -->
+
+    <!-- --------------- PAPER property -->
+    <div *ngIf="property === 'paper'" class="d-flex flex-grow-1 flex-column align-items-center px-4 py-3 gap-2 w-100">
+        <!-- title -->
+        <h4 class="text-center fw-bold m-0 pt-3 pt-lg-0 text-green zx-text-big" [class.zx-ltr]="!isRTL"
+            [class.text-white]="isDarkMode" [class.zx-ltr]="!isRTL">
+            <span>
+                {{ "printing-table.explain-title-paper" | translate }}
+            </span>
+            <span *ngIf="realBranch.name">
+                <span>
+                    {{ ('choose-branch.naming.' + realBranch.name | translate) | slice:0:12 }}
+                </span>
+                <span *ngIf="('choose-branch.naming.' + realBranch.name | translate).length > 12">
+                    ..
+                </span>
+            </span>
+            <span>
+                {{ "when-to-print-explanation-now-express-2" | translate }}
+            </span>
+        </h4>
+        <app-tooltip-content class="pb-2" [printingService]="printingService" [inputBins]="inputBins"
+            [printServicePapers]="printServicePapers">
+        </app-tooltip-content>
+    </div>
+    <!-- // --------------- PAPER property -->
+
+</div>

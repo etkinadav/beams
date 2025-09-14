@@ -1,0 +1,53 @@
+<div class="full-screen overflow-hidden">
+    <div class="d-flex flex-grow-1">
+        <div class="zx-settings-nav flex-shrink h-100 d-flex flex-column overflow-hidden"
+            [class.zx-settings-nav-dark]="isDarkMode">
+            <article class="w-100 h-100 d-flex p-3 flex-column overflow-auto" [class.bg-white]="!isDarkMode">
+                <article class="w-100 d-flex flex-column gap-3 flex-grow-1">
+
+                    <div class="step-item w-100 rounded-3 shadow-85" [class.step-item-dark]="isDarkMode">
+                    </div>
+                    <div class="step-item w-100 rounded-3 shadow-85" [class.step-item-dark]="isDarkMode">
+                    </div>
+                    <div class="step-item w-100 rounded-3 shadow-85" [class.step-item-dark]="isDarkMode">
+                    </div>
+
+                </article>
+            </article>
+            <div class="w-100 p-2 shadow-85-strong">
+                <button type="button" mat-raised-button color="primary" disabled class="text-white rounded-pill w-100">
+                </button>
+            </div>
+        </div>
+
+        <div class="d-none d-md-flex h-100 flex-grow-1 justify-content-center align-items-center">
+            <article
+                class="zx-canvas shadow-85 rounded-3 d-flex justify-content-center align-items-center position-relative"
+                [class.zx-canvas-dark]="isDarkMode">
+            </article>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<!-- <mat-card>
+    <mat-spinner *ngIf="isLoading"></mat-spinner>
+    <form (submit)="onLogin(loginForm)" #loginForm="ngForm" *ngIf="!isLoading">
+        <mat-form-field>
+            <input matInput name="email" ngModel type="email" placeholder="E-Mail" #emailInput="ngModel" required email>
+            <mat-error *ngIf="emailInput.invalid">Please enter a valid email.</mat-error>
+        </mat-form-field>
+        <mat-form-field>
+            <input type="password" name="password" ngModel matInput placeholder="Password" #passwordInput="ngModel"
+                required>
+            <mat-error *ngIf="passwordInput.invalid">Please enter a valid password.</mat-error>
+        </mat-form-field>
+        <button mat-raised-button color="accent" type="submit" *ngIf="!isLoading">Login</button>
+    </form>
+</mat-card>  -->

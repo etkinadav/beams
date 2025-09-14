@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en-US" datatype="plaintext" original="ng2.template" target-language="es">
+    <body>
+      <trans-unit id="4611551643679327800" datatype="html">
+        <source>light mode</source>
+        <target>light mode in spanish</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4775545708844453227" datatype="html">
+        <source>dark mode</source>
+        <target>dark mode in spanish</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2145474890033501719" datatype="html">
+        <source>ENGLISH ipsum, dolor sit amet consectetur adipisicing elit. Recusandae, earum maiores? Natus suscipit neque quaerat cumque error aspernatur accusantium inventore numquam molestiae provident. Adipisci fuga pariatur provident, maxime ullam aliquam?</source>
+        <target>SPANISH1 ipsum, dolor sit amet consectetur adipisicing elit. Recusandae, earum maiores? Natus suscipit neque quaerat cumque error aspernatur accusantium inventore numquam molestiae provident. Adipisci fuga pariatur provident, maxime ullam aliquam?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/main-section/main-section.component.html</context>
+          <context context-type="linenumber">4,6</context>
+        </context-group>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

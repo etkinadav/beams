@@ -1,0 +1,30 @@
+<div class="d-flex w-100 flex-column align-items-center p-3 p-lg-4">
+    <h1 mat-dialog-title class="text-center py-1 py-lg-3 fw-bold zx-text-22 text-red" [class.zx-rtl]="isRTL"
+        [class.zx-text-white]="isDarkMode">
+        {{ "error-title-" + data.message | translate }}
+    </h1>
+    <div mat-dialog-content
+        class="w-100 p-0 d-flex flex-column align-items-center justify-content-center gap-2 gap-lg-3">
+        <img class="zx-big-icon-size zx-huge-icon-size-lg" src="assets/images/negative-icon.svg">
+        <p class="text-center text-red fw-bold" [class.zx-rtl]="isRTL" [class.zx-text-white]="isDarkMode">
+            {{ "error-content-" + data.message | translate }}
+        </p>
+        <button mat-raised-button (click)="openWhatsApp()" class="rounded-pill zx-text-tiny zx-text-sm-small">
+            <div class="w-100 h-100 d-flex align-items-center gap-2">
+                <div class="whatsup-logo-container-small">
+                    <img src="assets/images/whatsup-logo.svg" alt="WhatsUp Logo" class="whatsup-logo-small">
+                </div>
+                <span class="zx-text-tiny-tiny">
+                    {{'my-orders.contact-us-for-help' | translate}}
+                </span>
+            </div>
+        </button>
+    </div>
+
+    <div mat-dialog-actions class="w-100 row d-flex justify-content-center">
+        <div tabindex="0" cdkFocusInitial></div>
+        <button mat-raised-button mat-dialog-close class="col col-lg-4 rounded-pill">
+            {{ "error-content-ok-btn" | translate }}
+        </button>
+    </div>
+</div>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title style="display: none;">printing made eazix</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.rtl.min.css"
+        integrity="sha384-T5m5WERuXcjgzF8DAb7tRkByEZQGcpraRTinjpywg37AO96WoYN9+hrhDVoM6CaT" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="station-que.css">
+</head>
+
+<!-- html -->
+
+<body class="w-100 d-flex vh-100 flex-column align-items-center">
+
+    <!-- -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= DEV -->
+    <div class="position-absolute z-index-10000">
+        <div class="position-relative border-gray-v-v-light size-21-px z-index-10000 c-pointer bg-hover-green-v-light"
+            onclick="DEV()"></div>
+    </div>
+    <div id="dev-manu" class="position-absolute bg-white" style="z-index: 10000">
+        <div class="position-relative d-flex w-100 justify-content-start flex-column align-items-start">
+            <div class="border-gray-v-light bg-hover-green-v-light c-pointer" onclick="DEV()">X</div>
+
+            <h3 class="fw-bold text-14-px p-10-15-px m-0">פעולות</h3>
+
+            <div class="w-100">
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer fw-bold"
+                    onclick="fPlotterOrExpress(), DEV()">החלף
+                    סוג הדפסה - פלוטר | מסמכים</div>
+            </div>
+
+            <h3 class="fw-bold text-14-px p-10-15-px m-0">מצבי התור</h3>
+
+            <div class="w-100">
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fQueEmpty(), DEV()">התור ריק
+                </div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fQueOnePlotter(), DEV()">התור עם הזמנה 1 (פלוטר)</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fQueOneExpress(), DEV()">המדפסת מדפיסה (אקספרס)</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fQueFull(), DEV()">התור מלא</div>
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer"
+                    onclick="fQueError(), DEV()">התור במצב תקלה</div>
+            </div>
+
+            <h3 class="fw-bold text-14-px p-10-15-px m-0">מודלים</h3>
+
+            <div class="w-100">
+                <div class="p-5-px border-gray-v-light bg-hover-green-v-light w-100 c-pointer" data-bs-toggle="modal"
+                    data-bs-target="#_" onclick="DEV()">_
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE -->
+    <article
+        class="z-index-1-e h-140-px w-100 d-flex justify-content-center bg-pink-light-vivid text-58-px text-white fw-bold align-items-center">
+        מדפסת
+        "פלוטר" (פורמט רחב) בשירות עצמי</article>
+    <!-- bace container!! CONTENT -->
+    <article class="z-index-2-e w-100 h-100 d-flex justify-content-evenly pt-80-px pb-50-px">
+
+        <!-- sub container!! create new order -->
+        <article class="d-flex flex-column h-100 justify-content-between">
+            <div class="d-flex flex-column gap-50-px align-items-center">
+                <!-- title -->
+                <div class="text-48-px d-flex fw-bold text-white">צור הזמנה חדשה</div>
+                <!-- QR -->
+                <div class="size-435-px rounded-10-px bg-white p-20-px">
+                    <img src="branch-qr-code.png" alt="" class="w-100 h-100 object-fit-cover-e">
+                </div>
+            </div>
+            <!-- or: -->
+            <div class="d-flex justify-content-center align-items-center gap-20-px">
+                <div class="border-b-white w-30-px"></div>
+                <div class="text-white text-28-px">או</div>
+                <div class="border-b-white w-30-px"></div>
+            </div>
+            <!-- down -->
+            <div class="d-flex flex-column justify-content-center gap-15-px align-items-center">
+                <div class="text-42-px text-white fw-bold">www.eazix.io/972</div>
+                <div class="text-28-px text-white mt-12-px opacity-75">להזין את הכתובת ולהזמין</div>
+                <div class="logo-white opacity-25"></div>
+            </div>
+        </article>
+        <!-- - -->
+
+        <!-- sub container!! left side -->
+        <article class="d-flex flex-column h-100 gap-50-px align-items-center">
+
+            <!-- title -->
+
+            <!-- PLOTTER -->
+            <div class="f-plotter-show text-48-px fw-bold text-white">תור ההדפסה</div>
+            <!-- EXPRESS -->
+            <div class="f-express-show text-48-px fw-bold text-white">הדפס הזמנה קיימת</div>
+
+            <!-- QUE! -->
+
+            <!-- PLOTTER -->
+            <div class="f-plotter-show flex-column flex-grow-1 gap-20-px w-695-px">
+                <div class="w-100 d-flex flex-column flex-grow-1">
+                    <article class="h-100 w-100 d-flex flex-column rounded-10-px bg-white-e">
+                        <div class="w-100 h-100 d-flex flex-column">
+                            <!-- titles -->
+                            <div class="d-flex w-100 rounded-10-10-0-0-px bg-dark">
+                                <div
+                                    class="p-25-5-px w-20-pr d-flex justify-content-center text-20-px fw-bold text-white">
+                                    מיקום
+                                </div>
+                                <div
+                                    class="p-sm-25-25-25-5-px flex-grow-1 text-20-px fw-bold text-white d-flex justify-content-center justify-content-sm-start">
+                                    שם משתמש</div>
+                                <div
+                                    class="p-sm-25-25-25-5-px w-30-pr d-flex justify-content-center text-20-px fw-bold text-white">
+                                    זמן
+                                    המתנה
+                                </div>
+                            </div>
+                            <!-- plotter-que-orders -->
+                            <article class="f-que-full d-flex h-100 w-100 flex-grow-1 position-relative">
+                                <!-- PLOTTER left side -->
+                                <article
+                                    class="f-scrolling-div d-flex plotter-que-orders w-100 h-100 flex-column position-absolute overflow-auto">
+                                    <!-- current -->
+                                    <div class="w-100 d-flex bg-green-slightly-light">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px text-green fw-bold border-l-dark-25-pr">
+                                            בהדפסה</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            etkinadav</div>
+                                        <div
+                                            class="p-25-5-px w-30-pr d-flex justify-content-center text-center text-18-px text-green">
+                                            בהדפסה
+                                            (2/4)
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 1 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            2</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            dormosko123</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">17 דקות
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 2 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            3</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            Viki_Glam_123</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">29 דקות
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 3 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            4</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            nara lisko</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">46 דקות
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 4 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            5</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            ראול סמואל</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">60 דקות
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 5 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            6</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            SISI123456789</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">1 ש' ו-
+                                            12
+                                            ד'
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 6 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            7</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            יוסי בן עמי 98</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">1 ש' ו-
+                                            33
+                                            ד'
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 7 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            8</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            Avi Gabriel</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">1 ש'
+                                            ו-55 ד'
+                                        </div>
+                                    </div>
+                                    <!-- plotter order no 8 -->
+                                    <div class="f-que-one d-none w-100 bg-gray-v-v-light-even">
+                                        <div
+                                            class="p-25-5-px w-20-pr d-flex justify-content-center text-18-px fw-bold border-l-dark-25-pr">
+                                            9</div>
+                                        <div
+                                            class="p-sm-25-25-25-5-px flex-grow-1 text-18-px border-l-dark-25-pr d-flex justify-content-center justify-content-sm-start">
+                                            יוסי בן עמי 98</div>
+                                        <div class="p-25-5-px w-30-pr d-flex justify-content-center text-18-px">2 שעות
+                                        </div>
+                                    </div>
+                                    <!--orders underline -->
+                                    <div class="w-100 border-b-gray-v-v-light"></div>
+                                </article>
+                            </article>
+
+                            <!-- plotter-que-NO-orders -->
+                            <div
+                                class="f-que-empty d-none w-100 h-100 flex-column gap-20-px justify-content-center align-items-center">
+                                <div class="size-150-130-px que-empty-icon svg"></div>
+                                <div class="d-flex flex-column gap-20-px justify-content-center align-items-center">
+                                    <div class="text-28-px">אין כרגע הזמנות בתור ההדפסה!</div>
+                                    <div class="text-28-px">ניתן ליצור הזמנה והיא תודפס מיידית!!!
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- plotter-que-error -->
+                            <div
+                                class="f-que-error d-none p-5-px h-100 w-100 d-flex flex-column gap-20-px justify-content-center align-items-center">
+                                <div
+                                    class="text-28-px fw-bold text-red w-100 justify-content-center text-center lh-37-px">
+                                    לצערינו לא ניתן להדפיס, המערכת מחכה לתפעול.
+                                </div>
+                                <div class="size-150-130-px que-error-icon svg"></div>
+                                <div class="text-22-px text-red text-center lh-30-px opacity-75">
+                                    -במידה
+                                    וסגרו את הסניף - הטקסט שהוזן בעת סגירת
+                                    הסניף יופיע
+                                    פה-</div>
+                                <div class="w-100 text-22-px text-center lh-30-px gap-5-px">בכל
+                                    שאלה או
+                                    בעיה
+                                    אנו
+                                    זמינים
+                                    בווצאפ במספר <div class="d-inline text-22-px fw-bold text-green">
+                                        03-3746962</div>.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ender -->
+                        <article class="f-plotter-show w-100 h-42-px">
+                            <div
+                                class="f-que-full d-flex w-100 p-10-15-px rounded-0-0-10-10-px h-100 bg-pink-light-pastel justify-content-end align-items-center gap-10-px">
+                                <div class="printing-que-list-icon svg size-25-px"></div>
+                                <div class="text-18-px fw-bold">3 הדפסות סה"כ</div>
+                                <div class="printing-que-time-icon svg size-25-px"></div>
+                                <div class="text-18-px">6:12 שעות סה"כ</div>
+                            </div>
+                        </article>
+                        <!-- - -->
+                    </article>
+                    <!-- @@@ -->
+                </div>
+                <!-- branch and printer -->
+                <div class="w-100 h-180-px rounded-10-px bg-pink-light-vivid d-flex align-items-center">
+                    <div class="w-100 gap-25-px d-flex justify-content-around p-15-px">
+                        <!-- branch -->
+                        <img class="size-88-px rounded-5-px object-fit-cover-e bg-white" src="example-branch-logo.png"
+                            alt=""></img>
+                        <div class="flex-grow-1 d-flex justify-content-center flex-column gap-15-px">
+                            <div class="text-32-px text-white fw-bold">אונ ת"א - ת"א</div>
+                            <div class="text-18-px text-white">סניף</div>
+                        </div>
+                        <!-- printer -->
+                        <div class="size-88-px p-10-px rounded-5-px bg-white">
+                            <div class="w-100 h-100 plotter-icon svg"></div>
+                        </div>
+                        <div class="flex-grow-1 d-flex justify-content-center flex-column gap-15-px">
+                            <div class="text-32-px text-white fw-bold">מדפסת 972</div>
+                            <div class="flex-column gap-5-px">
+                                <div class="text-18-px text-white">סוגי נייר: פשוט 90ג'</div>
+                                <div class="text-18-px text-white">מצופה 180ג'</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- - -->
+                </div>
+                <!-- --- -->
+            </div>
+
+            <!-- EXPRESS -->
+            <div class="f-express-show flex-column flex-grow-1 gap-20-px w-695-px">
+                <div class="w-100 d-flex flex-column flex-grow-1">
+                    <article class="h-100 w-100 d-flex flex-column rounded-10-px bg-white-e">
+                        <div class="w-100 h-100 d-flex flex-column">
+
+                            <!-- printing (no code) -->
+                            <article
+                                class="f-express-show h-100 w-100 d-flex flex-column align-items-center justify-content-center gap-90-px">
+                                <!-- NOT printing (code) -->
+                                <div class="f-que-full d-flex text-28-px">קוד זמני לשחרור ההזמנה הבאה הוא...</div>
+                                <div class="f-que-full d-flex text-150-px fw-bold lh-90-px">94702</div>
+                                <!-- printing (no code) -->
+                                <article
+                                    class="f-que-print-express d-none w-100 h-100 flex-column align-items-center justify-content-center gap-15-px">
+                                    <div class="text-28-px text-pink fw-bold">היי viki glam,
+                                    </div>
+                                    <div class="size-130-px printing-que-clock-icon svg"></div>
+                                    <div class="text-22-px">ההזמנה שלך מודפסת ברגעים אלה...</div>
+                                    <div class="text-22-px">תודה שהדפסת איזיקס!</div>
+                                </article>
+                                <!-- plotter-que-NO-orders -->
+                                <div
+                                    class="f-que-empty d-none w-100 h-100 flex-column gap-20-px justify-content-center align-items-center">
+                                    <div class="size-150-130-px que-empty-icon svg"></div>
+                                    <div class="d-flex flex-column gap-20-px justify-content-center align-items-center">
+                                        <div class="text-28-px">אין כרגע הזמנות בתור ההדפסה!</div>
+                                        <div class="text-28-px">ניתן ליצור הזמנה והיא תודפס מיידית!!!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- plotter-que-error -->
+                                <div
+                                    class="f-que-error d-none p-5-px h-100 w-100 d-flex flex-column gap-20-px justify-content-center align-items-center">
+                                    <div
+                                        class="text-28-px fw-bold text-red w-100 justify-content-center text-center lh-37-px">
+                                        לצערינו לא ניתן להדפיס, המערכת מחכה לתפעול.
+                                    </div>
+                                    <div class="size-150-130-px que-error-icon svg"></div>
+                                    <div class="text-22-px text-red text-center lh-30-px opacity-75">
+                                        -במידה
+                                        וסגרו את הסניף - הטקסט שהוזן בעת סגירת
+                                        הסניף יופיע
+                                        פה-</div>
+                                    <div class="w-100 text-22-px text-center lh-30-px gap-5-px">בכל
+                                        שאלה או
+                                        בעיה
+                                        אנו
+                                        זמינים
+                                        בווצאפ במספר <div class="d-inline text-22-px fw-bold text-green">
+                                            03-3746962</div>.
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </article>
+                    <!-- @@@ -->
+                </div>
+                <!-- branch and printer -->
+                <div class="w-100 h-180-px rounded-10-px bg-pink-light-vivid d-flex align-items-center">
+                    <div class="w-100 gap-25-px d-flex justify-content-around p-15-px">
+                        <!-- branch -->
+                        <img class="size-88-px rounded-5-px object-fit-cover-e bg-white" src="example-branch-logo.png"
+                            alt=""></img>
+                        <div class="flex-grow-1 d-flex justify-content-center flex-column gap-15-px">
+                            <div class="text-32-px text-white fw-bold">אונ ת"א - ת"א</div>
+                            <div class="text-18-px text-white">סניף</div>
+                        </div>
+                        <!-- printer -->
+                        <div class="size-88-px p-10-px rounded-5-px bg-white">
+                            <div class="w-100 h-100 plotter-icon svg"></div>
+                        </div>
+                        <div class="flex-grow-1 d-flex justify-content-center flex-column gap-15-px">
+                            <div class="text-32-px text-white fw-bold">מדפסת 972</div>
+                            <div class="flex-column gap-5-px">
+                                <div class="text-18-px text-white">סוגי נייר: פשוט 90ג'</div>
+                                <div class="text-18-px text-white">מצופה 180ג'</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- - -->
+                </div>
+                <!-- --- -->
+            </div>
+        </article>
+        <!-- - -->
+
+    </article>
+
+    <!-- bace container -  VIDEO -->
+    <article class="w-100 vh-100 d-flex position-fixed">
+
+        <video id="queVideo" class="object-fit-cover-e h-100 w-100" muted autoplay loop>
+            <source src="printing-que-video.mp4" type="video/mp4">
+        </video>
+
+    </article>
+
+    <!-- bootstrap -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+        integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
+        integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
+        crossorigin="anonymous"></script>
+
+    <!-- eazix js -->
+
+    <script src="station-que.js"></script>
+
+</body>
+
+</html>
