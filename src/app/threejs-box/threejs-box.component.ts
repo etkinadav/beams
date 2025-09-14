@@ -33,7 +33,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     product: any = null;
     params: any[] = [];
 
-    constructor(private http: HttpClient) { } ת
+    constructor(private http: HttpClient) { }
 
     ngOnInit() {
         this.checkUserAuthentication();
