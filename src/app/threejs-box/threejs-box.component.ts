@@ -700,6 +700,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     beam.depth = beam.depth - 2 * this.frameWidth;
                 }
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+                this.setCorrectTextureMapping(geometry, beam.width, beam.height, beam.depth);
                 const material = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.castShadow = true;
@@ -717,6 +718,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             );
             for (const beam of frameBeams) {
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+                this.setCorrectTextureMapping(geometry, beam.width, beam.height, beam.depth);
                 const material = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.castShadow = true;
@@ -757,6 +759,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             );
             for (const leg of legs) {
                 const geometry = new THREE.BoxGeometry(leg.width, leg.height, leg.depth);
+                this.setCorrectTextureMapping(geometry, leg.width, leg.height, leg.depth);
                 const material = new THREE.MeshStandardMaterial({ map: legWoodTexture });
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.castShadow = true;
@@ -839,6 +842,40 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             });
         }
         return beams;
+    }
+
+    // פונקציה להגדרת UV mapping נכון לטקסטורה
+    private setCorrectTextureMapping(geometry: THREE.BoxGeometry, width: number, height: number, depth: number) {
+        const uvAttribute = geometry.attributes.uv;
+        const uvArray = uvAttribute.array as Float32Array;
+        
+        // מצא את הצלע הארוכה ביותר
+        const maxDimension = Math.max(width, height, depth);
+        const isWidthLongest = width === maxDimension;
+        const isHeightLongest = height === maxDimension;
+        const isDepthLongest = depth === maxDimension;
+        
+        // התאם את ה-UV mapping כך שהכיוון הרחב של הטקסטורה יהיה על הצלע הארוכה ביותר
+        for (let i = 0; i < uvArray.length; i += 2) {
+            const u = uvArray[i];
+            const v = uvArray[i + 1];
+            
+            if (isWidthLongest) {
+                // אם הרוחב הוא הארוך ביותר, השאר את הטקסטורה כפי שהיא
+                uvArray[i] = u;
+                uvArray[i + 1] = v;
+            } else if (isHeightLongest) {
+                // אם הגובה הוא הארוך ביותר, סובב את הטקסטורה 90 מעלות
+                uvArray[i] = 1 - v;
+                uvArray[i + 1] = u;
+            } else if (isDepthLongest) {
+                // אם העומק הוא הארוך ביותר, סובב את הטקסטורה 90 מעלות בכיוון אחר
+                uvArray[i] = v;
+                uvArray[i + 1] = 1 - u;
+            }
+        }
+        
+        uvAttribute.needsUpdate = true;
     }
 
     // רגליים
