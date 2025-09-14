@@ -375,7 +375,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
         // For each shelf, render its beams at its calculated height
         let currentY = 0;
-        for (const shelf of this.shelves) {
+        const totalShelves = this.shelves.length;
+        for (let shelfIndex = 0; shelfIndex < this.shelves.length; shelfIndex++) {
+            const shelf = this.shelves[shelfIndex];
             currentY += shelf.gap;
             // Surface beams (קורת משטח)
             const surfaceBeams = this.createSurfaceBeams(
@@ -387,8 +389,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             );
             for (let i = 0; i < surfaceBeams.length; i++) {
                 let beam = { ...surfaceBeams[i] };
-                // Shorten first and last beam in the length (depth) direction by 2*frameWidth, keep centered
-                if (i === 0 || i === surfaceBeams.length - 1) {
+                // Only shorten first and last beam in the length (depth) direction for non-top shelves
+                // Top shelf (last shelf) gets full-length beams
+                const isTopShelf = shelfIndex === totalShelves - 1;
+                if (!isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) {
                     beam.depth = beam.depth - 2 * this.frameWidth;
                 }
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
@@ -530,6 +534,18 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             totalLength / 2 - frameWidth / 2
         ];
         const legs = [];
+        
+        // Get shelf beam height to match leg height to beam thickness
+        const shelfsParam = this.getParam('shelfs');
+        let beamHeight = this.beamHeight;
+        if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+            const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+            beamHeight = shelfBeam ? shelfBeam.height / 10 : this.beamHeight;
+        }
+        
+        // Shorten legs by beam height so they end at the same level as the bottom shelf beam
+        const legHeight = topHeight - beamHeight;
+        
         for (const x of xVals) {
             for (const z of zVals) {
                 legs.push({
@@ -537,7 +553,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     y: 0,
                     z,
                     width: frameWidth,
-                    height: topHeight,
+                    height: legHeight,
                     depth: frameWidth
                 });
             }
