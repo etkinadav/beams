@@ -496,10 +496,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // Add infinite floor plane with subtle grid
         const floorGeometry = new THREE.PlaneGeometry(2000, 2000);
-        const floorMaterial = new THREE.MeshLambertMaterial({ 
+        const floorMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xF0F0F0, // Much whiter floor
             transparent: true,
-            opacity: 0.9
+            opacity: 0.5,  // 50% שקיפות
+            roughness: 0.1,  // חלקות נמוכה לרפלקציה
+            metalness: 0.0,  // לא מתכתי
+            reflectivity: 0.25,  // 25% רפלקציה
+            clearcoat: 0.1,  // שכבה שקופה דקה
+            clearcoatRoughness: 0.1
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal

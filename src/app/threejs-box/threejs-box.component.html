@@ -41,7 +41,7 @@
                                     <mat-option
                                         *ngFor="let type of param.beams[param.selectedBeamIndex]?.types; let tIdx = index"
                                         [value]="tIdx">
-                                        {{param.beams[param.selectedBeamIndex]?.translatedName}} {{type.translatedName}}
+                                        {{type.translatedName}}
                                     </mat-option>
                                 </mat-select>
                             </mat-form-field>
@@ -93,7 +93,7 @@
                                 <mat-option
                                     *ngFor="let type of param.beams[param.selectedBeamIndex]?.types; let tIdx = index"
                                     [value]="tIdx">
-                                    {{param.beams[param.selectedBeamIndex]?.translatedName}} {{type.translatedName}}
+                                    {{type.translatedName}}
                                 </mat-option>
                             </mat-select>
                         </mat-form-field>
