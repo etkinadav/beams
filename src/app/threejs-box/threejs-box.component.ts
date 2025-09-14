@@ -63,10 +63,12 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     if (param.name === 'shelfs' && Array.isArray(param.beams) && param.beams.length) {
                         param.selectedBeamIndex = 0;
                         param.selectedTypeIndex = Array.isArray(param.beams[0].types) && param.beams[0].types.length ? 0 : null;
+                        param.selectedBeamTypeIndex = 0; // Initialize combined selection
                     }
                     if (param.type === 'beamSingle' && Array.isArray(param.beams) && param.beams.length) {
                         param.selectedBeamIndex = 0;
                         param.selectedTypeIndex = Array.isArray(param.beams[0].types) && param.beams[0].types.length ? 0 : null;
+                        param.selectedBeamTypeIndex = 0; // Initialize combined selection
                     }
                     return param;
                 });
@@ -125,6 +127,40 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         const validatedValue = this.validateParameterValue(param, value);
         param.default[index] = validatedValue;
         this.updateBeams();
+    }
+
+    // Get all beam types as combined options
+    getAllBeamTypes(param: any): { beamName: string, typeName: string, beamIndex: number, typeIndex: number }[] {
+        const beamTypes: { beamName: string, typeName: string, beamIndex: number, typeIndex: number }[] = [];
+        
+        if (param.beams && Array.isArray(param.beams)) {
+            param.beams.forEach((beam: any, beamIndex: number) => {
+                if (beam.types && Array.isArray(beam.types)) {
+                    beam.types.forEach((type: any, typeIndex: number) => {
+                        beamTypes.push({
+                            beamName: beam.translatedName || beam.name,
+                            typeName: type.translatedName || type.name,
+                            beamIndex: beamIndex,
+                            typeIndex: typeIndex
+                        });
+                    });
+                }
+            });
+        }
+        
+        return beamTypes;
+    }
+
+    // Update beam type selection (combined beam and type)
+    updateBeamTypeSelection(param: any) {
+        const beamTypes = this.getAllBeamTypes(param);
+        const selectedBeamType = beamTypes[param.selectedBeamTypeIndex];
+        
+        if (selectedBeamType) {
+            param.selectedBeamIndex = selectedBeamType.beamIndex;
+            param.selectedTypeIndex = selectedBeamType.typeIndex;
+            this.updateBeams();
+        }
     }
 
     // Shelves logic based on params
@@ -249,7 +285,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 name: param.name,
                 default: param.default,
                 selectedBeamIndex: param.selectedBeamIndex,
-                selectedTypeIndex: param.selectedTypeIndex
+                selectedTypeIndex: param.selectedTypeIndex,
+                selectedBeamTypeIndex: param.selectedBeamTypeIndex
             })),
             timestamp: new Date().toISOString()
         };
@@ -342,6 +379,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     param.default = savedParam.default;
                     param.selectedBeamIndex = savedParam.selectedBeamIndex;
                     param.selectedTypeIndex = savedParam.selectedTypeIndex;
+                    param.selectedBeamTypeIndex = savedParam.selectedBeamTypeIndex;
                 }
             });
         }

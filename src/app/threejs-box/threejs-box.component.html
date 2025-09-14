@@ -29,19 +29,9 @@
                         <div class="shelf-row">
                             <mat-form-field appearance="outline">
                                 <mat-label>סוג קורה</mat-label>
-                                <mat-select [(ngModel)]="param.selectedBeamIndex" (selectionChange)="updateBeams()">
-                                    <mat-option *ngFor="let beam of param.beams; let bIdx = index" [value]="bIdx">
-                                        {{beam.translatedName}}
-                                    </mat-option>
-                                </mat-select>
-                            </mat-form-field>
-                            <mat-form-field appearance="outline">
-                                <mat-label>סוג עץ</mat-label>
-                                <mat-select [(ngModel)]="param.selectedTypeIndex" (selectionChange)="updateBeams()">
-                                    <mat-option
-                                        *ngFor="let type of param.beams[param.selectedBeamIndex]?.types; let tIdx = index"
-                                        [value]="tIdx">
-                                        {{type.translatedName}}
+                                <mat-select [(ngModel)]="param.selectedBeamTypeIndex" (selectionChange)="updateBeamTypeSelection(param)">
+                                    <mat-option *ngFor="let beamType of getAllBeamTypes(param); let idx = index" [value]="idx">
+                                        {{beamType.beamName}} - {{beamType.typeName}}
                                     </mat-option>
                                 </mat-select>
                             </mat-form-field>
@@ -81,19 +71,9 @@
                             style="font-weight:bold; display:block; margin-bottom: 1.5em;">{{param.translatedName}}</label>
                         <mat-form-field appearance="outline">
                             <mat-label>סוג קורה</mat-label>
-                            <mat-select [(ngModel)]="param.selectedBeamIndex" (selectionChange)="updateBeams()">
-                                <mat-option *ngFor="let beam of param.beams; let bIdx = index" [value]="bIdx">
-                                    {{beam.translatedName}}
-                                </mat-option>
-                            </mat-select>
-                        </mat-form-field>
-                        <mat-form-field appearance="outline">
-                            <mat-label>סוג עץ</mat-label>
-                            <mat-select [(ngModel)]="param.selectedTypeIndex" (selectionChange)="updateBeams()">
-                                <mat-option
-                                    *ngFor="let type of param.beams[param.selectedBeamIndex]?.types; let tIdx = index"
-                                    [value]="tIdx">
-                                    {{type.translatedName}}
+                            <mat-select [(ngModel)]="param.selectedBeamTypeIndex" (selectionChange)="updateBeamTypeSelection(param)">
+                                <mat-option *ngFor="let beamType of getAllBeamTypes(param); let idx = index" [value]="idx">
+                                    {{beamType.beamName}} - {{beamType.typeName}}
                                 </mat-option>
                             </mat-select>
                         </mat-form-field>
