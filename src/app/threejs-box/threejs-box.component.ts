@@ -13,6 +13,10 @@ interface Shelf {
     styleUrls: ['./threejs-box.component.scss']
 })
 export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
+    // Helper for numeric step
+    getStep(type: number): number {
+        return 1 / Math.pow(10, type);
+    }
     // ...existing code...
     toggleDrawer() {
         this.drawerOpen = !this.drawerOpen;
@@ -20,8 +24,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     }
     drawerOpen: boolean = true;
     product: any = null;
+    params: any[] = [];
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) { } ת
 
     ngOnInit() {
         this.getProductById('68a186bb0717136a1a9245de');
@@ -31,51 +36,117 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.http.get(`/api/products/${id}`).subscribe({
             next: (data) => {
                 this.product = data;
+                const prod: any = data;
+                this.params = (prod.params || []).map(param => {
+                    // Set default selected beam and type for shelfs and beamSingle
+                    if (param.name === 'shelfs' && Array.isArray(param.beams) && param.beams.length) {
+                        param.selectedBeamIndex = 0;
+                        param.selectedTypeIndex = Array.isArray(param.beams[0].types) && param.beams[0].types.length ? 0 : null;
+                    }
+                    if (param.type === 'beamSingle' && Array.isArray(param.beams) && param.beams.length) {
+                        param.selectedBeamIndex = 0;
+                        param.selectedTypeIndex = Array.isArray(param.beams[0].types) && param.beams[0].types.length ? 0 : null;
+                    }
+                    return param;
+                });
+                this.initParamsFromProduct();
                 console.log('Product loaded:', data);
+                this.updateBeams();
             },
             error: (err) => {
                 console.error('Failed to load product:', err);
             }
         });
     }
-    // The first shelf is always the bottom one (cannot be removed)
-    shelves: Shelf[] = [
-        { gap: 10 }, // bottom shelf (from floor)
-        { gap: 50 },
-        { gap: 50 }
-    ];
 
-    // Add shelf above the current top
-    addShelf() {
-        this.shelves = [...this.shelves, { gap: 50 }];
-        this.updateBeams();
+    // Helper: get param by name
+    getParam(name: string) {
+        return this.params.find(p => p.name === name);
     }
 
-    // Only allow removing shelves above the bottom one
-    removeShelf(idx: number) {
-        if (idx === 0) return; // bottom shelf cannot be removed
-        this.shelves = this.shelves.filter((_, i) => i !== idx);
-        this.updateBeams();
-    }
-
-    // Update gap for shelf, bottom shelf has min height
-    updateShelfGap(idx: number, value: number) {
-        if (idx === 0) {
-            const minGap = this.frameHeight + this.beamHeight;
-            this.shelves[0].gap = Math.max(value, minGap);
-        } else {
-            this.shelves[idx].gap = value;
+    // Shelves logic based on params
+    get shelves(): Shelf[] {
+        const shelfsParam = this.getParam('shelfs');
+        if (shelfsParam && Array.isArray(shelfsParam.default)) {
+            // Model: bottom shelf is first (no reverse)
+            return shelfsParam.default.map((gap: number) => ({ gap }));
         }
-        this.updateBeams();
+        return [];
     }
+
+    addShelf() {
+        const shelfsParam = this.getParam('shelfs');
+        if (shelfsParam && Array.isArray(shelfsParam.default)) {
+            shelfsParam.default.push(50);
+            this.updateBeams();
+        }
+    }
+
+    removeShelf(idx: number) {
+        const shelfsParam = this.getParam('shelfs');
+        if (shelfsParam && Array.isArray(shelfsParam.default) && idx !== 0) {
+            shelfsParam.default.splice(idx, 1);
+            this.updateBeams();
+        }
+    }
+
+    updateShelfGap(idx: number, value: number) {
+        const shelfsParam = this.getParam('shelfs');
+        if (shelfsParam && Array.isArray(shelfsParam.default)) {
+            if (idx === 0) {
+                const minGap = this.frameHeight + this.beamHeight;
+                shelfsParam.default[0] = Math.max(value, minGap);
+            } else {
+                shelfsParam.default[idx] = value;
+            }
+            this.updateBeams();
+        }
+    }
+
+    // Numeric params
+    get surfaceWidth(): number {
+        const p = this.getParam('width');
+        return p ? p.default : 100;
+    }
+    set surfaceWidth(val: number) {
+        const p = this.getParam('width');
+        if (p) { p.default = val; this.updateBeams(); }
+    }
+
+    get surfaceLength(): number {
+        const p = this.getParam('depth');
+        return p ? p.default : 100;
+    }
+    set surfaceLength(val: number) {
+        const p = this.getParam('depth');
+        if (p) { p.default = val; this.updateBeams(); }
+    }
+
+    get minGap(): number {
+        const p = this.getParam('gap');
+        return p ? p.default : 1;
+    }
+    set minGap(val: number) {
+        const p = this.getParam('gap');
+        if (p) { p.default = val; this.updateBeams(); }
+    }
+
+    // Beams for shelf/leg
+    get shelfBeams() {
+        const p = this.getParam('shelfs');
+        return p && p.beams ? p.beams : [];
+    }
+    get legBeams() {
+        const p = this.getParam('leg');
+        return p && p.beams ? p.beams : [];
+    }
+
+    // Frame beams (example: can be set in params if needed)
     frameWidth: number = 5;
     frameHeight: number = 5;
     private target: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
     beamWidth: number = 10;
     beamHeight: number = 2;
-    surfaceWidth: number = 100;
-    surfaceLength: number = 100;
-    minGap: number = 1;
     private beamMeshes: THREE.Mesh[] = [];
     @ViewChild('rendererContainer', { static: true }) rendererContainer!: ElementRef;
     width = 2;
@@ -88,9 +159,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     private onResizeBound = this.onResize.bind(this);
     private woodTexture!: THREE.Texture;
 
+    // Initialize other params if needed
+    initParamsFromProduct() {
+        // Example: set frameWidth/frameHeight if present in params
+        // You can extend this to other params as needed
+    }
+
     ngAfterViewInit() {
         this.initThree();
-        this.updateBeams();
         this.onResize();
         window.addEventListener('resize', this.onResizeBound);
         this.animate();
@@ -274,6 +350,29 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             (mesh.material as THREE.Material).dispose();
         });
         this.beamMeshes = [];
+
+        // Defensive checks
+        if (!this.shelves || !this.shelves.length) {
+            console.warn('No shelves found, cannot render model.');
+            return;
+        }
+        if (!this.surfaceWidth || !this.surfaceLength) {
+            console.warn('surfaceWidth or surfaceLength missing, cannot render model.');
+            return;
+        }
+
+        // Get shelf beam and type from params
+        const shelfsParam = this.getParam('shelfs');
+        let shelfBeam = null;
+        let shelfType = null;
+        if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+            shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+            shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedTypeIndex || 0] : null;
+        }
+        // Always convert beam width/height from mm to cm
+        let beamWidth = shelfBeam ? shelfBeam.width / 10 : this.beamWidth;
+        let beamHeight = shelfBeam ? shelfBeam.height / 10 : this.beamHeight;
+
         // For each shelf, render its beams at its calculated height
         let currentY = 0;
         for (const shelf of this.shelves) {
@@ -282,8 +381,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const surfaceBeams = this.createSurfaceBeams(
                 this.surfaceWidth,
                 this.surfaceLength,
-                this.beamWidth,
-                this.beamHeight,
+                beamWidth,
+                beamHeight,
                 this.minGap
             );
             for (let i = 0; i < surfaceBeams.length; i++) {
@@ -315,7 +414,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.beamMeshes.push(mesh);
             }
             // Add the height of the shelf itself for the next shelf
-            currentY += this.frameHeight + this.beamHeight;
+            currentY += this.frameHeight + beamHeight;
         }
         // לא מעדכן מיקום מצלמה/zoom אחרי עדכון אלמנטים
         // רגליים (legs)
@@ -323,7 +422,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             // Compute total height for legs and camera
             let totalY = 0;
             for (const shelf of this.shelves) {
-                totalY += shelf.gap + this.frameHeight + this.beamHeight;
+                totalY += shelf.gap + this.frameHeight + beamHeight;
             }
             const legs = this.createLegBeams(
                 this.surfaceWidth,

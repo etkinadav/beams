@@ -8,57 +8,91 @@
                 </svg>
             </button>
             <ng-container *ngIf="drawerOpen">
-                <div class="shelf-controls">
-                    <label style="font-weight:bold;">מדפים:</label>
-                    <div *ngFor="let shelf of shelves.slice().reverse(); let i = index" class="shelf-row">
-                        <mat-form-field appearance="outline" class="shelf-gap-field">
-                            <mat-label>רווח מהמדף הקודם {{(shelves.length-1-i) === 0 ? '(מהקרקע, מינימום קורות)' :
-                                ''}}</mat-label>
-                            <input matInput type="number"
-                                [min]="(shelves.length-1-i) === 0 ? frameHeight + beamHeight : 0" max="1000" step="1"
-                                [value]="shelf.gap"
-                                (input)="updateShelfGap(shelves.length-1-i, $any($event.target).valueAsNumber)">
-                        </mat-form-field>
-                        <button mat-raised-button color="warn" (click)="removeShelf(shelves.length-1-i)"
-                            [disabled]="(shelves.length-1-i) === 0">הסר</button>
+                <div *ngFor="let param of params" class="param-box">
+                    <div *ngIf="param.name === 'shelfs'">
+                        <label
+                            style="font-weight:bold; display:block; margin-bottom: 1.5em;">{{param.translatedName}}</label>
+                        <div class="shelf-row">
+                            <mat-form-field appearance="outline">
+                                <mat-label>סוג קורה</mat-label>
+                                <mat-select [(ngModel)]="param.selectedBeamIndex" (selectionChange)="updateBeams()">
+                                    <mat-option *ngFor="let beam of param.beams; let bIdx = index" [value]="bIdx">
+                                        {{beam.translatedName}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>סוג עץ</mat-label>
+                                <mat-select [(ngModel)]="param.selectedTypeIndex" (selectionChange)="updateBeams()">
+                                    <mat-option
+                                        *ngFor="let type of param.beams[param.selectedBeamIndex]?.types; let tIdx = index"
+                                        [value]="tIdx">
+                                        {{param.beams[param.selectedBeamIndex]?.translatedName}} {{type.translatedName}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div *ngFor="let i of [].constructor(param.default.length); let idx = index" class="shelf-row">
+                            <div class="shelf-gap-field-wrapper">
+                                <mat-form-field appearance="outline" class="shelf-gap-field">
+                                    <mat-label>מידה {{param.default.length - idx}}</mat-label>
+                                    <input matInput type="number" [min]="param.min" [max]="param.max" [step]="1"
+                                        [(ngModel)]="param.default[param.default.length - 1 - idx]"
+                                        (input)="updateBeams()">
+                                </mat-form-field>
+                                <button *ngIf="idx !== param.default.length - 1" class="remove-shelf-btn"
+                                    (click)="param.default.splice(param.default.length - 1 - idx,1); updateBeams()"
+                                    [disabled]="param.default.length<=1" aria-label="הסר מדף">
+                                    <svg width="14" height="14" viewBox="0 0 14 14">
+                                        <circle cx="7" cy="7" r="6" fill="#fff" stroke="#d32f2f" stroke-width="1.2" />
+                                        <line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#d32f2f" stroke-width="1.5" />
+                                        <line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#d32f2f" stroke-width="1.5" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="add-shelf-btn-container">
+                            <button class="add-shelf-btn" (click)="param.default.push(param.min); updateBeams()">
+                                <svg viewBox="0 0 16 16" width="14" height="14">
+                                    <circle cx="8" cy="8" r="7" fill="#fff" />
+                                    <line x1="8" y1="4" x2="8" y2="12" stroke="#333" stroke-width="2" />
+                                    <line x1="4" y1="8" x2="12" y2="8" stroke="#333" stroke-width="2" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <button mat-raised-button color="primary" (click)="addShelf()">הוסף מדף</button>
+                    <div *ngIf="param.type === 'beamSingle'">
+                        <label
+                            style="font-weight:bold; display:block; margin-bottom: 1.5em;">{{param.translatedName}}</label>
+                        <mat-form-field appearance="outline">
+                            <mat-label>סוג קורה</mat-label>
+                            <mat-select [(ngModel)]="param.selectedBeamIndex" (selectionChange)="updateBeams()">
+                                <mat-option *ngFor="let beam of param.beams; let bIdx = index" [value]="bIdx">
+                                    {{beam.translatedName}}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline">
+                            <mat-label>סוג עץ</mat-label>
+                            <mat-select [(ngModel)]="param.selectedTypeIndex" (selectionChange)="updateBeams()">
+                                <mat-option
+                                    *ngFor="let type of param.beams[param.selectedBeamIndex]?.types; let tIdx = index"
+                                    [value]="tIdx">
+                                    {{param.beams[param.selectedBeamIndex]?.translatedName}} {{type.translatedName}}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div *ngIf="param.type !== 'beamSingle' && param.name !== 'shelfs'">
+                        <div class="param-box non-beam">
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{param.translatedName}}</mat-label>
+                                <input matInput type="number" [min]="param.min" [max]="param.max"
+                                    [step]="getStep(param.type)" [(ngModel)]="param.default" (input)="updateBeams()">
+                            </mat-form-field>
+                        </div>
+                    </div>
                 </div>
-                <mat-form-field appearance="outline">
-                    <mat-label>רוחב קורה</mat-label>
-                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="beamWidth"
-                        (input)="updateBeams()">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                    <mat-label>גובה קורה</mat-label>
-                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="beamHeight"
-                        (input)="updateBeams()">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                    <mat-label>רוחב משטח</mat-label>
-                    <input matInput type="number" min="1" max="1000" step="1" [(ngModel)]="surfaceWidth"
-                        (input)="updateBeams()">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                    <mat-label>אורך משטח</mat-label>
-                    <input matInput type="number" min="1" max="1000" step="1" [(ngModel)]="surfaceLength"
-                        (input)="updateBeams()">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                    <mat-label>רווח מינימלי</mat-label>
-                    <input matInput type="number" min="0" max="100" step="0.1" [(ngModel)]="minGap"
-                        (input)="updateBeams()">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                    <mat-label>רוחב קורת מסגרת</mat-label>
-                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="frameWidth"
-                        (input)="updateBeams()">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                    <mat-label>גובה קורת מסגרת</mat-label>
-                    <input matInput type="number" min="0.1" max="100" step="0.1" [(ngModel)]="frameHeight"
-                        (input)="updateBeams()">
-                </mat-form-field>
             </ng-container>
         </div>
         <div #rendererContainer class="renderer-container" [class.expanded]="!drawerOpen"></div>
