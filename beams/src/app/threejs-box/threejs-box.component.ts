@@ -660,6 +660,18 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // For each shelf, render its beams at its calculated height
         let currentY = 0;
         const totalShelves = this.shelves.length;
+        
+        // Get frame beam dimensions for shelf beam shortening
+        const frameParamForShortening = this.params.find(p => p.type === 'beamSingle');
+        let frameBeamWidth = this.frameWidth;
+        if (frameParamForShortening && Array.isArray(frameParamForShortening.beams) && frameParamForShortening.beams.length) {
+            const frameBeam = frameParamForShortening.beams[frameParamForShortening.selectedBeamIndex || 0];
+            if (frameBeam) {
+                // החלפה: height של הפרמטר הופך ל-width של הקורה (לשימוש בקיצור)
+                frameBeamWidth = frameBeam.height / 10;  // המרה ממ"מ לס"מ
+            }
+        }
+        
         for (let shelfIndex = 0; shelfIndex < this.shelves.length; shelfIndex++) {
             const shelf = this.shelves[shelfIndex];
             currentY += shelf.gap;
@@ -677,7 +689,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 // Top shelf (last shelf) gets full-length beams
                 const isTopShelf = shelfIndex === totalShelves - 1;
                 if (!isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) {
-                    beam.depth = beam.depth - 2 * this.frameWidth;
+                    beam.depth = beam.depth - 2 * frameBeamWidth;
                 }
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
                 const material = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
