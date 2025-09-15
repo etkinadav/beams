@@ -853,9 +853,21 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             if (legBeam) {
                 legWidth = legBeam.width / 10;  // המרה ממ"מ לס"מ
                 legDepth = legBeam.height / 10; // המרה ממ"מ לס"מ
-                // הגובה נשאר topHeight (גובה המבנה כולו)
             }
         }
+        
+        // קבלת עובי קורות המדפים כדי לקצר את הרגליים
+        const shelfsParam = this.getParam('shelfs');
+        let shelfBeamHeight = this.beamHeight;
+        if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+            const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+            if (shelfBeam) {
+                shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
+            }
+        }
+        
+        // קיצור הרגליים בעובי קורות המדפים - הרגליים צריכות להגיע רק עד לתחתית המדף העליון
+        legHeight = topHeight - shelfBeamHeight;
         
         // 4 פינות - מיקום צמוד לקצה בהתאם לעובי הרגל בפועל
         const xVals = [
