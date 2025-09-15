@@ -627,8 +627,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 });
             } else {
                 // אם זה Mesh רגיל (קורות)
-                mesh.geometry.dispose();
-                (mesh.material as THREE.Material).dispose();
+            mesh.geometry.dispose();
+            (mesh.material as THREE.Material).dispose();
             }
         });
         this.beamMeshes = [];
@@ -1040,6 +1040,49 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     screwRadius: number = 0.1; // 1 מ"מ = 0.1 ס"מ (רדיוס הבורג)
     headHeight: number = 0.2; // 2 מ"מ = 0.2 ס"מ (גובה הראש)
     headRadius: number = 0.3; // 3 מ"מ = 0.3 ס"מ (רדיוס הראש)
+
+    // חישוב מידות המוצר הסופי
+    getProductDimensions(): { length: number, width: number, height: number, beamCount: number, gapBetweenBeams: number, shelfCount: number } {
+        // רוחב כולל
+        const totalWidth = this.surfaceWidth;
+        
+        // אורך כולל
+        const totalLength = this.surfaceLength;
+        
+        // גובה כולל
+        let totalHeight = 0;
+        const beamHeight = this.beamHeight;
+        const frameHeight = this.frameHeight;
+        
+        for (let i = 0; i < this.shelves.length; i++) {
+            totalHeight += this.shelves[i].gap;
+            totalHeight += frameHeight + beamHeight;
+        }
+        
+        // חישוב כמות קורות המדף
+        const beamWidth = this.beamWidth;
+        const minGap = this.minGap;
+        const beamCount = Math.floor((totalWidth + minGap) / (beamWidth + minGap));
+        
+        // חישוב רווח בין קורות המדף
+        let gapBetweenBeams = 0;
+        if (beamCount > 1) {
+            // (רוחב כולל - כמות קורות × רוחב קורה) / (כמות קורות - 1)
+            gapBetweenBeams = (totalWidth - (beamCount * beamWidth)) / (beamCount - 1);
+        }
+        
+        // כמות המדפים
+        const shelfCount = this.shelves.length;
+        
+        return {
+            length: totalLength,
+            width: totalWidth,
+            height: totalHeight,
+            beamCount: beamCount,
+            gapBetweenBeams: gapBetweenBeams,
+            shelfCount: shelfCount
+        };
+    }
     
     // יצירת גיאומטריית בורג אופקי (להרגליים)
     private createHorizontalScrewGeometry(): THREE.Group {
