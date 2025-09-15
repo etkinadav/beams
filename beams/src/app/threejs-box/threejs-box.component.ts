@@ -1041,10 +1041,24 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         if (isShortenedBeam !== "top") {
             // הסר את הברגים הראשון והשלישי (אינדקסים 0 ו-2)
             if (isShortenedBeam === "start") {
-                screwPositions = screwPositions.filter((pos, index) => index !== 1 && index !== 3);
+                screwPositions = screwPositions.filter((pos, index) => index !== 1 && index !== 3); 
             } else {
                 screwPositions = screwPositions.filter((pos, index) => index !== 0 && index !== 2);
             }
+            const startPositions = screwPositions[0];
+            const endPositions = screwPositions[1];
+            // create 2 new positions between start and end - 1/3 from start and 2/3 from end and the opposite
+           const newPosition = [
+                {
+                    x: startPositions.x + (endPositions.x - startPositions.x) / 3,
+                    z: startPositions.z + (endPositions.z - startPositions.z) / 3
+                },
+                {
+                    x: startPositions.x + (2 * (endPositions.x - startPositions.x) / 3),
+                    z: startPositions.z + (2 * (endPositions.z - startPositions.z) / 3)
+                }
+           ];
+           screwPositions = [...newPosition, ...screwPositions];
         }
         
         // יצירת ברגים
