@@ -676,11 +676,13 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // Get frame beam dimensions for shelf beam shortening
         const frameParamForShortening = this.params.find(p => p.type === 'beamSingle');
         let frameBeamWidth = this.frameWidth;
+        let frameBeamHeight = this.frameHeight;
         if (frameParamForShortening && Array.isArray(frameParamForShortening.beams) && frameParamForShortening.beams.length) {
             const frameBeam = frameParamForShortening.beams[frameParamForShortening.selectedBeamIndex || 0];
             if (frameBeam) {
                 // החלפה: height של הפרמטר הופך ל-width של הקורה (לשימוש בקיצור)
                 frameBeamWidth = frameBeam.height / 10;  // המרה ממ"מ לס"מ
+                frameBeamHeight = frameBeam.width / 10;  // width של הפרמטר הופך ל-height של הקורה
             }
         }
         
@@ -795,6 +797,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.scene.add(mesh);
                 this.beamMeshes.push(mesh);
             }
+            
+            // הוספת ברגים לרגליים
+            this.addScrewsToLegs(totalShelves, legs, frameBeamHeight, 0);
+            
             // Focus camera at the vertical center of the structure
             this.target.set(0, totalY / 2, 0);
         }
@@ -972,29 +978,114 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         return legs;
     }
 
+    // הוספת ברגים לרגליים
+    private addScrewsToLegs(totalShelves: number, legPositions: any[], frameBeamHeight: number, shelfY: number) {
+        console.log('Adding screws to legs:', this.shelves);
+        
+        // לכל מדף, נוסיף ברגים לרגליים
+        for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
+            const currentShelfY = this.getShelfHeight(shelfIndex) - (this.beamHeight + (this.frameHeight / 2));            
+                    
+            legPositions.forEach((leg, legIndex) => {
+                const isEven = legIndex % 2 === 0;
+                // 2 ברגים לכל רגל (אחד לכל קורת חיזוק - קדמית ואחורית)
+                const screwPositions = [
+                    // בורג לקורת חיזוק קדמית
+                    {
+                        x: leg.x, // מרכז רוחב הרגל
+                        y: currentShelfY + this.frameHeight / 2, // מרכז קורת החיזוק
+                        z: isEven ? (leg.z - (leg.depth / 2 + this.headHeight)) : (leg.z + (leg.depth / 2 + this.headHeight)) // צד חיצוני של הרגל (קדמי)
+                    },
+                    {
+                        x: leg.x + ((leg.width / 2 + this.headHeight) * (legIndex > 1 ? 1 : -1)), // מרכז רוחב הרגל
+                        y: currentShelfY + this.frameHeight / 2, // מרכז קורת החיזוק
+                        z: (isEven ? (leg.z - (leg.depth / 2 + this.headHeight)) : (leg.z + (leg.depth / 2 + this.headHeight))) +
+                        ((isEven ? 1 : -1) * (leg.depth / 2 + this.headHeight)) // צד חיצוני של הרגל (קדמי)
+                    }
+                ];
+                
+                screwPositions.forEach((pos, screwIndex) => {
+                    const screwGroup = this.createHorizontalScrewGeometry();
+                    
+                    // הברגים אופקיים ומיושרים ל-X (מאונכים לדופן Z)
+                    screwGroup.position.set(pos.x, pos.y, pos.z);
+                    if (screwIndex === 0) {
+                        screwGroup.rotation.y =  Math.PI / 2 * (isEven ? 1 : -1);
+                    } else {
+                        screwGroup.rotation.y =  legIndex > 1 ? 0 : Math.PI;
+                    }
+                    
+                    this.scene.add(screwGroup);
+                    this.beamMeshes.push(screwGroup);
+                    
+                    console.log(`Leg ${legIndex + 1}, Shelf ${shelfIndex + 1}, Screw ${screwIndex + 1}: x=${pos.x.toFixed(1)}, y=${pos.y.toFixed(1)}, z=${pos.z.toFixed(1)}`);
+                });
+            });
+        }
+    }
+
+    private getShelfHeight(shelfIndex: number): number {
+        let currentY = 0;
+        for (let i = 0; i < shelfIndex; i++) {
+            currentY += this.shelves[i].gap; // הוספת הרווח של המדף
+            currentY += this.frameHeight + this.beamHeight; // הוספת גובה קורת החיזוק + קורת המדף
+        }
+        // הוספת הרווח של המדף הנוכחי
+        currentY += this.shelves[shelfIndex].gap;
+        // החזרת הגובה של קורת החיזוק (כמו בקוד המקורי)
+        return currentY + this.frameHeight + (((shelfIndex > 0 ? shelfIndex : 0) / (this.shelves.length)) * this.beamHeight);
+    }
+
+    // פרמטרים של הבורג (מידות אמיתיות)
+    screwLength: number = 4.0; // 40 מ"מ = 4 ס"מ
+    screwRadius: number = 0.1; // 1 מ"מ = 0.1 ס"מ (רדיוס הבורג)
+    headHeight: number = 0.2; // 2 מ"מ = 0.2 ס"מ (גובה הראש)
+    headRadius: number = 0.3; // 3 מ"מ = 0.3 ס"מ (רדיוס הראש)
+    
+    // יצירת גיאומטריית בורג אופקי (להרגליים)
+    private createHorizontalScrewGeometry(): THREE.Group {
+        console.log('Creating horizontal screw geometry');
+        const screwGroup = new THREE.Group();
+        
+        // פרמטרים של הבורג (מידות אמיתיות)
+
+        // יצירת גוף הבורג (צינור צר) - אופקי
+        const screwGeometry = new THREE.CylinderGeometry(this.screwRadius, this.screwRadius, this.screwLength, 8);
+        const screwMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 }); // אפור מתכתי
+        const screwMesh = new THREE.Mesh(screwGeometry, screwMaterial);
+        screwMesh.rotation.z = Math.PI / 2; // סיבוב לרוחב
+        screwMesh.position.x = -this.screwLength / 2; // מרכז את הבורג
+        screwGroup.add(screwMesh);
+        
+        // יצירת ראש הבורג (גליל נפרד) - בחלק הקדמי של הבורג
+        const headGeometry = new THREE.CylinderGeometry(this.headRadius, this.headRadius, this.headHeight, 8);
+        const headMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 }); // כהה יותר
+        const headMesh = new THREE.Mesh(headGeometry, headMaterial);
+        headMesh.rotation.z = Math.PI / 2; // סיבוב לרוחב
+        headMesh.position.x = - this.headHeight / 2; // ראש בחלק הקדמי של הבורג
+        screwGroup.add(headMesh);
+        
+        return screwGroup;
+    }
+
     // יצירת גיאומטריית בורג
     private createScrewGeometry(): THREE.Group {
         console.log('Creating screw geometry');
         const screwGroup = new THREE.Group();
-        
-        // פרמטרים של הבורג (מידות אמיתיות)
-        const screwLength = 4.0; // 40 מ"מ = 4 ס"מ
-        const screwRadius = 0.1; // 1 מ"מ = 0.1 ס"מ (רדיוס הבורג)
-        const headHeight = 0.2; // 2 מ"מ = 0.2 ס"מ (גובה הראש)
-        const headRadius = 0.5; // 3 מ"מ = 0.3 ס"מ (רדיוס הראש)
+
         
         // יצירת גוף הבורג (צינור צר)
-        const screwGeometry = new THREE.CylinderGeometry(screwRadius, screwRadius, screwLength, 8);
+        const screwGeometry = new THREE.CylinderGeometry(this.screwRadius, this.screwRadius, this.screwLength, 8);
         const screwMaterial = new THREE.MeshStandardMaterial({ color: 0x444444  }); // כמעט שחור
         const screwMesh = new THREE.Mesh(screwGeometry, screwMaterial);
-        screwMesh.position.y = -screwLength / 2; // מרכז את הבורג
+        screwMesh.position.y = -this.screwLength / 2; // מרכז את הבורג
         screwGroup.add(screwMesh);
         
         // יצירת ראש הבורג (גליל נפרד) - בחלק העליון של הבורג
-        const headGeometry = new THREE.CylinderGeometry(headRadius, headRadius, headHeight, 8);
+        const headGeometry = new THREE.CylinderGeometry(this.headRadius, this.headRadius, this.headHeight, 8);
         const headMaterial = new THREE.MeshStandardMaterial({ color: 0x444444  }); // צבע בהיר יותר לראש
         const headMesh = new THREE.Mesh(headGeometry, headMaterial);
-        headMesh.position.y = headHeight / 2; // ראש בחלק העליון של הבורג
+        headMesh.position.y = this.headHeight / 2; // ראש בחלק העליון של הבורג
         console.log('Adding screw head:', headMesh.position.y);
         screwGroup.add(headMesh);
         
