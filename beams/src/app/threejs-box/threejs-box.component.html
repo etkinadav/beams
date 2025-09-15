@@ -1,17 +1,5 @@
 <div class="threejs-box-wrapper">
-    <!-- Validation Message -->
-    <div *ngIf="showValidationMessage" class="validation-message" 
-         [style.background-color]="'#ffeb3b'" 
-         [style.color]="'#333'"
-         [style.padding]="'12px 16px'"
-         [style.margin]="'8px 0'"
-         [style.border-radius]="'4px'"
-         [style.font-weight]="'bold'"
-         [style.text-align]="'center'"
-         [style.position]="'relative'"
-         [style.z-index]="'1000'">
-        {{validationMessage}}
-    </div>
+    <!-- הודעת validation הוסרה - משתמשים ב-SnackBar -->
     
     <div class="main-flex-row">
         <div class="controls" [class.closed]="!drawerOpen">

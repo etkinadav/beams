@@ -238,3 +238,17 @@ mat-form-field {
     width: 100vw;
     min-width: 0;
 }
+
+// סגנון מותאם אישית ל-SnackBar
+::ng-deep .custom-snackbar {
+    background-color: #ff5722 !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+::ng-deep .custom-snackbar .mat-mdc-snack-bar-action {
+    color: white !important;
+    font-weight: bold !important;
+}

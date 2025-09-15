@@ -1,6 +1,7 @@
 
 import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import * as THREE from 'three';
 
 interface Shelf {
@@ -16,9 +17,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     private isUserAuthenticated = false;
     private authToken: string | null = null;
     
-    // Validation messages
-    validationMessage: string = '';
-    showValidationMessage: boolean = false;
+    // Validation messages (הוסרו - משתמשים ב-SnackBar)
     
     // Helper for numeric step
     getStep(type: number): number {
@@ -33,7 +32,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     product: any = null;
     params: any[] = [];
 
-    constructor(private http: HttpClient) { } ת
+    constructor(private http: HttpClient, private snackBar: MatSnackBar) { } 
 
     ngOnInit() {
         this.checkUserAuthentication();
@@ -101,13 +100,13 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         }
 
         if (message) {
-            this.showValidationMessage = true;
-            this.validationMessage = message;
-            // Hide message after 3 seconds
-            setTimeout(() => {
-                this.showValidationMessage = false;
-                this.validationMessage = '';
-            }, 3000);
+            // הצגת הודעה ב-SnackBar
+            this.snackBar.open(message, 'סגור', {
+                duration: 3000,
+                horizontalPosition: 'center',
+                verticalPosition: 'top',
+                panelClass: ['custom-snackbar']
+            });
         }
 
         return validatedValue;
@@ -1101,7 +1100,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // הזחה מהקצוות: מחצית ממידת ה-height של קורת החיזוק
         const edgeOffset = frameBeamWidth / 2;
         // הזחה כלפי פנים: רבע ממידת ה-width של קורת המדף
-        const inwardOffset = beam.width / 4 < edgeOffset ? beam.width / 4 : edgeOffset;
+        const inwardOffset = beam.width / 4 > this.frameWidth / 2 ? beam.width / 4 : this.frameWidth / 2;
         
         // קורות המדפים נטענות ב-z=0 (במרכז)
         const beamZ = 0;
