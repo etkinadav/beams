@@ -1010,7 +1010,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // הזחה מהקצוות: מחצית ממידת ה-height של קורת החיזוק
         const edgeOffset = frameBeamWidth / 2;
         // הזחה כלפי פנים: רבע ממידת ה-width של קורת המדף
-        const inwardOffset = beam.width / 4;
+        const inwardOffset = beam.width / 4 < edgeOffset ? beam.width / 4 : edgeOffset;
         
         // קורות המדפים נטענות ב-z=0 (במרכז)
         const beamZ = 0;
