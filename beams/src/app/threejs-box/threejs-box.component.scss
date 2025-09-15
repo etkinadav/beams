@@ -3,15 +3,15 @@
 .shelf-gap-field,
 mat-form-field {
     width: 100%;
-    min-width: 180px;
-    max-width: 200px;
+    min-width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
 }
 
 /* Compact form fields inside shelf measurements */
 .shelf-measurements-container mat-form-field {
-    min-width: 160px;
-    max-width: 180px;
+    min-width: 100%;
+    max-width: 100%;
 }
 
 
@@ -34,7 +34,7 @@ mat-form-field {
     background: none;
     border: none;
     padding: 0;
-    margin: 0;
+    margin: 3px 20px 0 20px;
     cursor: pointer;
     border-radius: 50%;
     display: flex;
@@ -58,29 +58,7 @@ mat-form-field {
     height: 14px;
 }
 
-/* Remove shelf X button */
-.remove-shelf-btn {
-    background: none;
-    border: none;
-    padding: 0.2em 0.3em;
-    margin-top: 0.3em;
-    margin-left: 0.5em;
-    cursor: pointer;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-    outline: none;
-}
-
-.remove-shelf-btn:hover {
-    background: #ffeaea;
-}
-
-.remove-shelf-btn svg {
-    display: block;
-}
+/* Shelf measurements container with border */
 
 /* Shelf measurements container with border */
 .shelf-measurements-container {
@@ -104,11 +82,20 @@ mat-form-field {
 .param-box {
     background: #fff;
     border-radius: 8px;
-    padding: 0.8em;
-    margin-bottom: 1em;
+    padding: 0 0.8em;
+    margin-bottom: 0.3em;
 }
 
 .param-box:last-child {
+    margin-bottom: 0;
+}
+
+/* Remove shadow from single input fields (non-beam parameters) */
+.param-box.non-beam {
+    box-shadow: none;
+    background: transparent;
+    border: none;
+    padding: 0;
     margin-bottom: 0;
 }
 
@@ -174,7 +161,7 @@ mat-form-field {
 .controls {
     display: flex;
     flex-direction: column;
-    gap: 1em;
+    gap: 0;
     min-width: 270px;
     max-width: 340px;
     flex-basis: 340px;
