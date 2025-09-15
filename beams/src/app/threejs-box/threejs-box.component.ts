@@ -617,8 +617,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         this.beamMeshes.forEach(mesh => {
             this.scene.remove(mesh);
-            mesh.geometry.dispose();
-            (mesh.material as THREE.Material).dispose();
+            
+            // אם זה Group (ברגים), צריך לטפל בכל הילדים
+            if (mesh instanceof THREE.Group) {
+                mesh.children.forEach(child => {
+                    if (child instanceof THREE.Mesh) {
+                        child.geometry.dispose();
+                        (child.material as THREE.Material).dispose();
+                    }
+                });
+            } else {
+                // אם זה Mesh רגיל (קורות)
+                mesh.geometry.dispose();
+                (mesh.material as THREE.Material).dispose();
+            }
         });
         this.beamMeshes = [];
 
@@ -699,6 +711,17 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 mesh.position.set(beam.x, currentY + this.frameHeight + beam.height / 2, 0);
                 this.scene.add(mesh);
                 this.beamMeshes.push(mesh);
+                
+                // הוספת ברגים לקורת המדף
+                let isShortenedBeam = (!isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) ? "not-top" : "top";
+                if (isShortenedBeam !== "top") {
+                    if (i === 0) {
+                        isShortenedBeam = "start";
+                    } else {
+                        isShortenedBeam = "end";
+                    }
+                }
+                this.addScrewsToShelfBeam(beam, currentY + this.frameHeight, beamHeight, frameBeamWidth, isShortenedBeam);
             }
             
             // Get leg beam dimensions for frame beams positioning
@@ -947,5 +970,101 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         }
         
         return legs;
+    }
+
+    // יצירת גיאומטריית בורג
+    private createScrewGeometry(): THREE.Group {
+        console.log('Creating screw geometry');
+        const screwGroup = new THREE.Group();
+        
+        // פרמטרים של הבורג (מידות אמיתיות)
+        const screwLength = 4.0; // 40 מ"מ = 4 ס"מ
+        const screwRadius = 0.1; // 1 מ"מ = 0.1 ס"מ (רדיוס הבורג)
+        const headHeight = 0.2; // 2 מ"מ = 0.2 ס"מ (גובה הראש)
+        const headRadius = 0.5; // 3 מ"מ = 0.3 ס"מ (רדיוס הראש)
+        
+        // יצירת גוף הבורג (צינור צר)
+        const screwGeometry = new THREE.CylinderGeometry(screwRadius, screwRadius, screwLength, 8);
+        const screwMaterial = new THREE.MeshStandardMaterial({ color: 0x444444  }); // כמעט שחור
+        const screwMesh = new THREE.Mesh(screwGeometry, screwMaterial);
+        screwMesh.position.y = -screwLength / 2; // מרכז את הבורג
+        screwGroup.add(screwMesh);
+        
+        // יצירת ראש הבורג (גליל נפרד) - בחלק העליון של הבורג
+        const headGeometry = new THREE.CylinderGeometry(headRadius, headRadius, headHeight, 8);
+        const headMaterial = new THREE.MeshStandardMaterial({ color: 0x444444  }); // צבע בהיר יותר לראש
+        const headMesh = new THREE.Mesh(headGeometry, headMaterial);
+        headMesh.position.y = headHeight / 2; // ראש בחלק העליון של הבורג
+        console.log('Adding screw head:', headMesh.position.y);
+        screwGroup.add(headMesh);
+        
+        // ביטול החריצים - אין צורך בהם
+        
+        return screwGroup;
+    }
+
+    // הוספת ברגים לקורת מדף
+    private addScrewsToShelfBeam(beam: any, shelfY: number, beamHeight: number, frameBeamWidth: number, isShortenedBeam: string = "top") {
+        console.log('Adding screws to shelf beam:', beam, 'shelfY:', shelfY, 'beamHeight:', beamHeight, 'frameBeamWidth:', frameBeamWidth);
+        // חישוב מיקומי הברגים
+        // הזחה מהקצוות: מחצית ממידת ה-height של קורת החיזוק
+        const edgeOffset = frameBeamWidth / 2;
+        // הזחה כלפי פנים: רבע ממידת ה-width של קורת המדף
+        const inwardOffset = beam.width / 4;
+        
+        // קורות המדפים נטענות ב-z=0 (במרכז)
+        const beamZ = 0;
+        let screwPositions = [
+            // פינה שמאלית קדמית
+            {
+                x: beam.x - beam.width / 2 + inwardOffset,
+                z: beamZ - beam.depth / 2 + edgeOffset
+            },
+            // פינה ימנית קדמית
+            {
+                x: beam.x + beam.width / 2 - inwardOffset,
+                z: beamZ - beam.depth / 2 + edgeOffset
+            },
+            // פינה שמאלית אחורית
+            {
+                x: beam.x - beam.width / 2 + inwardOffset,
+                z: beamZ + beam.depth / 2 - edgeOffset
+            },
+            // פינה ימנית אחורית
+            {
+                x: beam.x + beam.width / 2 - inwardOffset,
+                z: beamZ + beam.depth / 2 - edgeOffset
+            }
+        ];
+        
+        // אם הקורה מקוצרת, הסר את הברגים הראשון והשלישי מהרשימה
+        if (isShortenedBeam !== "top") {
+            // הסר את הברגים הראשון והשלישי (אינדקסים 0 ו-2)
+            if (isShortenedBeam === "start") {
+                screwPositions = screwPositions.filter((pos, index) => index !== 1 && index !== 3);
+            } else {
+                screwPositions = screwPositions.filter((pos, index) => index !== 0 && index !== 2);
+            }
+        }
+        
+        // יצירת ברגים
+        screwPositions.forEach((pos, index) => {
+            const screwGroup = this.createScrewGeometry();
+            // הבורג צריך להיות כך שהראש שלו נוגע בקורה
+            // הבורג לא מסובב, אז הראש נמצא ב-(screwLength/2 + headHeight/2) מהמרכז
+            // כדי שהראש יהיה על הקורה, המרכז צריך להיות מתחת לקורה ב-(screwLength/2 + headHeight/2)
+            // הורדה נוספת של 20 מ"מ כלפי מטה
+            const headHeight = 0.2; // 2 מ"מ
+            const screwLength = 4.0; // 40 מ"מ
+            const screwY = shelfY + beamHeight; // הורדה של 20 מ"מ + 100 לראות את הברגים
+            // מיקום הבורג: החלק התחתון של הראש על הקורה, מופנה כלפי מטה
+            screwGroup.position.set(pos.x, screwY, pos.z);
+            console.log(`Screw ${index + 1} position: x=${pos.x.toFixed(1)}, y=${screwY.toFixed(1)}, z=${pos.z.toFixed(1)}`);
+            // הבורג כבר מופנה כלפי מטה - אין צורך בסיבוב
+            // screwGroup.rotation.x = Math.PI;
+            
+            this.scene.add(screwGroup);
+            this.beamMeshes.push(screwGroup);
+        });
     }
 }
