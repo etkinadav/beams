@@ -643,6 +643,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // Get wood texture for shelf beams
         const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
+        
+        // Get wood texture for frame beams (קורות חיזוק)
+        const frameParam = this.params.find(p => p.type === 'beamSingle');
+        let frameType = null;
+        if (frameParam && Array.isArray(frameParam.beams) && frameParam.beams.length) {
+            const frameBeam = frameParam.beams[frameParam.selectedBeamIndex || 0];
+            frameType = frameBeam.types && frameBeam.types.length ? frameBeam.types[frameParam.selectedTypeIndex || 0] : null;
+        }
+        const frameWoodTexture = this.getWoodTexture(frameType ? frameType.name : '');
+        
         // Always convert beam width/height from mm to cm
         let beamWidth = shelfBeam ? shelfBeam.width / 10 : this.beamWidth;
         let beamHeight = shelfBeam ? shelfBeam.height / 10 : this.beamHeight;
@@ -678,16 +688,31 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.scene.add(mesh);
                 this.beamMeshes.push(mesh);
             }
+            
+            // Get leg beam dimensions for frame beams positioning
+            const legParam = this.getParam('leg');
+            let legWidth = this.frameWidth;
+            let legDepth = this.frameWidth;
+            if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+                const legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
+                if (legBeam) {
+                    legWidth = legBeam.width / 10;   // המרה ממ"מ לס"מ
+                    legDepth = legBeam.height / 10; // המרה ממ"מ לס"מ
+                }
+            }
+            
             // Frame beams (קורת חיזוק)
             const frameBeams = this.createFrameBeams(
                 this.surfaceWidth,
                 this.surfaceLength,
                 this.frameWidth,
-                this.frameHeight
+                this.frameHeight,
+                legWidth,
+                legDepth
             );
             for (const beam of frameBeams) {
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
-                const material = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
+                const material = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
@@ -777,35 +802,51 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         totalWidth: number,
         totalLength: number,
         frameWidth: number,
-        frameHeight: number
+        frameHeight: number,
+        legWidth: number,
+        legDepth: number
     ): { x: number, y: number, z: number, width: number, height: number, depth: number }[] {
+        // קבלת מידות קורות החיזוק מהפרמטרים (מפרמטר beamSingle)
+        const frameParam = this.params.find(p => p.type === 'beamSingle');
+        let frameBeamWidth = frameWidth;
+        let frameBeamHeight = frameHeight;
+        
+        if (frameParam && Array.isArray(frameParam.beams) && frameParam.beams.length) {
+            const frameBeam = frameParam.beams[frameParam.selectedBeamIndex || 0];
+            if (frameBeam) {
+                // החלפה: width של הפרמטר הופך ל-height של הקורה, height של הפרמטר הופך ל-width של הקורה
+                frameBeamWidth = frameBeam.height / 10;  // המרה ממ"מ לס"מ - height הופך ל-width
+                frameBeamHeight = frameBeam.width / 10;  // המרה ממ"מ לס"מ - width הופך ל-height
+            }
+        }
+        
         const beams = [];
-        // X axis beams (front/back)
+        // X axis beams (front/back) - קורות אופקיות קדמיות ואחוריות
         for (const z of [
-            -totalLength / 2 + frameWidth / 2,
-            totalLength / 2 - frameWidth / 2
+            -totalLength / 2 + legDepth / 2,    // קדמית - צמודה לקצה לפי מידות הרגליים
+            totalLength / 2 - legDepth / 2      // אחורית - צמודה לקצה לפי מידות הרגליים
         ]) {
             beams.push({
                 x: 0,
                 y: 0,
                 z,
-                width: totalWidth - 2 * frameWidth,
-                height: frameHeight,
-                depth: frameWidth
+                width: totalWidth - 2 * legWidth,  // רוחב מותאם לעובי הרגליים
+                height: frameBeamHeight,           // גובה מקורות החיזוק
+                depth: frameBeamWidth              // עומק מקורות החיזוק
             });
         }
-        // Z axis beams (left/right)
+        // Z axis beams (left/right) - קורות אופקיות שמאליות וימניות
         for (const x of [
-            -totalWidth / 2 + frameWidth / 2,
-            totalWidth / 2 - frameWidth / 2
+            -totalWidth / 2 + legWidth / 2,     // שמאלית - צמודה לקצה לפי מידות הרגליים
+            totalWidth / 2 - legWidth / 2       // ימנית - צמודה לקצה לפי מידות הרגליים
         ]) {
             beams.push({
                 x,
                 y: 0,
                 z: 0,
-                width: frameWidth,
-                height: frameHeight,
-                depth: totalLength - 2 * frameWidth
+                width: frameBeamWidth,              // רוחב מקורות החיזוק
+                height: frameBeamHeight,           // גובה מקורות החיזוק
+                depth: totalLength - 2 * legDepth  // עומק מותאם לעובי הרגליים
             });
         }
         return beams;
