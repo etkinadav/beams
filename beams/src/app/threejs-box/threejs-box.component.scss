@@ -278,6 +278,15 @@ mat-form-field {
             
             &:last-child {
                 border-bottom: none;
+                
+                // מיוחד לשורה האחרונה - גבהי המדפים
+                td:first-child {
+                    vertical-align: top;
+                }
+                
+                td:last-child {
+                    vertical-align: top;
+                }
             }
         }
         
@@ -297,6 +306,13 @@ mat-form-field {
                 color: #2196f3;
                 text-align: left;
                 width: 40%;
+                
+                // פונט קטן ליחידות
+                small {
+                    font-size: 8px;
+                    font-weight: 300;
+                    opacity: 0.6;
+                }
             }
         }
     }

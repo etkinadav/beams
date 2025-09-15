@@ -1042,7 +1042,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     headRadius: number = 0.3; // 3 מ"מ = 0.3 ס"מ (רדיוס הראש)
 
     // חישוב מידות המוצר הסופי
-    getProductDimensions(): { length: number, width: number, height: number, beamCount: number, gapBetweenBeams: number, shelfCount: number, shelfHeights: string } {
+    getProductDimensions(): { length: string, width: string, height: string, beamCount: string, gapBetweenBeams: string, shelfCount: string, shelfHeights: string, totalScrews: string } {
         // רוחב כולל
         const totalWidth = this.surfaceWidth;
         
@@ -1074,22 +1074,37 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // כמות המדפים
         const shelfCount = this.shelves.length;
         
-        // גבהי המדפים (רשימה מופרדת בפסיקים)
+        // גבהי המדפים (רשימה מופרדת בפסיקים, מלמעלה למטה)
         const shelfHeightsList: string[] = [];
         for (let i = 0; i < this.shelves.length; i++) {
             const shelfHeight = this.getShelfHeight(i);
-            shelfHeightsList.push(`${shelfHeight.toFixed(1)}`);
+            shelfHeightsList.push(`${shelfHeight.toFixed(1)} <small>ס"מ</small>`);
         }
         const shelfHeights = shelfHeightsList.join(', ');
         
+        // חישוב כמות ברגים כוללת
+        let totalScrews = 0;
+        
+        // ברגים לקורות המדפים
+        for (let i = 0; i < this.shelves.length; i++) {
+            const isShortenedBeam = (i === 0 || i === this.shelves.length - 1) && this.shelves.length > 1;
+            const screwsPerBeam = isShortenedBeam ? 2 : 4; // 2 ברגים לקורות מקוצרות, 4 לקורות רגילות
+            totalScrews += beamCount * screwsPerBeam;
+        }
+        
+        // ברגים לרגליים (2 ברגים לכל רגל לכל מדף)
+        const legScrews = this.shelves.length * 4 * 2; // 4 רגליים × 2 ברגים לכל מדף
+        totalScrews += legScrews;
+        
         return {
-            length: totalLength,
-            width: totalWidth,
-            height: totalHeight,
-            beamCount: beamCount,
-            gapBetweenBeams: gapBetweenBeams,
-            shelfCount: shelfCount,
-            shelfHeights: shelfHeights
+            length: `${totalLength.toFixed(1)} <small>ס"מ</small>`,
+            width: `${totalWidth.toFixed(1)} <small>ס"מ</small>`,
+            height: `${totalHeight.toFixed(1)} <small>ס"מ</small>`,
+            beamCount: `${beamCount} <small>קורות</small>`,
+            gapBetweenBeams: `${gapBetweenBeams.toFixed(1)} <small>ס"מ</small>`,
+            shelfCount: `${shelfCount} <small>מדפים</small>`,
+            shelfHeights: shelfHeights,
+            totalScrews: `${totalScrews} <small>ברגים</small>`
         };
     }
     

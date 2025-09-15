@@ -102,42 +102,41 @@
                         </div>
                     </div>
                 </div>
+                <!-- טבלת מידות המוצר -->
+                <div class="product-dimensions-container">
+                    <h3>מידות המוצר הסופי</h3>
+                    <table class="dimensions-table">
+                        <tr>
+                            <td>אורך כולל:</td>
+                            <td [innerHTML]="getProductDimensions().length"></td>
+                        </tr>
+                        <tr>
+                            <td>רוחב כולל:</td>
+                            <td [innerHTML]="getProductDimensions().width"></td>
+                        </tr>
+                        <tr>
+                            <td>גובה כולל:</td>
+                            <td [innerHTML]="getProductDimensions().height"></td>
+                        </tr>
+                        <tr>
+                            <td>כמות קורות במדף:</td>
+                            <td [innerHTML]="getProductDimensions().beamCount"></td>
+                        </tr>
+                        <tr>
+                            <td>רווח בין קורות המדף:</td>
+                            <td [innerHTML]="getProductDimensions().gapBetweenBeams"></td>
+                        </tr>
+                        <tr>
+                            <td>כמות מדפים:</td>
+                            <td [innerHTML]="getProductDimensions().shelfCount"></td>
+                        </tr>
+                        <tr>
+                            <td>גבהי המדפים:</td>
+                            <td [innerHTML]="getProductDimensions().shelfHeights"></td>
+                        </tr>
+                    </table>
+                </div>
             </ng-container>
-            
-            <!-- טבלת מידות המוצר -->
-            <div class="product-dimensions-container">
-                <h3>מידות המוצר הסופי</h3>
-                <table class="dimensions-table">
-                    <tr>
-                        <td>אורך כולל:</td>
-                        <td>{{getProductDimensions().length.toFixed(1)}} ס"מ</td>
-                    </tr>
-                    <tr>
-                        <td>רוחב כולל:</td>
-                        <td>{{getProductDimensions().width.toFixed(1)}} ס"מ</td>
-                    </tr>
-                    <tr>
-                        <td>גובה כולל:</td>
-                        <td>{{getProductDimensions().height.toFixed(1)}} ס"מ</td>
-                    </tr>
-                    <tr>
-                        <td>כמות קורות במדף:</td>
-                        <td>{{getProductDimensions().beamCount}} קורות</td>
-                    </tr>
-                    <tr>
-                        <td>רווח בין קורות המדף:</td>
-                        <td>{{getProductDimensions().gapBetweenBeams.toFixed(1)}} ס"מ</td>
-                    </tr>
-                    <tr>
-                        <td>כמות מדפים:</td>
-                        <td>{{getProductDimensions().shelfCount}} מדפים</td>
-                    </tr>
-                    <tr>
-                        <td>גבהי המדפים:</td>
-                        <td>{{getProductDimensions().shelfHeights}} ס"מ</td>
-                    </tr>
-                </table>
-            </div>
         </div>
         <div #rendererContainer class="renderer-container" [class.expanded]="!drawerOpen"></div>
     </div>
