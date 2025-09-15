@@ -225,6 +225,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // Initialize other params if needed
     initParamsFromProduct() {
+        // Set default selected beam and type for leg parameter
+        const legParam = this.getParam('leg');
+        if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+            legParam.selectedBeamIndex = legParam.selectedBeamIndex || 0;
+            legParam.selectedTypeIndex = legParam.selectedTypeIndex || 
+                (Array.isArray(legParam.beams[0].types) && legParam.beams[0].types.length ? 0 : null);
+        }
+        
         // Example: set frameWidth/frameHeight if present in params
         // You can extend this to other params as needed
     }
@@ -803,50 +811,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         return beams;
     }
 
-    // רגליים
-    private createLegBeams(
-        totalWidth: number,
-        totalLength: number,
-        frameWidth: number,
-        frameHeight: number,
-        topHeight: number
-    ): { x: number, y: number, z: number, width: number, height: number, depth: number }[] {
-        // 4 corners
-        const xVals = [
-            -totalWidth / 2 + frameWidth / 2,
-            totalWidth / 2 - frameWidth / 2
-        ];
-        const zVals = [
-            -totalLength / 2 + frameWidth / 2,
-            totalLength / 2 - frameWidth / 2
-        ];
-        const legs = [];
-        
-        // Get shelf beam height to match leg height to beam thickness
-        const shelfsParam = this.getParam('shelfs');
-        let beamHeight = this.beamHeight;
-        if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
-            const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
-            beamHeight = shelfBeam ? shelfBeam.height / 10 : this.beamHeight;
-        }
-        
-        // Shorten legs by beam height so they end at the same level as the bottom shelf beam
-        const legHeight = topHeight - beamHeight;
-        
-        for (const x of xVals) {
-            for (const z of zVals) {
-                legs.push({
-                    x,
-                    y: 0,
-                    z,
-                    width: frameWidth,
-                    height: legHeight,
-                    depth: frameWidth
-                });
-            }
-        }
-        return legs;
-    }
 
     // ממקם את המצלמה כך שכל המדפים והרגליים ייכנסו בפריים
     private frameAllShelves() {
@@ -868,5 +832,55 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         const distance = Math.max(distanceY, distanceX, fitDepth * 1.2);
         this.camera.position.set(0.7 * width, distance, 1.2 * depth);
         this.camera.lookAt(this.target);
+    }
+
+    // יצירת קורות רגליים
+    private createLegBeams(
+        totalWidth: number,
+        totalLength: number,
+        frameWidth: number,
+        frameHeight: number,
+        topHeight: number
+    ): { x: number, y: number, z: number, width: number, height: number, depth: number }[] {
+        // קבלת מידות קורות הרגליים מהפרמטרים
+        const legParam = this.getParam('leg');
+        let legWidth = frameWidth;
+        let legHeight = topHeight;
+        let legDepth = frameWidth;
+        
+        if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+            const legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
+            if (legBeam) {
+                legWidth = legBeam.width / 10;  // המרה ממ"מ לס"מ
+                legDepth = legBeam.height / 10; // המרה ממ"מ לס"מ
+                // הגובה נשאר topHeight (גובה המבנה כולו)
+            }
+        }
+        
+        // 4 פינות - מיקום צמוד לקצה בהתאם לעובי הרגל בפועל
+        const xVals = [
+            -totalWidth / 2 + legWidth / 2,    // פינה שמאלית - צמודה לקצה
+            totalWidth / 2 - legWidth / 2      // פינה ימנית - צמודה לקצה
+        ];
+        const zVals = [
+            -totalLength / 2 + legDepth / 2,   // פינה אחורית - צמודה לקצה
+            totalLength / 2 - legDepth / 2     // פינה קדמית - צמודה לקצה
+        ];
+        const legs = [];
+        
+        for (const x of xVals) {
+            for (const z of zVals) {
+                legs.push({
+                    x,
+                    y: 0,
+                    z,
+                    width: legWidth,
+                    height: legHeight,
+                    depth: legDepth
+                });
+            }
+        }
+        
+        return legs;
     }
 }
