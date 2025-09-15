@@ -1042,7 +1042,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     headRadius: number = 0.3; // 3 מ"מ = 0.3 ס"מ (רדיוס הראש)
 
     // חישוב מידות המוצר הסופי
-    getProductDimensions(): { length: number, width: number, height: number, beamCount: number, gapBetweenBeams: number, shelfCount: number } {
+    getProductDimensions(): { length: number, width: number, height: number, beamCount: number, gapBetweenBeams: number, shelfCount: number, shelfHeights: string } {
         // רוחב כולל
         const totalWidth = this.surfaceWidth;
         
@@ -1074,13 +1074,22 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // כמות המדפים
         const shelfCount = this.shelves.length;
         
+        // גבהי המדפים (רשימה מופרדת בפסיקים)
+        const shelfHeightsList: string[] = [];
+        for (let i = 0; i < this.shelves.length; i++) {
+            const shelfHeight = this.getShelfHeight(i);
+            shelfHeightsList.push(`${shelfHeight.toFixed(1)}`);
+        }
+        const shelfHeights = shelfHeightsList.join(', ');
+        
         return {
             length: totalLength,
             width: totalWidth,
             height: totalHeight,
             beamCount: beamCount,
             gapBetweenBeams: gapBetweenBeams,
-            shelfCount: shelfCount
+            shelfCount: shelfCount,
+            shelfHeights: shelfHeights
         };
     }
     
