@@ -96,13 +96,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-    this.camera.position.set(-150, 45, 150); // הגדלת המרחק כדי שהמודל יכנס לפריים
-    this.target.set(0, this.dynamicParams.height/4 -35, 0);
+    // מיקום המצלמה יתאים למידות האוביקט אחרי יצירת המודל
+    this.target.set(0, 0, 0); // מרכז המודל
     this.camera.lookAt(this.target);
     
-    // הגדרת מיקום התחלתי עבור הזום
-    const offset = this.camera.position.clone().sub(this.target);
-    this.spherical.setFromVector3(offset);
+    // הגדרת מיקום התחלתי עבור הזום - יוגדר אחרי updateCameraPosition
 
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -365,6 +363,45 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     // סיבוב המודל - זהה לקובץ הראשי
     this.scene.rotation.y = Math.PI / 6; // 30 מעלות סיבוב
+    
+    // התאמת מיקום המצלמה למידות האוביקט - זהה לקובץ הראשי
+    this.updateCameraPosition();
+  }
+
+  // התאמת מיקום המצלמה למידות האוביקט - זהה לקובץ הראשי
+  private updateCameraPosition() {
+    // חישוב מידות האוביקט
+    const width = this.dynamicParams.width;
+    const height = this.dynamicParams.height;
+    const depth = this.dynamicParams.length;
+    
+    // מרכז האוביקט
+    const centerY = height / 2;
+    this.target.set(0, centerY, 0);
+    
+    // חישוב המרחק האופטימלי של המצלמה
+    const fov = this.camera.fov * Math.PI / 180;
+    const fitHeight = height * 1.15;
+    const fitWidth = width * 1.15;
+    const fitDepth = depth * 1.15;
+    const distanceY = fitHeight / (2 * Math.tan(fov / 2));
+    const distanceX = fitWidth / (2 * Math.tan(fov / 2) * this.camera.aspect);
+    const distance = Math.max(distanceY, distanceX, fitDepth * 1.2) * 2; // זום אאוט פי 2
+    
+    // מיקום המצלמה - זהה לקובץ הראשי
+    this.camera.position.set(0.7 * width, distance, 1.2 * depth);
+    this.camera.lookAt(this.target);
+    
+    // סיבוב המצלמה 20 מעלות כלפי מטה
+    const offset = this.camera.position.clone().sub(this.target);
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    spherical.phi += 20 * Math.PI / 180; // 20 מעלות כלפי מטה
+    this.camera.position.setFromSpherical(spherical).add(this.target);
+    this.camera.lookAt(this.target);
+    
+    // הגדרת מיקום התחלתי עבור הזום - אחרי מיקום המצלמה
+    const offset2 = this.camera.position.clone().sub(this.target);
+    this.spherical.setFromVector3(offset2);
   }
 
 
