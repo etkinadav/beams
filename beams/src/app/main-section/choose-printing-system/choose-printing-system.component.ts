@@ -68,13 +68,6 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
     this.dataSharingService.getPrintingService().subscribe((value) => {
       this.printingService = value;
       this.updatecontinueToServiceText();
-      setTimeout(() => {
-        if (this.printingService === 'express' || this.printingService === 'plotter' || this.printingService === 'ph') {
-          this.isSystemSet = true;
-        } else {
-          this.isSystemSet = false;
-        }
-      }, 120);
     });
     
     // משיכת כל המוצרים

@@ -8,8 +8,8 @@ import * as THREE from 'three';
   `,
   styles: [`
     .mini-preview-container {
-      width: 100%;
-      height: 100%;
+      width: 200px;
+      height: 150px;
       border-radius: 8px;
       overflow: hidden;
     }
@@ -113,7 +113,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // Camera
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
     this.camera.position.set(-50, 15, 50); // חזרתי למצב הקודם
-    this.camera.lookAt(0, this.dynamicParams.height/4, 0);
+    this.camera.lookAt(0, this.dynamicParams.height/-2, 0);
 
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
