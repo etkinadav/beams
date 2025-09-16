@@ -74,68 +74,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <!-- printingService BTN [plotter] -->
-                                    <div (click)="onChoosePrintingService('plotter')"
-                                        (mouseenter)="onHoverPrintingService('plotter')"
-                                        (mouseleave)="onHoverPrintingService('')"
-                                        [class.zx-step-choosen]="printingService === 'plotter'"
-                                        class="step-item-trans-plotter step-item step-item-hover w-100 rounded-3 shadow-85 d-flex p-2 align-items-center justify-content-center"
-                                        matRipple [class.step-item-dark]="isDarkMode">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <img src="assets/images/plotter-icon.svg" alt="plotter Logo"
-                                                class="image-plotter p-3 zx-big-icon-size-trans">
-                                            <b class="title-small-plotter d-none" style="max-width: 50px;">
-                                                {{'choose-system.title-short-plotter' | translate}}
-                                            </b>
-                                        </div>
-                                        <div
-                                            class="text-con-plotter d-flex flex-column flex-grow-1 justify-content-between">
-                                            <h6 class="fw-bold zx-text-big"
-                                                [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{'choose-system.title-plotter' | translate}}
-                                            </h6>
-                                            <span class="d-md-none opacity-75 zx-text-tiny zx-text-sm-small"
-                                                [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{ 'choose-system.explanation-plotter' | translate }}
-                                            </span>
-                                            <span
-                                                class="d-none d-md-inline opacity-75 zx-text-tiny zx-text-sm-small text-center"
-                                                [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{ 'choose-system.explanation-plotter' | translate }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <!-- printingService BTN [ph] -->
-                                    <div *ngIf="isSu()" (click)="onChoosePrintingService('ph')"
-                                        (mouseenter)="onHoverPrintingService('ph')"
-                                        (mouseleave)="onHoverPrintingService('')"
-                                        [class.zx-step-choosen]="printingService === 'ph'"
-                                        class="step-item-trans-ph step-item step-item-hover w-100 rounded-3 shadow-85 d-flex p-2 align-items-center justify-content-center"
-                                        matRipple [class.step-item-dark]="isDarkMode">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <img src="assets/images/ph-icon.svg" alt="printing houses Logo"
-                                                class="image-ph p-3 zx-big-icon-size-trans">
-                                            <b class="title-small-ph d-none" style="max-width: 50px;">
-                                                {{'choose-system.title-short-plotter' | translate}}
-                                            </b>
-                                        </div>
-                                        <div class="text-con-ph d-flex flex-column flex-grow-1 justify-content-between">
-                                            <h6 class="fw-bold zx-text-big"
-                                                [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{'choose-system.title-ph' | translate}}
-                                            </h6>
-                                            <span class="d-md-none opacity-75 zx-text-tiny zx-text-sm-small"
-                                                [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{ 'choose-system.explanation-ph' | translate }}
-                                            </span>
-                                            <span
-                                                class="d-none d-md-inline opacity-75 zx-text-tiny zx-text-sm-small text-center"
-                                                [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{ 'choose-system.explanation-ph' | translate }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <!-- - -->
+                                                                    
                                     <div class="scroll-for-info-con d-sm-none">
                                         <span class="zx-text-tiny title-trans">
                                             {{'about-us.scroll-for-info' | translate}}

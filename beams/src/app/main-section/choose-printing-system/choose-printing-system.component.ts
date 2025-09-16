@@ -36,6 +36,8 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
   products: any[] = [];
   isLoading: boolean = false;
   error: string | null = null;
+  selectedProduct: any = null;
+  hoveredProduct: any = null;
 
   constructor(
     private directionService: DirectionService,
@@ -131,6 +133,17 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
     if (scrollPosition && scrollPosition > 30) {
       this.router.navigate(['/home']);
     }
+  }
+
+  // פונקציות למוצרים
+  onChooseProduct(product: any) {
+    console.log('נבחר מוצר:', product);
+    this.selectedProduct = product;
+    // כאן תוכל להוסיף לוגיקה נוספת לבחירת המוצר
+  }
+
+  onHoverProduct(product: any) {
+    this.hoveredProduct = product;
   }
 
   // פונקציה למשיכת כל המוצרים
