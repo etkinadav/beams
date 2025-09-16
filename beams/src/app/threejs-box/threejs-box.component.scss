@@ -178,6 +178,20 @@ mat-form-field {
     position: relative;
 }
 
+// רוחב תפריט במובייל
+@media (max-width: 768px) {
+    .controls {
+        min-width: 220px;
+        max-width: 220px;
+        flex-basis: 220px;
+        padding: 1em 0.5em 70px 0;
+    }
+    
+    .drawer-toggle {
+        left: 206px;
+    }
+}
+
 .controls.closed {
     min-width: 30px;
     max-width: 30px;
@@ -186,9 +200,10 @@ mat-form-field {
 }
 
 .drawer-toggle {
-    position: absolute;
-    top: 20px;
-    right: 0px;
+    position: fixed;
+    top: 63px;
+    left: 325px;
+    right: unset;
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -204,6 +219,13 @@ mat-form-field {
     padding: 0;
 }
 
+// מיקום כפתור במובייל
+@media (max-width: 768px) {
+    .drawer-toggle {
+        left: 205px;
+    }
+}
+
 .drawer-toggle:hover {
     background: #f5f5f5;
 }
@@ -216,6 +238,10 @@ mat-form-field {
     width: 12px;
     height: 12px;
     display: block;
+}
+
+.controls.closed .drawer-toggle {
+    left: 15px;
 }
 
 .controls.closed .drawer-toggle span {
