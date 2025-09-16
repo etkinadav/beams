@@ -1,9 +1,10 @@
 @use './palette.scss' as palette;
 @use '@angular/material' as mat;
 @import '@angular/material/theming';
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500;700;800;900&display=swap');
 
-$font-family-open-sans: 'Open Sans', sans-serif;
-$my-typography-open-sans: mat.define-typography-config($font-family: $font-family-open-sans);
+$font-family-m-plus-rounded: 'M PLUS Rounded 1c', sans-serif;
+$my-typography-m-plus-rounded: mat.define-typography-config($font-family: $font-family-m-plus-rounded);
 
 $light-primary: mat.define-palette(palette.$light-primary);
 $light-accent: mat.define-palette(palette.$light-accent);
@@ -15,7 +16,7 @@ $light-theme: mat.define-light-theme((color: (primary: $light-primary,
             ),
         ));
 @include mat.all-component-colors($light-theme);
-@include mat.all-component-typographies($light-theme);
+@include mat.all-component-typographies($my-typography-m-plus-rounded);
 
 $dark-primary: mat.define-palette(palette.$dark-primary);
 $dark-accent: mat.define-palette(palette.$dark-accent);
@@ -126,7 +127,7 @@ body {
 }
 
 * {
-    font-family: $font-family-open-sans;
+    font-family: $font-family-m-plus-rounded;
 }
 
 /* -----------------------------===---------------------------------- GENERAL USE ----===---- */
@@ -790,44 +791,44 @@ body[dir='rtl'] .custom-tooltip {
 /* --------===------------- TYPOLOGY ----===---- */
 
 .zx-text-big {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .zx-text-medium {
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .zx-text-small {
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .zx-text-tiny {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .zx-text-tiny-tiny {
-    font-size: 10px;
+    font-size: 12px;
 }
 
 @media only screen and (min-width: 576px) {
     .zx-text-sm-tiny {
-        font-size: 12px;
-    }
-
-    .zx-text-sm-small {
         font-size: 14px;
     }
 
-    .zx-text-sm-medium {
+    .zx-text-sm-small {
         font-size: 16px;
     }
 
-    .zx-text-sm-big {
+    .zx-text-sm-medium {
         font-size: 18px;
     }
 
+    .zx-text-sm-big {
+        font-size: 20px;
+    }
+
     .zx-text-sm-huge {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
     }
 }
 
