@@ -1080,7 +1080,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const shelfHeight = this.getShelfHeight(i);
             shelfHeightsList.push(`${this.formatNumber(shelfHeight)} <small>ס"מ</small>`);
         }
-        const shelfHeights = shelfHeightsList.join(', ');
+        const shelfHeights = shelfHeightsList.join('<br>');
         
         // חישוב כמות ברגים כוללת
         let totalScrews = 0;
