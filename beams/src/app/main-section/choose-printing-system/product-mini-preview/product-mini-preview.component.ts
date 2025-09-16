@@ -426,11 +426,15 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     this.camera.position.set(0.7 * width, distance, 1.2 * depth);
     this.camera.lookAt(this.target);
     
-    // סיבוב המצלמה 20 מעלות כלפי מטה
+    // סיבוב המצלמה 30 מעלות כלפי מטה
     const offset = this.camera.position.clone().sub(this.target);
     const spherical = new THREE.Spherical().setFromVector3(offset);
-    spherical.phi += 20 * Math.PI / 180; // 20 מעלות כלפי מטה
+    spherical.phi += 30 * Math.PI / 180; // 30 מעלות כלפי מטה
     this.camera.position.setFromSpherical(spherical).add(this.target);
+    this.camera.lookAt(this.target);
+    
+    // פאן של 30 פיקסלים למטה (כאילו גררנו עם גלגל העכבר)
+    this.target.y += 30;
     this.camera.lookAt(this.target);
     
     // הגדרת מיקום התחלתי עבור הזום - אחרי מיקום המצלמה
