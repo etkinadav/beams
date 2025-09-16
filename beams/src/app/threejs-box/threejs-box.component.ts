@@ -1108,6 +1108,21 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         };
     }
     
+    // פונקציה לקביעת יחידות לפי סוג הפרמטר
+    getUnitForParameter(param: any): string {
+        if (param.type === 'length' || param.type === 'width' || param.type === 'height') {
+            return 'ס"מ';
+        } else if (param.type === 'gap' || param.type === 'shelfHeight') {
+            return 'ס"מ';
+        } else if (param.type === 'beamCount') {
+            return 'יח\'';
+        } else if (param.type === 'shelfCount') {
+            return 'יח\'';
+        } else {
+            return 'ס"מ';
+        }
+    }
+    
     // יצירת גיאומטריית בורג אופקי (להרגליים)
     private createHorizontalScrewGeometry(): THREE.Group {
         console.log('Creating horizontal screw geometry');
