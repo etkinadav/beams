@@ -79,8 +79,10 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   private target = new THREE.Vector3(0, 0, 0);
   private spherical = new THREE.Spherical();
   private isMouseDown = false;
+  private isPan = false;
   private lastMouseX = 0;
   private lastMouseY = 0;
+  private hasUserInteracted = false; // האם המשתמש התחיל להזיז את המודל
 
   ngAfterViewInit() {
     this.initThreeJS();
@@ -153,6 +155,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // גלגל עכבר לזום
     container.addEventListener('wheel', (event: WheelEvent) => {
       event.preventDefault();
+      this.hasUserInteracted = true; // המשתמש התחיל להזיז
       const delta = event.deltaY;
       const zoomSpeed = 0.1;
       
@@ -164,12 +167,14 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.camera.position.setFromSpherical(this.spherical).add(this.target);
     });
 
-    // לחיצה וגרירה לסיבוב
+    // לחיצה וגרירה לסיבוב ו-pan
     container.addEventListener('mousedown', (event: MouseEvent) => {
       this.isMouseDown = true;
+      this.isPan = (event.button === 1 || event.button === 2); // כפתור אמצע או ימין
+      this.hasUserInteracted = true; // המשתמש התחיל להזיז
       this.lastMouseX = event.clientX;
       this.lastMouseY = event.clientY;
-      container.style.cursor = 'grabbing';
+      container.style.cursor = this.isPan ? 'grabbing' : 'grabbing';
     });
 
     container.addEventListener('mousemove', (event: MouseEvent) => {
@@ -178,15 +183,29 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       const deltaX = event.clientX - this.lastMouseX;
       const deltaY = event.clientY - this.lastMouseY;
       
-      const rotateSpeed = 0.01;
-      this.spherical.theta -= deltaX * rotateSpeed;
-      this.spherical.phi += deltaY * rotateSpeed;
-      
-      // הגבלת זווית אנכית
-      this.spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.spherical.phi));
-      
-      // עדכון מיקום המצלמה
-      this.camera.position.setFromSpherical(this.spherical).add(this.target);
+      if (this.isPan) {
+        // Pan - הזזת המצלמה
+        const panSpeed = 0.2;
+        const panX = -deltaX * panSpeed;
+        const panY = deltaY * panSpeed;
+        const cam = this.camera;
+        const pan = new THREE.Vector3();
+        pan.addScaledVector(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0), panX);
+        pan.addScaledVector(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1), panY);
+        cam.position.add(pan);
+        this.target.add(pan);
+      } else {
+        // סיבוב - כמו קודם
+        const rotateSpeed = 0.01;
+        this.spherical.theta -= deltaX * rotateSpeed;
+        this.spherical.phi += deltaY * rotateSpeed;
+        
+        // הגבלת זווית אנכית
+        this.spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.spherical.phi));
+        
+        // עדכון מיקום המצלמה
+        this.camera.position.setFromSpherical(this.spherical).add(this.target);
+      }
       
       this.lastMouseX = event.clientX;
       this.lastMouseY = event.clientY;
@@ -254,6 +273,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         case 'shelfs':
           if (param.beams && param.beams.length > 0) {
             const beam = param.beams[param.selectedBeamIndex || 0];
+            // המרה ממ"מ לס"מ כמו בקובץ הראשי
             this.dynamicParams.beamWidth = (beam.width / 10) || 1;
             this.dynamicParams.beamHeight = (beam.height / 10) || 0.5;
             this.paramRanges.beamWidth = { 
@@ -281,7 +301,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     console.log('פרמטרים מאותחלים מהמוצר:', {
       dynamicParams: this.dynamicParams,
-      paramRanges: this.paramRanges
+      paramRanges: this.paramRanges,
+      beamWidth: this.dynamicParams.beamWidth,
+      beamHeight: this.dynamicParams.beamHeight
     });
   }
 
@@ -292,80 +314,86 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     // יצירת מדפים דינמיים
     const shelfHeight = this.dynamicParams.height / this.dynamicParams.shelfCount;
+    const minGap = 2; // רווח מינימלי בין קורות
     
     for (let i = 0; i < this.dynamicParams.shelfCount; i++) {
       const y = i * shelfHeight;
+      const isTopShelf = i === this.dynamicParams.shelfCount - 1; // זיהוי המדף העליון
       
-      // יצירת מדף (משטח)
-      const shelfGeometry = new THREE.BoxGeometry(
-        this.dynamicParams.width, 
-        this.dynamicParams.beamHeight, 
-        this.dynamicParams.length
+      // יצירת קורות מדף (Surface Beams) - כמו בקובץ הראשי
+      const surfaceBeams = this.createSurfaceBeams(
+        this.dynamicParams.width,
+        this.dynamicParams.length,
+        this.dynamicParams.beamWidth,
+        this.dynamicParams.beamHeight,
+        minGap
       );
-      const shelfMaterial = new THREE.MeshLambertMaterial({ 
-        color: this.woodColors[this.dynamicParams.woodType]
-      });
-      const shelf = new THREE.Mesh(shelfGeometry, shelfMaterial);
-      shelf.position.set(0, y, 0);
-      shelf.castShadow = true;
-      shelf.receiveShadow = true;
-      this.scene.add(shelf);
-      this.meshes.push(shelf);
-
-      // יצירת קורות מדף
-      const beamCount = Math.floor(this.dynamicParams.width / (this.dynamicParams.beamWidth + 2));
-      for (let j = 0; j < beamCount; j++) {
-        const x = (j - beamCount/2) * (this.dynamicParams.beamWidth + 2);
-        const beamGeometry = new THREE.BoxGeometry(
-          this.dynamicParams.beamWidth,
-          this.dynamicParams.beamHeight,
-          this.dynamicParams.length
-        );
+      
+      for (let j = 0; j < surfaceBeams.length; j++) {
+        let beam = { ...surfaceBeams[j] };
+        
+        // במדף העליון - כל הקורות באורך מלא ללא קיצור
+        // במדפים אחרים - קיצור הקורות הראשונה והאחרונה
+        if (!isTopShelf && (j === 0 || j === surfaceBeams.length - 1)) {
+          beam.depth = beam.depth - 2 * this.dynamicParams.frameWidth;
+        }
+        
+        // לוג למדף העליון
+        if (isTopShelf) {
+          console.log(`מדף עליון - קורה ${j}: אורך=${beam.depth}, רוחב=${beam.width}, גובה=${beam.height}, מיקום Y=${y}`);
+        }
+        
+        const beamGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
         const beamMaterial = new THREE.MeshLambertMaterial({ 
-          color: this.beamColors[this.dynamicParams.beamType]
+          color: this.woodColors[this.dynamicParams.woodType]
         });
-        const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-        beam.position.set(x, y, 0);
-        beam.castShadow = true;
-        beam.receiveShadow = true;
-        this.scene.add(beam);
-        this.meshes.push(beam);
+        const beamMesh = new THREE.Mesh(beamGeometry, beamMaterial);
+        beamMesh.position.set(beam.x, y - this.dynamicParams.frameHeight/2 - this.dynamicParams.beamHeight/2, 0);
+        beamMesh.castShadow = true;
+        beamMesh.receiveShadow = true;
+        this.scene.add(beamMesh);
+        this.meshes.push(beamMesh);
       }
     }
 
-    // יצירת רגליים (frame beams)
+    // יצירת רגליים (frame beams) - מיקום קרוב יותר למרכז
     const legPositions = [
-      [-this.dynamicParams.width/2, 0, -this.dynamicParams.length/2],
-      [this.dynamicParams.width/2, 0, -this.dynamicParams.length/2],
-      [-this.dynamicParams.width/2, 0, this.dynamicParams.length/2],
-      [this.dynamicParams.width/2, 0, this.dynamicParams.length/2]
+      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
+      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
+      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2],
+      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2]
     ];
 
+    // חישוב גובה הרגליים - עד למפלס העליון של קורות החיזוק במדף העליון
+    const topShelfY = (this.dynamicParams.shelfCount - 1) * shelfHeight;
+    const legHeight = topShelfY + this.dynamicParams.frameHeight;
+    
     legPositions.forEach(pos => {
       const legGeometry = new THREE.BoxGeometry(
         this.dynamicParams.frameWidth,
-        this.dynamicParams.height,
+        legHeight,
         this.dynamicParams.frameWidth
       );
       const legMaterial = new THREE.MeshLambertMaterial({ 
         color: this.beamColors[this.dynamicParams.beamType]
       });
       const leg = new THREE.Mesh(legGeometry, legMaterial);
-      leg.position.set(pos[0], this.dynamicParams.height/2, pos[2]);
+      leg.position.set(pos[0], legHeight/2, pos[2]);
       leg.castShadow = true;
       leg.receiveShadow = true;
       this.scene.add(leg);
       this.meshes.push(leg);
     });
 
-    // הוספת קורות חיזוק אופקיות
-    for (let i = 1; i < this.dynamicParams.shelfCount; i++) {
+    // הוספת קורות חיזוק אופקיות (Frame Beams) בכל גובה מדף
+    for (let i = 0; i < this.dynamicParams.shelfCount; i++) {
       const y = i * shelfHeight;
       
-      // קורות חיזוק קדמיות ואחוריות
-      [-this.dynamicParams.length/2, this.dynamicParams.length/2].forEach(z => {
+      // קורות חיזוק קדמיות ואחוריות (X axis beams)
+      [-this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2, 
+       this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2].forEach(z => {
         const braceGeometry = new THREE.BoxGeometry(
-          this.dynamicParams.width,
+          this.dynamicParams.width - 2 * this.dynamicParams.frameWidth,
           this.dynamicParams.frameHeight,
           this.dynamicParams.frameWidth
         );
@@ -379,7 +407,65 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         this.scene.add(brace);
         this.meshes.push(brace);
       });
+
+      // קורות חיזוק שמאליות וימניות (Z axis beams)
+      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 
+       this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2].forEach(x => {
+        const braceGeometry = new THREE.BoxGeometry(
+          this.dynamicParams.frameWidth,
+          this.dynamicParams.frameHeight,
+          this.dynamicParams.length - 2 * this.dynamicParams.frameWidth
+        );
+        const braceMaterial = new THREE.MeshLambertMaterial({ 
+          color: this.beamColors[this.dynamicParams.beamType]
+        });
+        const brace = new THREE.Mesh(braceGeometry, braceMaterial);
+        brace.position.set(x, y, 0);
+        brace.castShadow = true;
+        brace.receiveShadow = true;
+        this.scene.add(brace);
+        this.meshes.push(brace);
+      });
     }
+
+    // הוספת קורות חיזוק אופקיות בחלק העליון של המסגרת - בגובה הנכון
+    const topBraceY = topShelfY + this.dynamicParams.frameHeight;
+    [-this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2, 
+     this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2].forEach(z => {
+      const topBraceGeometry = new THREE.BoxGeometry(
+        this.dynamicParams.width - 2 * this.dynamicParams.frameWidth,
+        this.dynamicParams.frameHeight,
+        this.dynamicParams.frameWidth
+      );
+      const topBraceMaterial = new THREE.MeshLambertMaterial({ 
+        color: this.beamColors[this.dynamicParams.beamType]
+      });
+      const topBrace = new THREE.Mesh(topBraceGeometry, topBraceMaterial);
+      topBrace.position.set(0, topBraceY, z);
+      topBrace.castShadow = true;
+      topBrace.receiveShadow = true;
+      this.scene.add(topBrace);
+      this.meshes.push(topBrace);
+    });
+
+    // קורות חיזוק שמאליות וימניות בחלק העליון - בגובה הנכון
+    [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 
+     this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2].forEach(x => {
+      const topBraceGeometry = new THREE.BoxGeometry(
+        this.dynamicParams.frameWidth,
+        this.dynamicParams.frameHeight,
+        this.dynamicParams.length - 2 * this.dynamicParams.frameWidth
+      );
+      const topBraceMaterial = new THREE.MeshLambertMaterial({ 
+        color: this.beamColors[this.dynamicParams.beamType]
+      });
+      const topBrace = new THREE.Mesh(topBraceGeometry, topBraceMaterial);
+      topBrace.position.set(x, topBraceY, 0);
+      topBrace.castShadow = true;
+      topBrace.receiveShadow = true;
+      this.scene.add(topBrace);
+      this.meshes.push(topBrace);
+    });
 
     // סיבוב כל המודל ב-180 מעלות סביב ציר X (להפוך למעלה-מטה)
     this.scene.rotation.x = Math.PI;
@@ -434,8 +520,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // עדכון נקודת המבט של המצלמה
     this.camera.lookAt(this.target);
     
-    // סיבוב איטי של המודל (רק אם לא במצב גרירה)
-    if (!this.isMouseDown) {
+    // סיבוב איטי של המודל (רק אם המשתמש לא התחיל להזיז)
+    if (!this.hasUserInteracted) {
       this.scene.rotation.y += 0.005;
     }
     
@@ -489,5 +575,28 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (progress <= 0.75) return 0.5;
     if (progress <= 0.9) return 0.75;
     return 1;
+  }
+
+  // קורות משטח - זהה לקובץ הראשי
+  private createSurfaceBeams(
+    totalWidth: number,
+    totalLength: number,
+    beamWidth: number,
+    beamHeight: number,
+    minGap: number
+  ): { x: number, width: number, height: number, depth: number }[] {
+    const n = Math.floor((totalWidth + minGap) / (beamWidth + minGap));
+    const actualGap = n > 1 ? (totalWidth - n * beamWidth) / (n - 1) : 0;
+    const beams = [];
+    for (let i = 0; i < n; i++) {
+      const x = -totalWidth / 2 + i * (beamWidth + actualGap) + beamWidth / 2;
+      beams.push({
+        x,
+        width: beamWidth,
+        height: beamHeight,
+        depth: totalLength
+      });
+    }
+    return beams;
   }
 }
