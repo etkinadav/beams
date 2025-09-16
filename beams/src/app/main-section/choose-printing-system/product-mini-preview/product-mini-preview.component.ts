@@ -76,6 +76,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   ];
 
   private meshes: THREE.Mesh[] = [];
+  private target = new THREE.Vector3(0, 0, 0);
+  private spherical = new THREE.Spherical();
+  private isMouseDown = false;
+  private lastMouseX = 0;
+  private lastMouseY = 0;
 
   ngAfterViewInit() {
     this.initThreeJS();
@@ -112,8 +117,13 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
-    this.camera.position.set(-50, 15, 50); // חזרתי למצב הקודם
-    this.camera.lookAt(0, this.dynamicParams.height/-2, 0);
+    this.camera.position.set(-50, 15, 50);
+    this.target.set(0, this.dynamicParams.height/4 -35, 0);
+    this.camera.lookAt(this.target);
+    
+    // הגדרת מיקום התחלתי עבור הזום
+    const offset = this.camera.position.clone().sub(this.target);
+    this.spherical.setFromVector3(offset);
 
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -132,6 +142,68 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     directionalLight.shadow.mapSize.width = 1024;
     directionalLight.shadow.mapSize.height = 1024;
     this.scene.add(directionalLight);
+
+    // הוספת אירועי עכבר לזום וסיבוב
+    this.addMouseControls();
+  }
+
+  private addMouseControls() {
+    const container = this.container.nativeElement;
+
+    // גלגל עכבר לזום
+    container.addEventListener('wheel', (event: WheelEvent) => {
+      event.preventDefault();
+      const delta = event.deltaY;
+      const zoomSpeed = 0.1;
+      
+      // שינוי רדיוס המצלמה
+      this.spherical.radius += delta * zoomSpeed;
+      this.spherical.radius = Math.max(20, Math.min(200, this.spherical.radius)); // הגבלת טווח זום
+      
+      // עדכון מיקום המצלמה
+      this.camera.position.setFromSpherical(this.spherical).add(this.target);
+    });
+
+    // לחיצה וגרירה לסיבוב
+    container.addEventListener('mousedown', (event: MouseEvent) => {
+      this.isMouseDown = true;
+      this.lastMouseX = event.clientX;
+      this.lastMouseY = event.clientY;
+      container.style.cursor = 'grabbing';
+    });
+
+    container.addEventListener('mousemove', (event: MouseEvent) => {
+      if (!this.isMouseDown) return;
+      
+      const deltaX = event.clientX - this.lastMouseX;
+      const deltaY = event.clientY - this.lastMouseY;
+      
+      const rotateSpeed = 0.01;
+      this.spherical.theta -= deltaX * rotateSpeed;
+      this.spherical.phi += deltaY * rotateSpeed;
+      
+      // הגבלת זווית אנכית
+      this.spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.spherical.phi));
+      
+      // עדכון מיקום המצלמה
+      this.camera.position.setFromSpherical(this.spherical).add(this.target);
+      
+      this.lastMouseX = event.clientX;
+      this.lastMouseY = event.clientY;
+    });
+
+    container.addEventListener('mouseup', () => {
+      this.isMouseDown = false;
+      container.style.cursor = 'grab';
+    });
+
+    container.addEventListener('mouseleave', () => {
+      this.isMouseDown = false;
+      container.style.cursor = 'grab';
+    });
+
+    // הגדרת סגנון עכבר
+    container.style.cursor = 'grab';
   }
 
   private initializeParamsFromProduct() {
@@ -359,8 +431,13 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // יצירת המודל מחדש עם הפרמטרים החדשים
     this.createSimpleProduct();
     
-    // סיבוב איטי של המודל
-    this.scene.rotation.y += 0.005;
+    // עדכון נקודת המבט של המצלמה
+    this.camera.lookAt(this.target);
+    
+    // סיבוב איטי של המודל (רק אם לא במצב גרירה)
+    if (!this.isMouseDown) {
+      this.scene.rotation.y += 0.005;
+    }
     
     this.renderer.render(this.scene, this.camera);
   }
