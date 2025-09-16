@@ -23,6 +23,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private animationId!: number;
+  private textureLoader = new THREE.TextureLoader();
 
   // פרמטרים דינמיים - ערכי ברירת מחדל זהה לקובץ הראשי
   private dynamicParams = {
@@ -52,6 +53,19 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     0x696969, // אפור בינוני
     0x2F4F4F  // אפור כהה יותר
   ];
+
+  // Get wood texture based on beam type - זהה לקובץ הראשי
+  private getWoodTexture(beamType: string): THREE.Texture {
+    let texturePath = 'assets/textures/pine.jpg'; // default
+    
+    if (beamType && beamType.toLowerCase().includes('oak')) {
+      texturePath = 'assets/textures/oak.jpg';
+    } else if (beamType && beamType.toLowerCase().includes('pine')) {
+      texturePath = 'assets/textures/pine.jpg';
+    }
+    
+    return this.textureLoader.load(texturePath);
+  }
 
   private meshes: THREE.Mesh[] = [];
   private target = new THREE.Vector3(0, 0, 0);
@@ -264,6 +278,17 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
     const shelfGaps = shelfsParam?.default || [10, 50, 50]; // ברירת מחדל
     const totalShelves = shelfGaps.length;
+
+    // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
+    let shelfBeam = null;
+    let shelfType = null;
+    if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+      shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+      shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedTypeIndex || 0] : null;
+    }
+    
+    // קבלת טקסטורת עץ לקורות המדפים - זהה לקובץ הראשי
+    const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
     
     for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
       const isTopShelf = shelfIndex === totalShelves - 1;
@@ -289,9 +314,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         }
         
         const beamGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
-        const beamMaterial = new THREE.MeshLambertMaterial({ 
-          color: this.woodColors[this.dynamicParams.woodType]
-        });
+        this.setCorrectTextureMapping(beamGeometry, beam.width, beam.height, beam.depth);
+        const beamMaterial = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
         const beamMesh = new THREE.Mesh(beamGeometry, beamMaterial);
         beamMesh.position.set(beam.x, currentY + this.dynamicParams.frameHeight + beam.height / 2, 0);
         beamMesh.castShadow = true;
@@ -312,9 +336,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       
       for (const beam of frameBeams) {
         const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
-        const frameMaterial = new THREE.MeshLambertMaterial({ 
-          color: this.beamColors[this.dynamicParams.beamType]
-        });
+        this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
+        const frameMaterial = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
         const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
         frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
         frameMesh.castShadow = true;
@@ -327,13 +350,18 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       currentY += this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
     }
 
-    // יצירת רגליים (frame beams) - מיקום קרוב יותר למרכז
-    const legPositions = [
-      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
-      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
-      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2],
-      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2]
-    ];
+    // יצירת רגליים (legs) - זהה לקובץ הראשי
+    // קבלת סוג הקורה של הרגליים מהפרמטרים
+    const legParam = this.product?.params?.find((p: any) => p.type === 'leg');
+    let legBeam = null;
+    let legType = null;
+    if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+      legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
+      legType = legBeam.types && legBeam.types.length ? legBeam.types[legParam.selectedTypeIndex || 0] : null;
+    }
+    
+    // קבלת טקסטורת עץ לרגליים - זהה לקובץ הראשי
+    const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
 
     // חישוב גובה הרגליים - זהה לקובץ הראשי
     let totalY = 0;
@@ -342,15 +370,22 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     const legHeight = totalY;
     
+    // מיקום הרגליים - זהה לקובץ הראשי
+    const legPositions = [
+      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
+      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
+      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2],
+      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2]
+    ];
+    
     legPositions.forEach(pos => {
       const legGeometry = new THREE.BoxGeometry(
         this.dynamicParams.frameWidth,
         legHeight,
         this.dynamicParams.frameWidth
       );
-      const legMaterial = new THREE.MeshLambertMaterial({ 
-        color: this.beamColors[this.dynamicParams.beamType]
-      });
+      this.setCorrectTextureMapping(legGeometry, this.dynamicParams.frameWidth, legHeight, this.dynamicParams.frameWidth);
+      const legMaterial = new THREE.MeshStandardMaterial({ map: legWoodTexture });
       const leg = new THREE.Mesh(legGeometry, legMaterial);
       leg.position.set(pos[0], legHeight/2, pos[2]);
       leg.castShadow = true;
@@ -481,5 +516,39 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       });
     }
     return beams;
+  }
+
+  // פונקציה להגדרת UV mapping נכון לטקסטורה - זהה לקובץ הראשי
+  private setCorrectTextureMapping(geometry: THREE.BoxGeometry, width: number, height: number, depth: number) {
+    const uvAttribute = geometry.attributes.uv;
+    const uvArray = uvAttribute.array as Float32Array;
+    
+    // מצא את הצלע הארוכה ביותר
+    const maxDimension = Math.max(width, height, depth);
+    const isWidthLongest = width === maxDimension;
+    const isHeightLongest = height === maxDimension;
+    const isDepthLongest = depth === maxDimension;
+    
+    // התאם את ה-UV mapping כך שהכיוון הרחב של הטקסטורה יהיה על הצלע הארוכה ביותר
+    for (let i = 0; i < uvArray.length; i += 2) {
+      const u = uvArray[i];
+      const v = uvArray[i + 1];
+      
+      if (isWidthLongest) {
+        // אם הרוחב הוא הארוך ביותר, השאר את הטקסטורה כפי שהיא
+        uvArray[i] = u;
+        uvArray[i + 1] = v;
+      } else if (isHeightLongest) {
+        // אם הגובה הוא הארוך ביותר, סובב את הטקסטורה 90 מעלות
+        uvArray[i] = 1 - v;
+        uvArray[i + 1] = u;
+      } else if (isDepthLongest) {
+        // אם העומק הוא הארוך ביותר, סובב את הטקסטורה 90 מעלות בכיוון אחר
+        uvArray[i] = v;
+        uvArray[i + 1] = 1 - u;
+      }
+    }
+    
+    uvAttribute.needsUpdate = true;
   }
 }
