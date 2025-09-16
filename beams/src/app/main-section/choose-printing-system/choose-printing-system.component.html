@@ -18,14 +18,6 @@
                                 <h6 class="mb-0 zx-text-small fw-bold zx-text-sm-medium">
                                     {{'choose-system.step-1' | translate}}
                                 </h6>
-                                <div class="d-flex align-items-center gap-1 c-pointer rounded-3 px-2" mat-ripple
-                                    [matTooltip]="byPrinterNumberExplanation" (click)="openPrinterNumnerDialod()">
-                                    <span class="text-green zx-text-tiny zx-text-sm-small">
-                                        {{ 'choose-system.by-printer-number' | translate }}
-                                    </span>
-                                    <mat-icon color="primary" *ngIf="isRTL">keyboard_arrow_left</mat-icon>
-                                    <mat-icon color="primary" *ngIf="!isRTL">keyboard_arrow_right</mat-icon>
-                                </div>
                             </div>
 
                         </div>

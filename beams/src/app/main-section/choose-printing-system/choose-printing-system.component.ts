@@ -27,7 +27,6 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
   public hoveredPrintingService: string = '';
   public printingService: string = '';
   continueToServiceText: string = '';
-  byPrinterNumberExplanation: string = '';
   userIsAuthenticated = false;
   userId: string;
   private authStatusSub: Subscription;
@@ -50,7 +49,6 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
     console.log('HttpClient injected:', this.http);
     this.translateService.onLangChange.subscribe(() => {
       this.updatecontinueToServiceText();
-      this.updatebyPrinterNumberExplanation();
     });
   }
 
@@ -124,10 +122,6 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
       this.translateService.instant('choose-system.title-short-' + this.printingService);
   }
 
-  updatebyPrinterNumberExplanation() {
-    this.byPrinterNumberExplanation = this.translateService.instant('choose-system.by-printer-number-explanation');
-  }
-
   // step-item-trans-plotter
 
   onScrollContainerScroll(event: Event) {
@@ -139,10 +133,6 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
     }
   }
 
-  openPrinterNumnerDialod() {
-    this.dialogService.onOpenPrinterNumberDialog();
-  }
-  
   // פונקציה למשיכת כל המוצרים
   loadAllProducts() {
     console.log('=== loadAllProducts התחיל ===');
