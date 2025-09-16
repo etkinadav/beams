@@ -11,6 +11,7 @@ import { ErrorComponent } from "./error/error.component";
 import { AngularMaterialModule } from "./angular-material.module";
 
 import { ChoosePrintingSystemComponent } from "./main-section/choose-printing-system/choose-printing-system.component"
+import { ProductMiniPreviewComponent } from "./main-section/choose-printing-system/product-mini-preview/product-mini-preview.component"
 import { ChooseBranchComponent } from "./main-section/choose-branch/choose-branch.component"
 import { ChooseProductComponent } from "./main-section/choose-product/choose-product.component"
 import { MainNavComponent } from './main-nav/main-nav.component';
@@ -77,6 +78,7 @@ import { ThreejsBoxModule } from './threejs-box/threejs-box.module';
     ErrorComponent,
     MainNavComponent,
     ChoosePrintingSystemComponent,
+    ProductMiniPreviewComponent,
     ChooseBranchComponent,
     ChooseProductComponent,
     PrintingTableComponent,

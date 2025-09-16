@@ -44,8 +44,8 @@
                                         class="step-item-trans-product step-item step-item-hover w-100 rounded-3 shadow-85 d-flex p-2 align-items-center justify-content-center"
                                         matRipple [class.step-item-dark]="isDarkMode">
                                         <div class="d-flex align-items-center gap-3">
-                                            <div class="product-icon p-3 zx-big-icon-size-trans d-flex align-items-center justify-content-center bg-light rounded">
-                                                <span class="zx-text-medium fw-bold text-primary">{{i + 1}}</span>
+                                            <div class="product-icon p-1 zx-big-icon-size-trans d-flex align-items-center justify-content-center bg-light rounded">
+                                                <app-product-mini-preview [product]="product" style="width: 100%; height: 100%;"></app-product-mini-preview>
                                             </div>
                                             <b class="title-small-product d-none" style="max-width: 50px;">
                                                 {{product.translatedName}}
