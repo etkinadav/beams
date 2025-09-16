@@ -223,42 +223,41 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // אתחול הפרמטרים הדינמיים מהמוצר
     console.log('פרמטרים מהמוצר:', this.product.params);
     this.product.params.forEach((param: any) => {
-      console.log(`פרמטר ${param.type}:`, param);
-      switch (param.type) {
-        case 'width':
-          this.dynamicParams.width = param.default || 100; // זהה לקובץ הראשי
-          console.log('רוחב:', this.dynamicParams.width);
-          break;
-        case 'length':
-          this.dynamicParams.length = param.default || 100; // זהה לקובץ הראשי
-          console.log('אורך:', this.dynamicParams.length);
-          break;
-        case 'height':
-          this.dynamicParams.height = param.default || 100; // זהה לקובץ הראשי
-          console.log('גובה:', this.dynamicParams.height);
-          break;
-        case 'beamSingle':
-          if (param.beams && param.beams.length > 0) {
-            const beam = param.beams[param.selectedBeamIndex || 0];
-            console.log('beamSingle beam:', beam);
-            // החלפה: width של הפרמטר הופך ל-height של הקורה, height של הפרמטר הופך ל-width של הקורה
-            this.dynamicParams.frameWidth = (beam.height / 10) || 5; // height הופך ל-width
-            this.dynamicParams.frameHeight = (beam.width / 10) || 5; // width הופך ל-height
-            console.log('frameWidth:', this.dynamicParams.frameWidth, 'frameHeight:', this.dynamicParams.frameHeight);
-          }
-          break;
-        case 'shelfs':
-          if (param.beams && param.beams.length > 0) {
-            const beam = param.beams[param.selectedBeamIndex || 0];
-            console.log('shelfs beam:', beam);
-            // המרה ממ"מ לס"מ כמו בקובץ הראשי
-            this.dynamicParams.beamWidth = (beam.width / 10) || 10; // ברירת מחדל 10 כמו בקובץ הראשי
-            this.dynamicParams.beamHeight = (beam.height / 10) || 2; // ברירת מחדל 2 כמו בקובץ הראשי
-            console.log('beamWidth:', this.dynamicParams.beamWidth, 'beamHeight:', this.dynamicParams.beamHeight);
-          }
-          // מספר מדפים
-          this.dynamicParams.shelfCount = param.default || 3;
-          break;
+      console.log(`פרמטר ${param.name || param.type}:`, param);
+      
+      // בדיקה לפי שם הפרמטר עבור מידות
+      if (param.name === 'width') {
+        this.dynamicParams.width = param.default || 100;
+        console.log('רוחב:', this.dynamicParams.width);
+      } else if (param.name === 'depth') {
+        this.dynamicParams.length = param.default || 100;
+        console.log('אורך (depth):', this.dynamicParams.length);
+      } else if (param.name === 'height') {
+        this.dynamicParams.height = param.default || 100;
+        console.log('גובה:', this.dynamicParams.height);
+      }
+      
+      // בדיקה לפי סוג הפרמטר עבור קורות
+      if (param.type === 'beamSingle') {
+        if (param.beams && param.beams.length > 0) {
+          const beam = param.beams[param.selectedBeamIndex || 0];
+          console.log('beamSingle beam:', beam);
+          // החלפה: width של הפרמטר הופך ל-height של הקורה, height של הפרמטר הופך ל-width של הקורה
+          this.dynamicParams.frameWidth = (beam.height / 10) || 5; // height הופך ל-width
+          this.dynamicParams.frameHeight = (beam.width / 10) || 5; // width הופך ל-height
+          console.log('frameWidth:', this.dynamicParams.frameWidth, 'frameHeight:', this.dynamicParams.frameHeight);
+        }
+      } else if (param.type === 'beamArray' && param.name === 'shelfs') {
+        if (param.beams && param.beams.length > 0) {
+          const beam = param.beams[param.selectedBeamIndex || 0];
+          console.log('shelfs beam:', beam);
+          // המרה ממ"מ לס"מ כמו בקובץ הראשי
+          this.dynamicParams.beamWidth = (beam.width / 10) || 10; // ברירת מחדל 10 כמו בקובץ הראשי
+          this.dynamicParams.beamHeight = (beam.height / 10) || 2; // ברירת מחדל 2 כמו בקובץ הראשי
+          console.log('beamWidth:', this.dynamicParams.beamWidth, 'beamHeight:', this.dynamicParams.beamHeight);
+        }
+        // מספר מדפים
+        this.dynamicParams.shelfCount = param.default || 3;
       }
     });
 
