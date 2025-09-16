@@ -9,7 +9,7 @@ import * as THREE from 'three';
   styles: [`
     .mini-preview-container {
       width: 200px;
-      height: 150px;
+      height: 200px;
       border-radius: 8px;
       overflow: hidden;
     }
