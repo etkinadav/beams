@@ -1078,7 +1078,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         const shelfHeightsList: string[] = [];
         for (let i = 0; i < this.shelves.length; i++) {
             const shelfHeight = this.getShelfHeight(i);
-            shelfHeightsList.push(`${shelfHeight.toFixed(1)} <small>ס"מ</small>`);
+            shelfHeightsList.push(`${this.formatNumber(shelfHeight)} <small>ס"מ</small>`);
         }
         const shelfHeights = shelfHeightsList.join(', ');
         
@@ -1097,15 +1097,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         totalScrews += legScrews;
         
         return {
-            length: `${totalLength.toFixed(1)} <small>ס"מ</small>`,
-            width: `${totalWidth.toFixed(1)} <small>ס"מ</small>`,
-            height: `${totalHeight.toFixed(1)} <small>ס"מ</small>`,
+            length: `${this.formatNumber(totalLength)} <small>ס"מ</small>`,
+            width: `${this.formatNumber(totalWidth)} <small>ס"מ</small>`,
+            height: `${this.formatNumber(totalHeight)} <small>ס"מ</small>`,
             beamCount: `${beamCount} <small>קורות</small>`,
-            gapBetweenBeams: `${gapBetweenBeams.toFixed(1)} <small>ס"מ</small>`,
+            gapBetweenBeams: `${this.formatNumber(gapBetweenBeams)} <small>ס"מ</small>`,
             shelfCount: `${shelfCount} <small>מדפים</small>`,
             shelfHeights: shelfHeights,
             totalScrews: `${totalScrews} <small>ברגים</small>`
         };
+    }
+    
+    // פונקציה עזר להצגת מספרים ללא .0 אם הם שלמים
+    private formatNumber(value: number): string {
+        return value % 1 === 0 ? value.toString() : value.toFixed(1);
     }
     
     // פונקציה לקביעת יחידות לפי סוג הפרמטר
