@@ -239,25 +239,46 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   private changeRandomShelfHeight() {
     this.saveCurrentRotation(); // שמירת הסיבוב הנוכחי
     
-    // חיפוש פרמטר הגובה
-    const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-    if (!heightParam) return; // אם לא נמצא פרמטר גובה, לא נשנה כלום
+    // זיהוי סוג המוצר
+    const isTable = this.product?.name === 'table';
     
-    const step = this.getStep(heightParam.type || 0);
-    const min = heightParam.min || 20;
-    const max = Math.min(heightParam.max || 100, 200); // הגבלה מקסימלית של 200
+    if (isTable) {
+      // שולחן - שינוי גובה המדף היחיד
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      if (!heightParam) return;
+      
+      const step = this.getStep(heightParam.type || 0);
+      const min = heightParam.min || 50;
+      const max = Math.min(heightParam.max || 120, 200);
+      
+      // בחירת ערך רנדומלי בטווח המלא
+      const range = max - min;
+      const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
+      const newValue = min + (randomSteps * step);
+      
+      this.shelfGaps[0] = Math.min(newValue, max); // שולחן - מדף אחד בלבד
+      console.log(`גובה שולחן השתנה ל: ${this.shelfGaps[0]} (טווח: ${min}-${max}, צעד: ${step})`);
+    } else {
+      // ארון - שינוי גובה המדף השלישי
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      if (!heightParam) return;
+      
+      const step = this.getStep(heightParam.type || 0);
+      const min = heightParam.min || 20;
+      const max = Math.min(heightParam.max || 100, 200);
+      
+      // בחירת ערך רנדומלי בטווח המלא
+      const range = max - min;
+      const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
+      const newValue = min + (randomSteps * step);
+      
+      this.shelfGaps[2] = Math.min(newValue, max); // ארון - מדף שלישי
+      console.log(`גובה השתנה ל: ${this.shelfGaps[2]} (טווח: ${min}-${max}, צעד: ${step})`);
+    }
     
-    // בחירת ערך רנדומלי בטווח המלא
-    const range = max - min;
-    const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
-    const newValue = min + (randomSteps * step);
-    
-    this.shelfGaps[2] = Math.min(newValue, max);
     this.createSimpleProductWithoutCameraUpdate();
     this.updateCameraPosition(); // עדכון מצלמה לשינויים אוטומטיים
     this.restoreRotation(); // שחזור הסיבוב
-    
-    console.log(`גובה השתנה ל: ${this.shelfGaps[2]} (טווח: ${min}-${max}, צעד: ${step})`);
   }
 
   // פונקציות לשמירה ושחזור סיבוב המודל
@@ -313,18 +334,36 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       return 'קורת מדפים לא זמינה';
     }
     
+    // זיהוי סוג המוצר
+    const isTable = this.product.name === 'table';
+    
     // חיפוש קורות המדפים
     let currentBeam: any = null;
     let currentBeamType: any = null;
     
     this.product.params.forEach((param: any) => {
-      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
-        const beamIndex = param.selectedBeamIndex || 0;
-        if (param.beams[beamIndex]) {
-          currentBeam = param.beams[beamIndex];
-          const typeIndex = param.selectedBeamTypeIndex || 0;
-          if (currentBeam.types && currentBeam.types[typeIndex]) {
-            currentBeamType = currentBeam.types[typeIndex];
+      if (isTable) {
+        // שולחן - חיפוש פרמטר plata
+        if (param.type === 'beamSingle' && param.name === 'plata' && param.beams && param.beams.length > 0) {
+          const beamIndex = param.selectedBeamIndex || 0;
+          if (param.beams[beamIndex]) {
+            currentBeam = param.beams[beamIndex];
+            const typeIndex = param.selectedBeamTypeIndex || 0;
+            if (currentBeam.types && currentBeam.types[typeIndex]) {
+              currentBeamType = currentBeam.types[typeIndex];
+            }
+          }
+        }
+      } else {
+        // ארון - חיפוש פרמטר shelfs
+        if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
+          const beamIndex = param.selectedBeamIndex || 0;
+          if (param.beams[beamIndex]) {
+            currentBeam = param.beams[beamIndex];
+            const typeIndex = param.selectedBeamTypeIndex || 0;
+            if (currentBeam.types && currentBeam.types[typeIndex]) {
+              currentBeamType = currentBeam.types[typeIndex];
+            }
           }
         }
       }
@@ -415,13 +454,25 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // שמירת המצב הנוכחי של המצלמה
     const currentCameraState = this.saveCurrentCameraState();
 
+    // זיהוי סוג המוצר
+    const isTable = this.product.name === 'table';
+
     // חיפוש קורות המדפים
     let shelfBeams: any[] = [];
     let shelfParam: any = null;
     this.product.params.forEach((param: any) => {
-      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
-        shelfBeams = param.beams;
-        shelfParam = param;
+      if (isTable) {
+        // שולחן - חיפוש פרמטר plata
+        if (param.type === 'beamSingle' && param.name === 'plata' && param.beams && param.beams.length > 0) {
+          shelfBeams = param.beams;
+          shelfParam = param;
+        }
+      } else {
+        // ארון - חיפוש פרמטר shelfs
+        if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
+          shelfBeams = param.beams;
+          shelfParam = param;
+        }
       }
     });
 
@@ -534,27 +585,57 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // שמירת המצב הנוכחי של המצלמה
     const currentCameraState = this.saveCurrentCameraState();
     
-    this.shelfGaps[2] += 5; // הוספת 5 ס"מ למדף השלישי
+    // זיהוי סוג המוצר
+    const isTable = this.product?.name === 'table';
+    
+    if (isTable) {
+      // שולחן - הגדלת גובה המדף היחיד
+      this.shelfGaps[0] += 5; // הוספת 5 ס"מ למדף היחיד
+      console.log('גובה שולחן הוגדל ל:', this.shelfGaps[0]);
+    } else {
+      // ארון - הגדלת גובה המדף השלישי
+      this.shelfGaps[2] += 5; // הוספת 5 ס"מ למדף השלישי
+      console.log('גובה המדף השלישי הוגדל ל:', this.shelfGaps[2]);
+    }
+    
     this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
     
     // עדכון הזום בהתאם לגובה הכולל
     this.restoreCameraState(currentCameraState, true);
-    
-    console.log('גובה המדף השלישי הוגדל ל:', this.shelfGaps[2]);
   }
 
   decreaseShelfHeight() {
-    if (this.shelfGaps[2] > 10) { // הגבלה מינימלית של 10 ס"מ
-      // שמירת המצב הנוכחי של המצלמה
-      const currentCameraState = this.saveCurrentCameraState();
-      
-      this.shelfGaps[2] -= 5; // הפחתת 5 ס"מ למדף השלישי
-      this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
-      
-      // עדכון הזום בהתאם לגובה הכולל
-      this.restoreCameraState(currentCameraState, true);
-      
-      console.log('גובה המדף השלישי הוקטן ל:', this.shelfGaps[2]);
+    // זיהוי סוג המוצר
+    const isTable = this.product?.name === 'table';
+    
+    if (isTable) {
+      // שולחן - הקטנת גובה המדף היחיד
+      if (this.shelfGaps[0] > 10) { // הגבלה מינימלית של 10 ס"מ
+        // שמירת המצב הנוכחי של המצלמה
+        const currentCameraState = this.saveCurrentCameraState();
+        
+        this.shelfGaps[0] -= 5; // הפחתת 5 ס"מ למדף היחיד
+        this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+        
+        // עדכון הזום בהתאם לגובה הכולל
+        this.restoreCameraState(currentCameraState, true);
+        
+        console.log('גובה שולחן הוקטן ל:', this.shelfGaps[0]);
+      }
+    } else {
+      // ארון - הקטנת גובה המדף השלישי
+      if (this.shelfGaps[2] > 10) { // הגבלה מינימלית של 10 ס"מ
+        // שמירת המצב הנוכחי של המצלמה
+        const currentCameraState = this.saveCurrentCameraState();
+        
+        this.shelfGaps[2] -= 5; // הפחתת 5 ס"מ למדף השלישי
+        this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+        
+        // עדכון הזום בהתאם לגובה הכולל
+        this.restoreCameraState(currentCameraState, true);
+        
+        console.log('גובה המדף השלישי הוקטן ל:', this.shelfGaps[2]);
+      }
     }
   }
 
@@ -821,6 +902,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       return;
     }
 
+    // זיהוי סוג המוצר
+    const isTable = this.product.name === 'table';
+
     // אתחול אינדקס הקורה הנוכחית - תמיד הקורה הראשונה וה-type הראשון שלה
     this.currentBeamIndex = 0;
     this.currentBeamTypeIndex = 0;
@@ -830,8 +914,16 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     // חיפוש קורות המדפים
     this.product.params.forEach((param: any) => {
-      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
-        shelfBeams = param.beams;
+      if (isTable) {
+        // שולחן - חיפוש פרמטר plata
+        if (param.type === 'beamSingle' && param.name === 'plata' && param.beams && param.beams.length > 0) {
+          shelfBeams = param.beams;
+        }
+      } else {
+        // ארון - חיפוש פרמטר shelfs
+        if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
+          shelfBeams = param.beams;
+        }
       }
     });
     
@@ -899,6 +991,26 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
           this.shelfGaps = [...param.default]; // העתקת הגבהים מהמוצר
           console.log('גבהי מדפים נטענו:', this.shelfGaps);
         }
+      } else if (isTable && param.type === 'beamSingle' && param.name === 'plata') {
+        // שולחן - טיפול בפרמטר plata
+        if (param.beams && param.beams.length > 0) {
+          const beam = param.beams[param.selectedBeamIndex || 0];
+          console.log('plata beam:', beam);
+          // המרה ממ"מ לס"מ כמו בקובץ הראשי
+          const beamWidth = beam.width || 100; // ברירת מחדל 100 מ"מ
+          const beamHeight = beam.height || 25; // ברירת מחדל 25 מ"מ
+          this.dynamicParams.beamWidth = beamWidth / 10; // המרה ממ"מ לס"מ
+          this.dynamicParams.beamHeight = beamHeight / 10; // המרה ממ"מ לס"מ
+          console.log('אתחול מידות קורת פלטה:', { beamWidth, beamHeight, beamWidthCm: this.dynamicParams.beamWidth, beamHeightCm: this.dynamicParams.beamHeight });
+        }
+        // שולחן - יש רק מדף אחד
+        this.dynamicParams.shelfCount = 1;
+        
+        // גובה המדף נקבע על ידי פרמטר height
+        const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+        const tableHeight = heightParam ? heightParam.default || 80 : 80;
+        this.shelfGaps = [tableHeight]; // מדף אחד בגובה שנקבע
+        console.log('גובה מדף שולחן נטען:', this.shelfGaps);
       }
     });
 
@@ -917,10 +1029,30 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const minGap = 2; // רווח מינימלי בין קורות
     let currentY = 0;
     
+    // זיהוי סוג המוצר - שולחן או ארון
+    const isTable = this.product?.name === 'table';
+    console.log('סוג מוצר:', isTable ? 'שולחן' : 'ארון');
+    
     // קבלת רשימת gaps מהמוצר
-    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
-    const shelfGaps = this.shelfGaps; // שימוש בגבהי המדפים הנוכחיים
-    const totalShelves = shelfGaps.length;
+    let shelfsParam = null;
+    let shelfGaps = [];
+    let totalShelves = 0;
+    
+    if (isTable) {
+      // שולחן - יש רק מדף אחד בגובה שנקבע על ידי פרמטר height
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      const tableHeight = heightParam ? this.dynamicParams.height : 80;
+      shelfGaps = [tableHeight]; // מדף אחד בגובה שנקבע
+      totalShelves = 1;
+      
+      // עבור שולחן, נשתמש בפרמטר plata במקום shelfs
+      shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'plata');
+    } else {
+      // ארון - שימוש בגבהי המדפים הנוכחיים
+      shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+      shelfGaps = this.shelfGaps;
+      totalShelves = shelfGaps.length;
+    }
 
     // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
     let shelfBeam = null;
@@ -941,7 +1073,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
     
     // קבלת סוג הקורה והעץ של קורות החיזוק מהפרמטרים
-    const frameParam = this.product?.params?.find((p: any) => p.type === 'beamSingle');
+    const frameParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'leg');
     let frameBeam = null;
     let frameType = null;
     console.log('frameParam:', frameParam);
@@ -1120,10 +1252,30 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const minGap = 2; // רווח מינימלי בין קורות
     let currentY = 0;
     
+    // זיהוי סוג המוצר - שולחן או ארון
+    const isTable = this.product?.name === 'table';
+    console.log('סוג מוצר:', isTable ? 'שולחן' : 'ארון');
+    
     // קבלת רשימת gaps מהמוצר
-    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
-    const shelfGaps = this.shelfGaps; // שימוש בגבהי המדפים הנוכחיים
-    const totalShelves = shelfGaps.length;
+    let shelfsParam = null;
+    let shelfGaps = [];
+    let totalShelves = 0;
+    
+    if (isTable) {
+      // שולחן - יש רק מדף אחד בגובה שנקבע על ידי פרמטר height
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      const tableHeight = heightParam ? this.dynamicParams.height : 80;
+      shelfGaps = [tableHeight]; // מדף אחד בגובה שנקבע
+      totalShelves = 1;
+      
+      // עבור שולחן, נשתמש בפרמטר plata במקום shelfs
+      shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'plata');
+    } else {
+      // ארון - שימוש בגבהי המדפים הנוכחיים
+      shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+      shelfGaps = this.shelfGaps;
+      totalShelves = shelfGaps.length;
+    }
 
     // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
     let shelfBeam = null;
@@ -1144,7 +1296,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
     
     // קבלת סוג הקורה והעץ של קורות החיזוק מהפרמטרים
-    const frameParam = this.product?.params?.find((p: any) => p.type === 'beamSingle');
+    const frameParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'leg');
     let frameBeam = null;
     let frameType = null;
     console.log('frameParam:', frameParam);
