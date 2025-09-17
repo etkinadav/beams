@@ -8,17 +8,17 @@ import * as THREE from 'three';
       <div #miniPreviewContainer class="mini-preview-container"></div>
       <div class="width-control">
         <button (click)="decreaseWidth()" class="control-btn">-</button>
-        <span class="width-value">{{dynamicParams.width}} ס"מ</span>
+        <span class="width-value">רוחב {{dynamicParams.width}} ס"מ</span>
         <button (click)="increaseWidth()" class="control-btn">+</button>
       </div>
         <div class="length-control">
           <button (click)="decreaseLength()" class="control-btn">-</button>
-          <span class="length-value">{{dynamicParams.length}} ס"מ</span>
+          <span class="length-value">אורך {{dynamicParams.length}} ס"מ</span>
           <button (click)="increaseLength()" class="control-btn">+</button>
         </div>
         <div class="shelf-height-control">
           <button (click)="decreaseShelfHeight()" class="control-btn">-</button>
-          <span class="shelf-height-value">{{shelfGaps[2]}} ס"מ</span>
+          <span class="shelf-height-value">גובה {{shelfGaps[2]}} ס"מ</span>
           <button (click)="increaseShelfHeight()" class="control-btn">+</button>
         </div>
       </div>
@@ -37,52 +37,52 @@ import * as THREE from 'three';
     }
       .width-control {
         position: absolute;
-        top: 10px;
+        bottom: 60px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 1000;
         display: flex;
         align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 6px 12px;
-        border-radius: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        border: 1px solid #e0e0e0;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 3px 8px;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        font-size: 10px;
       }
       .length-control {
         position: absolute;
-        top: 50px;
+        bottom: 30px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 1000;
         display: flex;
         align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 6px 12px;
-        border-radius: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        border: 1px solid #e0e0e0;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 3px 8px;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        font-size: 10px;
       }
       .shelf-height-control {
         position: absolute;
-        top: 90px;
+        bottom: 0px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 1000;
         display: flex;
         align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 6px 12px;
-        border-radius: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        border: 1px solid #e0e0e0;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 3px 8px;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        font-size: 10px;
       }
     .control-btn {
-      width: 24px;
-      height: 24px;
+      width: 16px;
+      height: 16px;
       border: none;
       border-radius: 50%;
       background: #2196f3;
@@ -92,14 +92,14 @@ import * as THREE from 'three';
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 10px;
       transition: background-color 0.2s;
     }
     .control-btn:hover {
       background: #1976d2;
     }
     .width-value, .length-value, .shelf-height-value {
-      font-size: 12px;
+      font-size: 9px;
       font-weight: 500;
       color: #333;
       min-width: 50px;
