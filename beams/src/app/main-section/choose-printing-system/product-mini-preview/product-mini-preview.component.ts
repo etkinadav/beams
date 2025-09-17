@@ -37,8 +37,9 @@ import * as THREE from 'three';
     }
       .width-control {
         position: absolute;
-        bottom: 60px;
-        left: 10px;
+        bottom: 20px;
+        right: 20px;
+        width: 50%;
         z-index: 1000;
         display: flex;
         align-items: center;
@@ -51,8 +52,9 @@ import * as THREE from 'three';
       }
       .length-control {
         position: absolute;
-        bottom: 30px;
-        left: 10px;
+        bottom: 50px;
+        right: 20px;
+        width: 50%;
         z-index: 1000;
         display: flex;
         align-items: center;
@@ -65,8 +67,9 @@ import * as THREE from 'three';
       }
       .shelf-height-control {
         position: absolute;
-        bottom: 0px;
-        left: 10px;
+        bottom: 80px;
+        right: 20px;
+        width: 50%;
         z-index: 1000;
         display: flex;
         align-items: center;
