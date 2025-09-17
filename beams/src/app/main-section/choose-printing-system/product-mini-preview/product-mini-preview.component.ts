@@ -78,6 +78,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   private inactivityTimer: any = null; // טיימר לחוסר פעילות
   private autoChangeTimer: any = null; // טיימר לשינוי אוטומטי של פרמטרים
   private savedRotation: THREE.Euler = new THREE.Euler(); // שמירת סיבוב המודל
+  private iterationCounter: number = 0; // מונה איטרציות לשינוי מדפים
 
   ngAfterViewInit() {
     this.initThreeJS();
@@ -140,6 +141,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
   // פונקציה לשינוי פרמטר רנדומלי
   private changeRandomParameter() {
+    this.iterationCounter++; // הגדלת מונה האיטרציות
+    
     const actions = [
       'changeWidth',
       'changeLength', 
@@ -147,6 +150,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       'changeFrameBeam',
       'changeShelfBeam'
     ];
+    
+    // הוספת שינוי מספר מדפים רק פעם ב-4 איטרציות
+    if (this.iterationCounter % 4 === 0) {
+      actions.push('changeShelfCount');
+    }
     
     // בחירת 3 פרמטרים רנדומליים שונים
     const selectedActions: string[] = [];
@@ -176,10 +184,13 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         case 'changeShelfBeam':
           this.changeShelfBeamType();
           break;
+        case 'changeShelfCount':
+          this.changeShelfCount();
+          break;
       }
     });
     
-    console.log(`שינוי אוטומטי של 3 פרמטרים: ${selectedActions.join(', ')}`);
+    console.log(`שינוי אוטומטי של 3 פרמטרים (איטרציה ${this.iterationCounter}): ${selectedActions.join(', ')}`);
   }
 
   // פונקציות לשינוי רנדומלי של מידות
@@ -250,6 +261,57 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     this.restoreRotation(); // שחזור הסיבוב
     
     console.log(`גובה השתנה ל: ${this.shelfGaps[2]} (טווח: ${min}-${max}, צעד: ${step})`);
+  }
+
+  // פונקציה לשינוי מספר מדפים
+  private changeShelfCount() {
+    this.saveCurrentRotation(); // שמירת הסיבוב הנוכחי
+    
+    // חיפוש פרמטר beamArray
+    const shelfParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+    if (!shelfParam) return; // אם לא נמצא פרמטר מדפים, לא נשנה כלום
+    
+    const min = shelfParam.min || 2; // מינימום 2 מדפים
+    const max = shelfParam.max || 8; // מקסימום 8 מדפים
+    const currentCount = this.shelfGaps.length;
+    
+    // הגרלה: אם יותר מ-0.5 - הוספה, אם פחות - הסרה
+    const randomValue = Math.random();
+    
+    if (randomValue > 0.5) {
+      // הוספת מדף
+      if (currentCount < max) {
+        const step = this.getStep(shelfParam.type || 0);
+        const minGap = shelfParam.minGap || 20;
+        const maxGap = shelfParam.maxGap || 100;
+        
+        // בחירת גודל רנדומלי למדף החדש
+        const range = maxGap - minGap;
+        const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
+        const newGapSize = minGap + (randomSteps * step);
+        
+        // הוספת המדף החדש בסוף הרשימה
+        this.shelfGaps.push(Math.min(newGapSize, maxGap));
+        
+        console.log(`נוסף מדף חדש בגודל: ${this.shelfGaps[this.shelfGaps.length - 1]} (סה"כ: ${this.shelfGaps.length} מדפים)`);
+      } else {
+        console.log('לא ניתן להוסיף מדף - הגענו למקסימום');
+      }
+    } else {
+      // הסרת מדף
+      if (currentCount > min) {
+        // בחירת מדף רנדומלי להסרה (לא המדף הראשון - הכי תחתון)
+        const removableIndex = Math.floor(Math.random() * (currentCount - 1)) + 1; // מ-1 עד סוף הרשימה
+        const removedGap = this.shelfGaps.splice(removableIndex, 1)[0];
+        
+        console.log(`הוסר מדף בגודל: ${removedGap} (סה"כ: ${this.shelfGaps.length} מדפים)`);
+      } else {
+        console.log('לא ניתן להסיר מדף - הגענו למינימום');
+      }
+    }
+    
+    this.createSimpleProductWithoutCameraUpdate();
+    this.restoreRotation(); // שחזור הסיבוב
   }
 
   // פונקציות לשמירה ושחזור סיבוב המודל
