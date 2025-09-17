@@ -35,12 +35,12 @@
                                 style="max-width: 100%;">
                                 <!-- printingService BTNs -->
                                 <article class="printing-service-btn-con d-flex flex-column gap-3">
-                                                                      <!-- Products BTNs -->
+                                    <!-- Products BTNs -->
                                     <div *ngFor="let product of products; let i = index" 
                                         (mouseenter)="onHoverProduct(product)"
                                         (mouseleave)="onHoverProduct(null)"
                                         [class.zx-step-choosen]="selectedProduct?._id === product._id"
-                                        class="step-item-trans-product step-item step-item-hover w-100 rounded-3 shadow-85 d-flex p-2 gap-md-3 align-items-center justify-content-center position-relative"
+                                        class="step-item-trans-product step-item w-100 rounded-3 shadow-85 d-flex p-2 gap-md-3 align-items-center justify-content-center position-relative"
                                         [class.step-item-dark]="isDarkMode">
                                         <div class="d-flex align-items-center gap-3">
                                             <div class="product-icon p-1 zx-big-icon-size-trans d-flex align-items-center justify-content-center bg-light rounded">
@@ -57,11 +57,11 @@
                                             </h6>
                                             <span class="d-md-none opacity-75 zx-text-tiny zx-text-sm-small"
                                                 [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{product.name || 'מוצר מותאם אישית'}}
+                                                דגם - {{product.name || 'מוצר מותאם אישית'}}
                                             </span>
                                             <span class="d-none d-md-inline opacity-75 zx-text-tiny zx-text-sm-small text-center"
                                                 [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
-                                                {{product.name || 'מוצר לא מתאים'}}
+                                                דגם - {{product.name || 'מוצר לא מתאים'}}
                                             </span>
                                         </div>
                                         
