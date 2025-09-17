@@ -176,5 +176,16 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
     }
     return false;
   }
+
+  // פונקציה לניווט למוצר
+  navigateToProduct(product: any) {
+    if (product && product.name) {
+      // ניווט לעמוד המוצר עם שם המוצר
+      window.location.href = `/beams?product=${encodeURIComponent(product.name)}`;
+    } else {
+      // אם אין שם מוצר, ניווט לעמוד הכללי
+      window.location.href = '/beams';
+    }
+  }
   // ==================
 }
