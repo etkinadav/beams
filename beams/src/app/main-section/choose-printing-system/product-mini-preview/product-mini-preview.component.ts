@@ -11,12 +11,17 @@ import * as THREE from 'three';
         <span class="width-value">{{dynamicParams.width}} ס"מ</span>
         <button (click)="increaseWidth()" class="control-btn">+</button>
       </div>
-      <div class="length-control">
-        <button (click)="decreaseLength()" class="control-btn">-</button>
-        <span class="length-value">{{dynamicParams.length}} ס"מ</span>
-        <button (click)="increaseLength()" class="control-btn">+</button>
+        <div class="length-control">
+          <button (click)="decreaseLength()" class="control-btn">-</button>
+          <span class="length-value">{{dynamicParams.length}} ס"מ</span>
+          <button (click)="increaseLength()" class="control-btn">+</button>
+        </div>
+        <div class="shelf-height-control">
+          <button (click)="decreaseShelfHeight()" class="control-btn">-</button>
+          <span class="shelf-height-value">{{shelfGaps[2]}} ס"מ</span>
+          <button (click)="increaseShelfHeight()" class="control-btn">+</button>
+        </div>
       </div>
-    </div>
   `,
   styles: [`
     .preview-wrapper {
@@ -30,36 +35,51 @@ import * as THREE from 'three';
       border-radius: 8px;
       overflow: hidden;
     }
-    .width-control {
-      position: absolute;
-      top: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 6px 12px;
-      border-radius: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      border: 1px solid #e0e0e0;
-    }
-    .length-control {
-      position: absolute;
-      top: 140px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 6px 12px;
-      border-radius: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      border: 1px solid #e0e0e0;
-    }
+      .width-control {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 6px 12px;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e0e0e0;
+      }
+      .length-control {
+        position: absolute;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 6px 12px;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e0e0e0;
+      }
+      .shelf-height-control {
+        position: absolute;
+        top: 90px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 6px 12px;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e0e0e0;
+      }
     .control-btn {
       width: 24px;
       height: 24px;
@@ -78,7 +98,7 @@ import * as THREE from 'three';
     .control-btn:hover {
       background: #1976d2;
     }
-    .width-value, .length-value {
+    .width-value, .length-value, .shelf-height-value {
       font-size: 12px;
       font-weight: 500;
       color: #333;
@@ -111,6 +131,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     beamType: 0  // אינדקס סוג קורה
   };
 
+  // גבהי המדפים הנוכחיים
+  public shelfGaps: number[] = [10, 50, 50];
+  
+  // מרחק ברירת מחדל של המצלמה
+  private defaultDistance: number = 0;
   
   // צבעי עץ שונים
   private woodColors = [
@@ -226,6 +251,35 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.restoreCameraState(currentCameraState);
       
       console.log('אורך הוקטן ל:', this.dynamicParams.length);
+    }
+  }
+
+  // פונקציות לשליטה בגובה המדף השלישי
+  increaseShelfHeight() {
+    // שמירת המצב הנוכחי של המצלמה
+    const currentCameraState = this.saveCurrentCameraState();
+    
+    this.shelfGaps[2] += 5; // הוספת 5 ס"מ למדף השלישי
+    this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+    
+    // עדכון הזום בהתאם לגובה הכולל
+    this.restoreCameraState(currentCameraState, true);
+    
+    console.log('גובה המדף השלישי הוגדל ל:', this.shelfGaps[2]);
+  }
+
+  decreaseShelfHeight() {
+    if (this.shelfGaps[2] > 10) { // הגבלה מינימלית של 10 ס"מ
+      // שמירת המצב הנוכחי של המצלמה
+      const currentCameraState = this.saveCurrentCameraState();
+      
+      this.shelfGaps[2] -= 5; // הפחתת 5 ס"מ למדף השלישי
+      this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+      
+      // עדכון הזום בהתאם לגובה הכולל
+      this.restoreCameraState(currentCameraState, true);
+      
+      console.log('גובה המדף השלישי הוקטן ל:', this.shelfGaps[2]);
     }
   }
 
@@ -388,6 +442,12 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         }
         // מספר מדפים
         this.dynamicParams.shelfCount = param.default || 3;
+        
+        // טעינת גבהי המדפים
+        if (Array.isArray(param.default)) {
+          this.shelfGaps = [...param.default]; // העתקת הגבהים מהמוצר
+          console.log('גבהי מדפים נטענו:', this.shelfGaps);
+        }
       }
     });
 
@@ -405,7 +465,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     // קבלת רשימת gaps מהמוצר
     const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
-    const shelfGaps = shelfsParam?.default || [10, 50, 50]; // ברירת מחדל
+    const shelfGaps = this.shelfGaps; // שימוש בגבהי המדפים הנוכחיים
     const totalShelves = shelfGaps.length;
 
     // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
@@ -544,7 +604,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     // קבלת רשימת gaps מהמוצר
     const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
-    const shelfGaps = shelfsParam?.default || [10, 50, 50]; // ברירת מחדל
+    const shelfGaps = this.shelfGaps; // שימוש בגבהי המדפים הנוכחיים
     const totalShelves = shelfGaps.length;
 
     // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
@@ -687,15 +747,33 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   }
 
   // שחזור המצב של המצלמה
-  private restoreCameraState(cameraState: any) {
+  private restoreCameraState(cameraState: any, isCamera: boolean = false) {
     // שחזור מיקום המצלמה
     this.camera.position.copy(cameraState.cameraPosition);
     this.target.copy(cameraState.target);
     
-    // שחזור מצב spherical
+     // שחזור מצב spherical
     this.spherical.radius = cameraState.spherical.radius;
     this.spherical.theta = cameraState.spherical.theta;
     this.spherical.phi = cameraState.spherical.phi;
+    
+    // עדכון מיקום המצלמה בפועל עם הערכים החדשים
+    if (isCamera) {
+      const totalShelfsNow = this.getTotalShelfHeight();
+      const totalShelfsDefault = this.getTotalShelfHeightDefault();
+      const extraZoom = totalShelfsNow - totalShelfsDefault;
+      
+      // אם defaultDistance עדיין לא הוגדר, נשתמש ב-radius הנוכחי כבסיס
+      const baseDistance = this.defaultDistance > 0 ? this.defaultDistance : cameraState.spherical.radius;
+      
+      // חישוב מרחק חדש בהתאם לגובה הכולל (זהה לטעינה הראשונה)
+      const heightRatio = totalShelfsNow / totalShelfsDefault;
+      const newDistance = baseDistance * heightRatio;
+      
+      this.spherical.radius = newDistance;
+      console.log('extraZoom!!', extraZoom, 'heightRatio:', heightRatio, 'baseDistance:', baseDistance, 'newDistance:', newDistance);  
+      this.camera.position.setFromSpherical(this.spherical).add(this.target);
+    }
     
     // שחזור סיבוב המודל
     this.scene.rotation.x = cameraState.sceneRotation.x;
@@ -725,7 +803,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const distanceY = fitHeight / (2 * Math.tan(fov / 2));
     const distanceX = fitWidth / (2 * Math.tan(fov / 2) * this.camera.aspect);
     const distance = Math.max(distanceY, distanceX, fitDepth * 1.2) * 2; // זום אאוט פי 2
-    
+    this.defaultDistance = distance;
+
     // מיקום המצלמה - זהה לקובץ הראשי
     this.camera.position.set(0.7 * width, distance, 1.2 * depth);
     this.camera.lookAt(this.target);
@@ -857,5 +936,63 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     
     uvAttribute.needsUpdate = true;
+  }
+
+  // פונקציה שמחזירה את גובה המדפים הכולל ברגע נתון
+  getTotalShelfHeight(): number {
+    let totalHeight = 0;
+    for (let i = 0; i < this.shelfGaps.length; i++) {
+      totalHeight += this.shelfGaps[i] + this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+    }
+    return totalHeight;
+  }
+
+  // פונקציה שמחזירה את גובה המדפים הכולל של ברירת המחדל מהמוצר
+  getTotalShelfHeightDefault(): number {
+    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
+    const defaultShelfGaps = shelfsParam?.default || [10, 50, 50];
+    let defaultTotalHeight = 0;
+    for (let i = 0; i < defaultShelfGaps.length; i++) {
+      defaultTotalHeight += defaultShelfGaps[i] + this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+    }
+    return defaultTotalHeight;
+  }
+
+  // עדכון הזום בהתאם לגובה הכולל של המדפים
+  private updateZoomBasedOnTotalHeight(cameraState: any) {
+    // חישוב הגובה הכולל הנוכחי של המדפים
+    const currentTotalHeight = this.getTotalShelfHeight();
+    
+    // חישוב הגובה הכולל של ברירת המחדל מהמוצר
+    const defaultTotalHeight = this.getTotalShelfHeightDefault();
+    
+    console.log('גובה כולל נוכחי:', currentTotalHeight);
+    console.log('גובה כולל ברירת מחדל:', defaultTotalHeight);
+    
+    // חישוב יחס הזום (ברירת מחדל = זום רגיל)
+    const zoomRatio = currentTotalHeight / defaultTotalHeight;
+    
+    // רדיוס בסיסי לזום רגיל (הרדיוס הנוכחי של המצלמה)
+    const baseRadius = cameraState.spherical.radius;
+    
+    // חישוב הרדיוס החדש בהתאם ליחס הזום
+    const newRadius = baseRadius * zoomRatio;
+    
+    // הגבלת טווח הזום
+    const minRadius = 30;
+    const maxRadius = 250;
+    const clampedRadius = Math.max(minRadius, Math.min(maxRadius, newRadius));
+    
+    console.log(`זום: יחס=${zoomRatio.toFixed(2)}, רדיוס בסיס=${baseRadius.toFixed(2)}, רדיוס חדש=${clampedRadius.toFixed(2)}`);
+    
+    // עדכון המצב של המצלמה עם הרדיוס החדש
+    cameraState.spherical.radius = clampedRadius;
+    
+    // עדכון ישיר של המצלמה עם הרדיוס החדש
+    this.spherical.radius = clampedRadius;
+    this.camera.position.setFromSpherical(this.spherical).add(this.target);
+    this.camera.lookAt(this.target);
+    
+    console.log('זום עודכן ישירות למצלמה:', this.spherical.radius);
   }
 }
