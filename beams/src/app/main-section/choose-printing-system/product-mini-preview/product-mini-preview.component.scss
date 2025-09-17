@@ -15,28 +15,28 @@
 // כפתורי מחזור בפינה הימנית העליונה של כל קטגוריה
 .refresh-btn {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 20px;
-  height: 20px;
+  top: 1px;
+  right: 1px;
+  width: 24px;
+  height: 24px;
   border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: #666;
+  border-radius: 0;
+  background: transparent;
+  color: #2196f3;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1001;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 
 .refresh-btn:hover {
-  background: rgba(255, 255, 255, 1);
-  color: #333;
-  transform: scale(1.1);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  background: transparent;
+  color: #1976d2;
+  transform: none;
+  box-shadow: none;
 }
 
 .refresh-btn:active {
@@ -44,15 +44,15 @@
 }
 
 .refresh-icon {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
 }
 
 .frame-beam-control {
   position: absolute;
-  bottom: 130px;
-  left: 5px;
-  width: 50%;
+  bottom: 5px;
+  right: 8px;
+  width: 40%;
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -74,9 +74,9 @@
 
 .shelf-beam-control {
   position: absolute;
-  bottom: 180px;
-  left: 5px;
-  width: 50%;
+  bottom: 65px;
+  right: 8px;
+  width: 40%;
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -108,7 +108,7 @@
   position: absolute;
   bottom: 5px;
   left: 5px;
-  width: 50%;
+  width: 40%;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -124,7 +124,7 @@
   position: absolute;
   bottom: 45px;
   left: 5px;
-  width: 50%;
+  width: 40%;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -140,7 +140,7 @@
   position: absolute;
   bottom: 85px;
   left: 5px;
-  width: 50%;
+  width: 40%;
   z-index: 1000;
   display: flex;
   align-items: center;

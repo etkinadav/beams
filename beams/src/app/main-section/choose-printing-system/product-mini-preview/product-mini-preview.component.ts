@@ -963,41 +963,17 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     };
   }
 
-  // שחזור המצב של המצלמה
+  // שחזור המצב של המצלמה - לא משנה את המבט הנוכחי
   private restoreCameraState(cameraState: any, isCamera: boolean = false) {
-    // שחזור מיקום המצלמה
-    this.camera.position.copy(cameraState.cameraPosition);
-    this.target.copy(cameraState.target);
-    
-     // שחזור מצב spherical
-    this.spherical.radius = cameraState.spherical.radius;
-    this.spherical.theta = cameraState.spherical.theta;
-    this.spherical.phi = cameraState.spherical.phi;
-    
-    // עדכון מיקום המצלמה בפועל עם הערכים החדשים
-    if (isCamera) {
-      const totalShelfsNow = this.getTotalShelfHeight();
-      const totalShelfsDefault = this.getTotalShelfHeightDefault();
-      const extraZoom = totalShelfsNow - totalShelfsDefault;
-      
-      // אם defaultDistance עדיין לא הוגדר, נשתמש ב-radius הנוכחי כבסיס
-      const baseDistance = this.defaultDistance > 0 ? this.defaultDistance : cameraState.spherical.radius;
-      
-      // חישוב מרחק חדש בהתאם לגובה הכולל (זהה לטעינה הראשונה)
-      const heightRatio = totalShelfsNow / totalShelfsDefault;
-      const newDistance = baseDistance * heightRatio;
-      
-      this.spherical.radius = newDistance;
-      console.log('extraZoom!!', extraZoom, 'heightRatio:', heightRatio, 'baseDistance:', baseDistance, 'newDistance:', newDistance);  
-      this.camera.position.setFromSpherical(this.spherical).add(this.target);
+    // לא משנים את מיקום המצלמה או את המבט - שומרים על המצב הנוכחי
+    // רק מעדכנים את סיבוב המודל אם צריך
+    if (cameraState.sceneRotation) {
+      this.scene.rotation.x = cameraState.sceneRotation.x;
+      this.scene.rotation.y = cameraState.sceneRotation.y;
+      this.scene.rotation.z = cameraState.sceneRotation.z;
     }
     
-    // שחזור סיבוב המודל
-    this.scene.rotation.x = cameraState.sceneRotation.x;
-    this.scene.rotation.y = cameraState.sceneRotation.y;
-    this.scene.rotation.z = cameraState.sceneRotation.z;
-    
-    // עדכון נקודת המבט
+    // עדכון נקודת המבט הנוכחית
     this.camera.lookAt(this.target);
   }
 
