@@ -136,7 +136,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       if (!this.hasUserInteracted) {
         this.changeRandomParameter();
       }
-    }, 2000); // כל 2 שניות
+    }, 5000); // כל 5 שניות
   }
 
   // פונקציה לשינוי פרמטר רנדומלי
@@ -257,6 +257,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       const newValue = min + (randomSteps * step);
       
       this.shelfGaps[0] = Math.min(newValue, max); // שולחן - מדף אחד בלבד
+      this.dynamicParams.height = this.shelfGaps[0]; // עדכון פרמטר הגובה
       console.log(`גובה שולחן השתנה ל: ${this.shelfGaps[0]} (טווח: ${min}-${max}, צעד: ${step})`);
     } else {
       // ארון - שינוי גובה המדף השלישי
@@ -591,6 +592,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (isTable) {
       // שולחן - הגדלת גובה המדף היחיד
       this.shelfGaps[0] += 5; // הוספת 5 ס"מ למדף היחיד
+      this.dynamicParams.height = this.shelfGaps[0]; // עדכון פרמטר הגובה
       console.log('גובה שולחן הוגדל ל:', this.shelfGaps[0]);
     } else {
       // ארון - הגדלת גובה המדף השלישי
@@ -615,6 +617,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         const currentCameraState = this.saveCurrentCameraState();
         
         this.shelfGaps[0] -= 5; // הפחתת 5 ס"מ למדף היחיד
+        this.dynamicParams.height = this.shelfGaps[0]; // עדכון פרמטר הגובה
         this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
         
         // עדכון הזום בהתאם לגובה הכולל
@@ -1008,7 +1011,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         
         // גובה המדף נקבע על ידי פרמטר height
         const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-        const tableHeight = heightParam ? heightParam.default || 80 : 80;
+        const tableHeight = heightParam ? this.dynamicParams.height || heightParam.default || 80 : 80;
         this.shelfGaps = [tableHeight]; // מדף אחד בגובה שנקבע
         console.log('גובה מדף שולחן נטען:', this.shelfGaps);
       }

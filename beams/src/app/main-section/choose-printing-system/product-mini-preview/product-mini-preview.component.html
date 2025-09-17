@@ -24,7 +24,7 @@
         <path d="M3 21v-5h5"/>
       </svg>
     </button>
-    <div class="control-label">החלף קורות מדפים</div>
+    <div class="control-label">{{product?.name === 'table' ? 'החלף קורות פלטה' : 'החלף קורות מדפים'}}</div>
     <span class="beam-value">{{getCurrentShelfBeamDisplayName()}}</span>
   </div>
   <div class="width-control" (click)="$event.stopPropagation()">
