@@ -377,7 +377,37 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     // Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xf8f9fa);
+    
+    // Enhanced background with gradient like threejs-box
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext('2d')!;
+    const gradient = context.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, '#F8F8F8'); // Light gray
+    gradient.addColorStop(1, '#E0E0E0'); // Slightly darker gray
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 256, 256);
+    const texture = new THREE.CanvasTexture(canvas);
+    this.scene.background = texture;
+    
+    // Add infinite floor plane with subtle grid like threejs-box
+    const floorGeometry = new THREE.PlaneGeometry(2000, 2000);
+    const floorMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xF0F0F0, // Much whiter floor
+        transparent: true,
+        opacity: 0.5,  // 50% שקיפות
+        roughness: 0.1,  // חלקות נמוכה לרפלקציה
+        metalness: 0.0,  // לא מתכתי
+        reflectivity: 0.25,  // 25% רפלקציה
+        clearcoat: 0.1,  // שכבה שקופה דקה
+        clearcoatRoughness: 0.1
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+    floor.position.y = -0.1; // Slightly below ground level
+    floor.receiveShadow = true;
+    this.scene.add(floor);
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
@@ -387,23 +417,59 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     // הגדרת מיקום התחלתי עבור הזום - יוגדר אחרי updateCameraPosition
 
-    // Renderer
+    // Renderer with enhanced settings like threejs-box
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(width, height);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.8; // Increased for higher contrast
     container.appendChild(this.renderer.domElement);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    this.scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(50, 50, 50);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
-    this.scene.add(directionalLight);
+    // Enhanced lighting setup like threejs-box
+    // Main directional light (45 degrees from right side) - increased intensity for contrast
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    const rightAngle = Math.PI / 4; // 45 degrees
+    const rightDistance = 200;
+    mainLight.position.set(
+        Math.cos(rightAngle) * rightDistance, 
+        150, 
+        Math.sin(rightAngle) * rightDistance
+    );
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.width = 2048;
+    mainLight.shadow.mapSize.height = 2048;
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 500;
+    mainLight.shadow.camera.left = -200;
+    mainLight.shadow.camera.right = 200;
+    mainLight.shadow.camera.top = 200;
+    mainLight.shadow.camera.bottom = -200;
+    this.scene.add(mainLight);
+    
+    // Secondary directional light (30 degrees from left side, very weak)
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.1);
+    const leftAngle = Math.PI / 6; // 30 degrees
+    const leftDistance = 200;
+    fillLight.position.set(
+        -Math.cos(leftAngle) * leftDistance, 
+        100, 
+        Math.sin(leftAngle) * leftDistance
+    );
+    this.scene.add(fillLight);
+    
+    // Ambient light for overall brightness - reduced for more contrast
+    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    this.scene.add(ambient);
+    
+    // Hemisphere light for atmospheric gradient
+    const hemisphereLight = new THREE.HemisphereLight(0xF8F8F8, 0xD0D0D0, 0.6);
+    this.scene.add(hemisphereLight);
+    
+    // Point light for accent
+    const pointLight = new THREE.PointLight(0xffffff, 0.5, 200);
+    pointLight.position.set(0, 100, 0);
+    this.scene.add(pointLight);
 
     // הוספת אירועי עכבר לזום וסיבוב
     this.addMouseControls();
