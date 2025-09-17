@@ -54,6 +54,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     0x2F4F4F  // אפור כהה יותר
   ];
 
+  // Helper for numeric step
+  getStep(type: number): number {
+    return 1 / Math.pow(10, type);
+  }
+
   // Get wood texture based on beam type - זהה לקובץ הראשי
   private getWoodTexture(beamType: string): THREE.Texture {
     console.log('getWoodTexture נקרא עם beamType:', beamType);
@@ -71,12 +76,15 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   private lastMouseY = 0;
   private hasUserInteracted = false; // האם המשתמש התחיל להזיז את המודל
   private inactivityTimer: any = null; // טיימר לחוסר פעילות
+  private autoChangeTimer: any = null; // טיימר לשינוי אוטומטי של פרמטרים
+  private savedRotation: THREE.Euler = new THREE.Euler(); // שמירת סיבוב המודל
 
   ngAfterViewInit() {
     this.initThreeJS();
     this.initializeParamsFromProduct();
     this.createSimpleProduct();
     this.animate();
+    this.startAutoParameterChange(); // התחלת שינוי אוטומטי של פרמטרים
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -100,6 +108,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (this.inactivityTimer) {
       clearTimeout(this.inactivityTimer);
     }
+    if (this.autoChangeTimer) {
+      clearInterval(this.autoChangeTimer);
+    }
   }
 
   // פונקציה לאפס את טיימר חוסר הפעילות
@@ -111,6 +122,147 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.hasUserInteracted = false; // החזרת הסיבוב האוטומטי
       console.log('החזרת סיבוב אוטומטי אחרי 5 שניות של חוסר פעילות');
     }, 5000); // 5 שניות
+  }
+
+  // פונקציה לשינוי אוטומטי של פרמטרים כל 2 שניות
+  private startAutoParameterChange() {
+    if (this.autoChangeTimer) {
+      clearInterval(this.autoChangeTimer);
+    }
+    
+    this.autoChangeTimer = setInterval(() => {
+      // רק אם המשתמש לא נוגע במודל והמודל מסתובב
+      if (!this.hasUserInteracted) {
+        this.changeRandomParameter();
+      }
+    }, 2000); // כל 2 שניות
+  }
+
+  // פונקציה לשינוי פרמטר רנדומלי
+  private changeRandomParameter() {
+    const actions = [
+      'changeWidth',
+      'changeLength', 
+      'changeShelfHeight',
+      'changeFrameBeam',
+      'changeShelfBeam'
+    ];
+    
+    // בחירת 3 פרמטרים רנדומליים שונים
+    const selectedActions: string[] = [];
+    const availableActions = [...actions]; // עותק של המערך
+    
+    for (let i = 0; i < 3 && availableActions.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * availableActions.length);
+      const selectedAction = availableActions.splice(randomIndex, 1)[0];
+      selectedActions.push(selectedAction);
+    }
+    
+    // ביצוע השינויים
+    selectedActions.forEach(action => {
+      switch (action) {
+        case 'changeWidth':
+          this.changeRandomWidth();
+          break;
+        case 'changeLength':
+          this.changeRandomLength();
+          break;
+        case 'changeShelfHeight':
+          this.changeRandomShelfHeight();
+          break;
+        case 'changeFrameBeam':
+          this.changeFrameBeamType();
+          break;
+        case 'changeShelfBeam':
+          this.changeShelfBeamType();
+          break;
+      }
+    });
+    
+    console.log(`שינוי אוטומטי של 3 פרמטרים: ${selectedActions.join(', ')}`);
+  }
+
+  // פונקציות לשינוי רנדומלי של מידות
+  private changeRandomWidth() {
+    this.saveCurrentRotation(); // שמירת הסיבוב הנוכחי
+    
+    // חיפוש פרמטר הרוחב
+    const widthParam = this.product?.params?.find((p: any) => p.name === 'width');
+    if (!widthParam) return; // אם לא נמצא פרמטר רוחב, לא נשנה כלום
+    
+    const step = this.getStep(widthParam.type || 0);
+    const min = widthParam.min || 50;
+    const max = Math.min(widthParam.max || 200, 200); // הגבלה מקסימלית של 200
+    
+    // בחירת ערך רנדומלי בטווח המלא
+    const range = max - min;
+    const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
+    const newValue = min + (randomSteps * step);
+    
+    this.dynamicParams.width = Math.min(newValue, max);
+    this.createSimpleProductWithoutCameraUpdate();
+    this.restoreRotation(); // שחזור הסיבוב
+    
+    console.log(`רוחב השתנה ל: ${this.dynamicParams.width} (טווח: ${min}-${max}, צעד: ${step})`);
+  }
+
+  private changeRandomLength() {
+    this.saveCurrentRotation(); // שמירת הסיבוב הנוכחי
+    
+    // חיפוש פרמטר האורך
+    const lengthParam = this.product?.params?.find((p: any) => p.name === 'depth');
+    if (!lengthParam) return; // אם לא נמצא פרמטר אורך, לא נשנה כלום
+    
+    const step = this.getStep(lengthParam.type || 0);
+    const min = lengthParam.min || 50;
+    const max = Math.min(lengthParam.max || 200, 200); // הגבלה מקסימלית של 200
+    
+    // בחירת ערך רנדומלי בטווח המלא
+    const range = max - min;
+    const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
+    const newValue = min + (randomSteps * step);
+    
+    this.dynamicParams.length = Math.min(newValue, max);
+    this.createSimpleProductWithoutCameraUpdate();
+    this.restoreRotation(); // שחזור הסיבוב
+    
+    console.log(`אורך השתנה ל: ${this.dynamicParams.length} (טווח: ${min}-${max}, צעד: ${step})`);
+  }
+
+  private changeRandomShelfHeight() {
+    this.saveCurrentRotation(); // שמירת הסיבוב הנוכחי
+    
+    // חיפוש פרמטר הגובה
+    const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+    if (!heightParam) return; // אם לא נמצא פרמטר גובה, לא נשנה כלום
+    
+    const step = this.getStep(heightParam.type || 0);
+    const min = heightParam.min || 20;
+    const max = Math.min(heightParam.max || 100, 200); // הגבלה מקסימלית של 200
+    
+    // בחירת ערך רנדומלי בטווח המלא
+    const range = max - min;
+    const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
+    const newValue = min + (randomSteps * step);
+    
+    this.shelfGaps[2] = Math.min(newValue, max);
+    this.createSimpleProductWithoutCameraUpdate();
+    this.restoreRotation(); // שחזור הסיבוב
+    
+    console.log(`גובה השתנה ל: ${this.shelfGaps[2]} (טווח: ${min}-${max}, צעד: ${step})`);
+  }
+
+  // פונקציות לשמירה ושחזור סיבוב המודל
+  private saveCurrentRotation() {
+    if (this.scene) {
+      this.savedRotation.copy(this.scene.rotation);
+    }
+  }
+
+  private restoreRotation() {
+    if (this.scene) {
+      this.scene.rotation.copy(this.savedRotation);
+    }
   }
 
   // פונקציה לקבלת שם התצוגה של קורת החיזוק הנוכחית
