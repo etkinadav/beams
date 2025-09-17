@@ -670,22 +670,61 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     let currentY = 0;
     
     // קבלת רשימת gaps מהמוצר
-    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
+    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
     const shelfGaps = this.shelfGaps; // שימוש בגבהי המדפים הנוכחיים
     const totalShelves = shelfGaps.length;
 
     // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
     let shelfBeam = null;
     let shelfType = null;
+    console.log('shelfsParam:', shelfsParam);
     if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+      console.log('selectedBeamIndex:', shelfsParam.selectedBeamIndex);
+      console.log('selectedBeamTypeIndex:', shelfsParam.selectedBeamTypeIndex);
       shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
-      shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedTypeIndex || 0] : null;
+      console.log('shelfBeam:', shelfBeam);
+      console.log('shelfBeam.types:', shelfBeam ? shelfBeam.types : 'null');
+      shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedBeamTypeIndex || 0] : null;
     }
     
     // קבלת טקסטורת עץ לקורות המדפים - זהה לקובץ הראשי
     console.log('shelfType:', shelfType);
     console.log('shelfType.name:', shelfType ? shelfType.name : 'null');
     const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
+    
+    // קבלת סוג הקורה והעץ של קורות החיזוק מהפרמטרים
+    const frameParam = this.product?.params?.find((p: any) => p.type === 'beamSingle');
+    let frameBeam = null;
+    let frameType = null;
+    console.log('frameParam:', frameParam);
+    if (frameParam && Array.isArray(frameParam.beams) && frameParam.beams.length) {
+      console.log('frameParam.selectedBeamIndex:', frameParam.selectedBeamIndex);
+      console.log('frameParam.selectedBeamTypeIndex:', frameParam.selectedBeamTypeIndex);
+      frameBeam = frameParam.beams[frameParam.selectedBeamIndex || 0];
+      console.log('frameBeam:', frameBeam);
+      console.log('frameBeam.types:', frameBeam ? frameBeam.types : 'null');
+      frameType = frameBeam.types && frameBeam.types.length ? frameBeam.types[frameParam.selectedBeamTypeIndex || 0] : null;
+    }
+    
+    // קבלת טקסטורת עץ לקורות החיזוק
+    console.log('frameType:', frameType);
+    console.log('frameType.name:', frameType ? frameType.name : 'null');
+    const frameWoodTexture = this.getWoodTexture(frameType ? frameType.name : '');
+    
+    // חישוב מידות אמיתיות של קורת החיזוק פעם אחת
+    let actualFrameWidth = this.dynamicParams.frameWidth;
+    let actualFrameHeight = this.dynamicParams.frameHeight;
+    if (frameType) {
+      actualFrameWidth = frameType.width ? frameType.width / 10 : this.dynamicParams.frameWidth;
+      actualFrameHeight = frameType.height ? frameType.height / 10 : this.dynamicParams.frameHeight;
+    } else if (frameBeam) {
+      actualFrameWidth = frameBeam.width ? frameBeam.width / 10 : this.dynamicParams.frameWidth;
+      actualFrameHeight = frameBeam.height ? frameBeam.height / 10 : this.dynamicParams.frameHeight;
+    }
+    
+    console.log('מידות אמיתיות של קורת החיזוק:');
+    console.log('actualFrameWidth:', actualFrameWidth);
+    console.log('actualFrameHeight:', actualFrameHeight);
     
     for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
       const isTopShelf = shelfIndex === totalShelves - 1;
@@ -707,7 +746,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         // Only shorten first and last beam in the length (depth) direction for non-top shelves
         // Top shelf (last shelf) gets full-length beams
         if (!isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) {
-          beam.depth = beam.depth - 2 * this.dynamicParams.frameWidth;
+          beam.depth = beam.depth - 2 * actualFrameWidth;
         }
         
         const beamGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
@@ -725,16 +764,16 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       const frameBeams = this.createFrameBeams(
         this.dynamicParams.width,
         this.dynamicParams.length,
-        this.dynamicParams.frameWidth,
-        this.dynamicParams.frameHeight,
-        this.dynamicParams.frameWidth, // legWidth
-        this.dynamicParams.frameWidth  // legDepth
+        actualFrameWidth,
+        actualFrameHeight,
+        actualFrameWidth, // legWidth
+        actualFrameWidth  // legDepth
       );
       
       for (const beam of frameBeams) {
         const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
         this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
-        const frameMaterial = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
+        const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
         const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
         frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
         frameMesh.castShadow = true;
@@ -744,47 +783,41 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       }
       
       // Add the height of the shelf itself for the next shelf
-      currentY += this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+      currentY += actualFrameHeight + this.dynamicParams.beamHeight;
     }
 
-    // יצירת רגליים (legs) - זהה לקובץ הראשי
-    // קבלת סוג הקורה של הרגליים מהפרמטרים
-    const legParam = this.product?.params?.find((p: any) => p.type === 'leg');
-    let legBeam = null;
-    let legType = null;
-    if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
-      legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
-      legType = legBeam.types && legBeam.types.length ? legBeam.types[legParam.selectedTypeIndex || 0] : null;
-    }
-    
-    // קבלת טקסטורת עץ לרגליים - זהה לקובץ הראשי
-    console.log('legType:', legType);
-    console.log('legType.name:', legType ? legType.name : 'null');
-    const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
+    // יצירת רגליים (legs) - זהה לקורות החיזוק
+    // הרגליים משתמשות באותן הגדרות של קורות החיזוק
+    // לא צריך לחפש פרמטר נפרד - משתמשים ב-frameParam שכבר נמצא
+    console.log('רגליים משתמשות בהגדרות קורות החיזוק:');
+    console.log('frameType.name:', frameType ? frameType.name : 'null');
+    console.log('frameWidth:', this.dynamicParams.frameWidth);
+    console.log('frameHeight:', this.dynamicParams.frameHeight);
 
     // חישוב גובה הרגליים - זהה לקובץ הראשי
     let totalY = 0;
     for (let i = 0; i < totalShelves; i++) {
-      totalY += shelfGaps[i] + this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight;
     }
     const legHeight = totalY;
     
+    
     // מיקום הרגליים - זהה לקובץ הראשי
     const legPositions = [
-      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
-      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
-      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2],
-      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2]
+      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
+      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
+      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2],
+      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2]
     ];
     
     legPositions.forEach(pos => {
       const legGeometry = new THREE.BoxGeometry(
-        this.dynamicParams.frameWidth,
+        actualFrameWidth,
         legHeight,
-        this.dynamicParams.frameWidth
+        actualFrameWidth
       );
-      this.setCorrectTextureMapping(legGeometry, this.dynamicParams.frameWidth, legHeight, this.dynamicParams.frameWidth);
-      const legMaterial = new THREE.MeshStandardMaterial({ map: legWoodTexture });
+      this.setCorrectTextureMapping(legGeometry, actualFrameWidth, legHeight, actualFrameWidth);
+      const legMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
       const leg = new THREE.Mesh(legGeometry, legMaterial);
       leg.position.set(pos[0], legHeight/2, pos[2]);
       leg.castShadow = true;
@@ -816,22 +849,61 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     let currentY = 0;
     
     // קבלת רשימת gaps מהמוצר
-    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
+    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
     const shelfGaps = this.shelfGaps; // שימוש בגבהי המדפים הנוכחיים
     const totalShelves = shelfGaps.length;
 
     // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
     let shelfBeam = null;
     let shelfType = null;
+    console.log('shelfsParam:', shelfsParam);
     if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+      console.log('selectedBeamIndex:', shelfsParam.selectedBeamIndex);
+      console.log('selectedBeamTypeIndex:', shelfsParam.selectedBeamTypeIndex);
       shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
-      shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedTypeIndex || 0] : null;
+      console.log('shelfBeam:', shelfBeam);
+      console.log('shelfBeam.types:', shelfBeam ? shelfBeam.types : 'null');
+      shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedBeamTypeIndex || 0] : null;
     }
     
     // קבלת טקסטורת עץ לקורות המדפים - זהה לקובץ הראשי
     console.log('shelfType:', shelfType);
     console.log('shelfType.name:', shelfType ? shelfType.name : 'null');
     const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
+    
+    // קבלת סוג הקורה והעץ של קורות החיזוק מהפרמטרים
+    const frameParam = this.product?.params?.find((p: any) => p.type === 'beamSingle');
+    let frameBeam = null;
+    let frameType = null;
+    console.log('frameParam:', frameParam);
+    if (frameParam && Array.isArray(frameParam.beams) && frameParam.beams.length) {
+      console.log('frameParam.selectedBeamIndex:', frameParam.selectedBeamIndex);
+      console.log('frameParam.selectedBeamTypeIndex:', frameParam.selectedBeamTypeIndex);
+      frameBeam = frameParam.beams[frameParam.selectedBeamIndex || 0];
+      console.log('frameBeam:', frameBeam);
+      console.log('frameBeam.types:', frameBeam ? frameBeam.types : 'null');
+      frameType = frameBeam.types && frameBeam.types.length ? frameBeam.types[frameParam.selectedBeamTypeIndex || 0] : null;
+    }
+    
+    // קבלת טקסטורת עץ לקורות החיזוק
+    console.log('frameType:', frameType);
+    console.log('frameType.name:', frameType ? frameType.name : 'null');
+    const frameWoodTexture = this.getWoodTexture(frameType ? frameType.name : '');
+    
+    // חישוב מידות אמיתיות של קורת החיזוק פעם אחת
+    let actualFrameWidth = this.dynamicParams.frameWidth;
+    let actualFrameHeight = this.dynamicParams.frameHeight;
+    if (frameType) {
+      actualFrameWidth = frameType.width ? frameType.width / 10 : this.dynamicParams.frameWidth;
+      actualFrameHeight = frameType.height ? frameType.height / 10 : this.dynamicParams.frameHeight;
+    } else if (frameBeam) {
+      actualFrameWidth = frameBeam.width ? frameBeam.width / 10 : this.dynamicParams.frameWidth;
+      actualFrameHeight = frameBeam.height ? frameBeam.height / 10 : this.dynamicParams.frameHeight;
+    }
+    
+    console.log('מידות אמיתיות של קורת החיזוק:');
+    console.log('actualFrameWidth:', actualFrameWidth);
+    console.log('actualFrameHeight:', actualFrameHeight);
     
     for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
       const isTopShelf = shelfIndex === totalShelves - 1;
@@ -853,7 +925,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         // Only shorten first and last beam in the length (depth) direction for non-top shelves
         // Top shelf (last shelf) gets full-length beams
         if (!isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) {
-          beam.depth = beam.depth - 2 * this.dynamicParams.frameWidth;
+          beam.depth = beam.depth - 2 * actualFrameWidth;
         }
         
         const beamGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
@@ -871,16 +943,16 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       const frameBeams = this.createFrameBeams(
         this.dynamicParams.width,
         this.dynamicParams.length,
-        this.dynamicParams.frameWidth,
-        this.dynamicParams.frameHeight,
-        this.dynamicParams.frameWidth, // legWidth
-        this.dynamicParams.frameWidth  // legDepth
+        actualFrameWidth,
+        actualFrameHeight,
+        actualFrameWidth, // legWidth
+        actualFrameWidth  // legDepth
       );
       
       for (const beam of frameBeams) {
         const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
         this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
-        const frameMaterial = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
+        const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
         const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
         frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
         frameMesh.castShadow = true;
@@ -890,47 +962,41 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       }
       
       // Add the height of the shelf itself for the next shelf
-      currentY += this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+      currentY += actualFrameHeight + this.dynamicParams.beamHeight;
     }
 
-    // יצירת רגליים (legs) - זהה לקובץ הראשי
-    // קבלת סוג הקורה של הרגליים מהפרמטרים
-    const legParam = this.product?.params?.find((p: any) => p.type === 'leg');
-    let legBeam = null;
-    let legType = null;
-    if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
-      legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
-      legType = legBeam.types && legBeam.types.length ? legBeam.types[legParam.selectedTypeIndex || 0] : null;
-    }
-    
-    // קבלת טקסטורת עץ לרגליים - זהה לקובץ הראשי
-    console.log('legType:', legType);
-    console.log('legType.name:', legType ? legType.name : 'null');
-    const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
+    // יצירת רגליים (legs) - זהה לקורות החיזוק
+    // הרגליים משתמשות באותן הגדרות של קורות החיזוק
+    // לא צריך לחפש פרמטר נפרד - משתמשים ב-frameParam שכבר נמצא
+    console.log('רגליים משתמשות בהגדרות קורות החיזוק:');
+    console.log('frameType.name:', frameType ? frameType.name : 'null');
+    console.log('frameWidth:', this.dynamicParams.frameWidth);
+    console.log('frameHeight:', this.dynamicParams.frameHeight);
 
     // חישוב גובה הרגליים - זהה לקובץ הראשי
     let totalY = 0;
     for (let i = 0; i < totalShelves; i++) {
-      totalY += shelfGaps[i] + this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight;
     }
     const legHeight = totalY;
     
+    
     // מיקום הרגליים - זהה לקובץ הראשי
     const legPositions = [
-      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
-      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
-      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2],
-      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2]
+      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
+      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
+      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2],
+      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2]
     ];
     
     legPositions.forEach(pos => {
       const legGeometry = new THREE.BoxGeometry(
-        this.dynamicParams.frameWidth,
+        actualFrameWidth,
         legHeight,
-        this.dynamicParams.frameWidth
+        actualFrameWidth
       );
-      this.setCorrectTextureMapping(legGeometry, this.dynamicParams.frameWidth, legHeight, this.dynamicParams.frameWidth);
-      const legMaterial = new THREE.MeshStandardMaterial({ map: legWoodTexture });
+      this.setCorrectTextureMapping(legGeometry, actualFrameWidth, legHeight, actualFrameWidth);
+      const legMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
       const leg = new THREE.Mesh(legGeometry, legMaterial);
       leg.position.set(pos[0], legHeight/2, pos[2]);
       leg.castShadow = true;
@@ -1142,7 +1208,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
   // פונקציה שמחזירה את גובה המדפים הכולל של ברירת המחדל מהמוצר
   getTotalShelfHeightDefault(): number {
-    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
+    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
     const defaultShelfGaps = shelfsParam?.default || [10, 50, 50];
     let defaultTotalHeight = 0;
     for (let i = 0; i < defaultShelfGaps.length; i++) {
