@@ -1113,7 +1113,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       totalY += safeShelfGap + safeActualFrameHeight + safeBeamHeight; // גובה מלא
     }
     // הרגליים מגיעות רק עד לקורות החיזוק התחתונות (לא כולל קורות המדפים העליונות)
-    const legHeight = Math.max(totalY - (this.dynamicParams.beamHeight || 2.5), 20); // מינימום 20 ס"מ
+    // הרגליים צריכות להיות בגובה הכולל פחות גובה קורת מדף העליונה ופחות מרווח המדף העליון
+    // הרגליים מגיעות רק עד לקורות החיזוק התחתונות, לא עד קורות המדפים העליונות
+    // לפי הלוגיקה של threejs-box: legHeight = topHeight - shelfBeamHeight
+    const safeBeamHeight = this.dynamicParams.beamHeight || 2.5; // גובה קורת מדף
+    const legHeight = Math.max(totalY - safeBeamHeight, 20); // מינימום 20 ס"מ
     
     
     // מיקום הרגליים - זהה לקובץ הראשי
@@ -1304,7 +1308,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       totalY += safeShelfGap + safeActualFrameHeight + safeBeamHeight; // גובה מלא
     }
     // הרגליים מגיעות רק עד לקורות החיזוק התחתונות (לא כולל קורות המדפים העליונות)
-    const legHeight = Math.max(totalY - (this.dynamicParams.beamHeight || 2.5), 20); // מינימום 20 ס"מ
+    // הרגליים צריכות להיות בגובה הכולל פחות גובה קורת מדף העליונה ופחות מרווח המדף העליון
+    // הרגליים מגיעות רק עד לקורות החיזוק התחתונות, לא עד קורות המדפים העליונות
+    // לפי הלוגיקה של threejs-box: legHeight = topHeight - shelfBeamHeight
+    const safeBeamHeight = this.dynamicParams.beamHeight || 2.5; // גובה קורת מדף
+    const legHeight = Math.max(totalY - safeBeamHeight, 20); // מינימום 20 ס"מ
     
     
     // מיקום הרגליים - זהה לקובץ הראשי
