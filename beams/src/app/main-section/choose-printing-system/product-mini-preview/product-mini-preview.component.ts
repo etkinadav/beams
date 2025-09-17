@@ -56,7 +56,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
   // Get wood texture based on beam type - זהה לקובץ הראשי
   private getWoodTexture(beamType: string): THREE.Texture {
+    console.log('getWoodTexture נקרא עם beamType:', beamType);
     const texturePath = beamType ? `assets/textures/${beamType}.jpg` : 'assets/textures/pine.jpg';
+    console.log('טוען טקסטורה מהנתיב:', texturePath);
     return this.textureLoader.load(texturePath);
   }
 
@@ -595,6 +597,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     
     // קבלת טקסטורת עץ לקורות המדפים - זהה לקובץ הראשי
+    console.log('shelfType:', shelfType);
+    console.log('shelfType.name:', shelfType ? shelfType.name : 'null');
     const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
     
     for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
@@ -668,6 +672,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     
     // קבלת טקסטורת עץ לרגליים - זהה לקובץ הראשי
+    console.log('legType:', legType);
+    console.log('legType.name:', legType ? legType.name : 'null');
     const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
 
     // חישוב גובה הרגליים - זהה לקובץ הראשי
@@ -734,6 +740,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     
     // קבלת טקסטורת עץ לקורות המדפים - זהה לקובץ הראשי
+    console.log('shelfType:', shelfType);
+    console.log('shelfType.name:', shelfType ? shelfType.name : 'null');
     const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
     
     for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
@@ -807,6 +815,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     
     // קבלת טקסטורת עץ לרגליים - זהה לקובץ הראשי
+    console.log('legType:', legType);
+    console.log('legType.name:', legType ? legType.name : 'null');
     const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
 
     // חישוב גובה הרגליים - זהה לקובץ הראשי
