@@ -26,8 +26,8 @@ import * as THREE from 'three';
   styles: [`
     .preview-wrapper {
       position: relative;
-      width: 200px;
-      height: 200px;
+      width: 300px;
+      height: 300px;
     }
     .mini-preview-container {
       width: 100%;
@@ -38,51 +38,48 @@ import * as THREE from 'three';
       .width-control {
         position: absolute;
         bottom: 60px;
-        left: 50%;
-        transform: translateX(-50%);
+        left: 10px;
         z-index: 1000;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
         background: rgba(255, 255, 255, 0.8);
-        padding: 3px 8px;
+        padding: 4px 10px;
         border-radius: 12px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-        font-size: 10px;
+        font-size: 11px;
       }
       .length-control {
         position: absolute;
         bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
+        left: 10px;
         z-index: 1000;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
         background: rgba(255, 255, 255, 0.8);
-        padding: 3px 8px;
+        padding: 4px 10px;
         border-radius: 12px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-        font-size: 10px;
+        font-size: 11px;
       }
       .shelf-height-control {
         position: absolute;
         bottom: 0px;
-        left: 50%;
-        transform: translateX(-50%);
+        left: 10px;
         z-index: 1000;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
         background: rgba(255, 255, 255, 0.8);
-        padding: 3px 8px;
+        padding: 4px 10px;
         border-radius: 12px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-        font-size: 10px;
+        font-size: 11px;
       }
     .control-btn {
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       border: none;
       border-radius: 50%;
       background: #2196f3;
@@ -92,17 +89,17 @@ import * as THREE from 'three';
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 12px;
       transition: background-color 0.2s;
     }
     .control-btn:hover {
       background: #1976d2;
     }
     .width-value, .length-value, .shelf-height-value {
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 500;
       color: #333;
-      min-width: 50px;
+      min-width: 60px;
       text-align: center;
     }
   `]
