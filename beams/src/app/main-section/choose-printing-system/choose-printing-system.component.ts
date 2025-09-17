@@ -124,7 +124,13 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
   onChooseProduct(product: any) {
     console.log('נבחר מוצר:', product);
     this.selectedProduct = product;
-    // כאן תוכל להוסיף לוגיקה נוספת לבחירת המוצר
+    // מעבר לעמוד המוצר ב-/beams
+    this.router.navigate(['/beams'], { 
+      queryParams: { 
+        productId: product._id,
+        productName: product.name 
+      } 
+    });
   }
 
   onHoverProduct(product: any) {

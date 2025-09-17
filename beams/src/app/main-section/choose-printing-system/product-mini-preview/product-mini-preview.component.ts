@@ -71,6 +71,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   private lastMouseX = 0;
   private lastMouseY = 0;
   private hasUserInteracted = false; // האם המשתמש התחיל להזיז את המודל
+  private inactivityTimer: any = null; // טיימר לחוסר פעילות
 
   ngAfterViewInit() {
     this.initThreeJS();
@@ -93,6 +94,20 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (this.renderer) {
       this.renderer.dispose();
     }
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
+  }
+
+  // פונקציה לאפס את טיימר חוסר הפעילות
+  private resetInactivityTimer() {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
+    this.inactivityTimer = setTimeout(() => {
+      this.hasUserInteracted = false; // החזרת הסיבוב האוטומטי
+      console.log('החזרת סיבוב אוטומטי אחרי 5 שניות של חוסר פעילות');
+    }, 5000); // 5 שניות
   }
 
   // פונקציות לשליטה ברוחב
@@ -228,6 +243,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     container.addEventListener('wheel', (event: WheelEvent) => {
       event.preventDefault();
       this.hasUserInteracted = true; // המשתמש התחיל להזיז
+      this.resetInactivityTimer(); // אפס את טיימר חוסר הפעילות
       const delta = event.deltaY;
       const zoomSpeed = 0.1;
       
@@ -244,6 +260,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.isMouseDown = true;
       this.isPan = (event.button === 1 || event.button === 2); // כפתור אמצע או ימין
       this.hasUserInteracted = true; // המשתמש התחיל להזיז
+      this.resetInactivityTimer(); // אפס את טיימר חוסר הפעילות
       this.lastMouseX = event.clientX;
       this.lastMouseY = event.clientY;
       container.style.cursor = this.isPan ? 'grabbing' : 'grabbing';
