@@ -5,7 +5,7 @@
         <div class="zx-settings-nav flex-shrink h-100 d-flex flex-column overflow-hidden"
             [class.zx-settings-nav-dark]="isDarkMode">
 
-            <article #scrollContainer (scroll)="onScrollContainerScroll($event)"
+            <article #scrollContainer
                 class="w-100 h-100 d-flex p-0 p-md-3 flex-column overflow-y-auto">
 
                 <section class="d-flex flex-column w-100 vh-100-sm-none flex-shrink-0">
@@ -41,7 +41,7 @@
                                         (mouseenter)="onHoverProduct(product)"
                                         (mouseleave)="onHoverProduct(null)"
                                         [class.zx-step-choosen]="selectedProduct?._id === product._id"
-                                        class="step-item-trans-product step-item step-item-hover w-100 rounded-3 shadow-85 d-flex p-2 align-items-center justify-content-center"
+                                        class="step-item-trans-product step-item step-item-hover w-100 rounded-3 shadow-85 d-flex p-2 gap-md-3 align-items-center justify-content-center"
                                         matRipple [class.step-item-dark]="isDarkMode">
                                         <div class="d-flex align-items-center gap-3">
                                             <div class="product-icon p-1 zx-big-icon-size-trans d-flex align-items-center justify-content-center bg-light rounded">
@@ -51,7 +51,7 @@
                                                 {{product.translatedName}}
                                             </b>
                                         </div>
-                                        <div class="text-con-product d-flex flex-column flex-grow-1 justify-content-between" style="margin-right: 30px;">
+                                        <div class="text-con-product d-flex flex-column flex-grow-1 justify-content-between">
                                             <h6 class="fw-bold zx-text-big"
                                                 [ngClass]="isRTL ? 'text-md-end' : 'text-md-start'">
                                                 {{product.translatedName}}
@@ -67,14 +67,7 @@
                                         </div>
                                     </div>
                                 
-                                    <!-- - -->
-                                    <div class="scroll-for-info-con d-sm-none">
-                                        <span class="zx-text-tiny title-trans">
-                                            {{'about-us.scroll-for-info' | translate}}
-                                        </span>
-                                    </div>
                                 </article>
-                                <span class="spacer"></span>
                             </article>
                         </article>
 

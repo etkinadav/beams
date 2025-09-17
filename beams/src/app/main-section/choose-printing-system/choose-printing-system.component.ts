@@ -119,14 +119,6 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
 
   // step-item-trans-plotter
 
-  onScrollContainerScroll(event: Event) {
-    const target = event.target as HTMLElement;
-    const scrollPosition = target.scrollTop;
-    console.log("scrollPosition", scrollPosition);
-    if (scrollPosition && scrollPosition > 30) {
-      this.router.navigate(['/home']);
-    }
-  }
 
   // פונקציות למוצרים
   onChooseProduct(product: any) {

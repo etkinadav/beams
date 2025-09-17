@@ -1,8 +1,20 @@
-// arrow
+// Responsive flex direction for product items
+.step-item-trans-product {
+  @media only screen and (max-width: 767px) {
+    flex-direction: column-reverse !important;
+    gap: 15px;
+  }
+}
 
-:host ::ng-deep img.zx-by-print-no-arrow {
-    width: auto;
-    height: 12px;
+.text-con-product {
+    padding: 12px 5px 0 5px;
+    min-width: 310px
+}
+
+@media only screen and (min-width: 768px) {
+    .text-con-product {
+        min-width: unset;
+    }
 }
 
 @media only screen and (min-width: 576px) {
