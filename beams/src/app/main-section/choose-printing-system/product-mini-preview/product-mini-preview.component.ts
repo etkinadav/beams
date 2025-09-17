@@ -794,12 +794,13 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     console.log('frameWidth:', this.dynamicParams.frameWidth);
     console.log('frameHeight:', this.dynamicParams.frameHeight);
 
-    // חישוב גובה הרגליים - זהה לקובץ הראשי
+    // חישוב גובה הרגליים - צריך להיות קצר יותר כי הרגליים לא מגיעות עד לקורות המדפים
     let totalY = 0;
     for (let i = 0; i < totalShelves; i++) {
-      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight;
+      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight; // גובה מלא
     }
-    const legHeight = totalY;
+    // קיצור הרגליים במידת הגובה של קורות המדפים
+    const legHeight = totalY - this.dynamicParams.beamHeight;
     
     
     // מיקום הרגליים - זהה לקובץ הראשי
@@ -973,12 +974,13 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     console.log('frameWidth:', this.dynamicParams.frameWidth);
     console.log('frameHeight:', this.dynamicParams.frameHeight);
 
-    // חישוב גובה הרגליים - זהה לקובץ הראשי
+    // חישוב גובה הרגליים - צריך להיות קצר יותר כי הרגליים לא מגיעות עד לקורות המדפים
     let totalY = 0;
     for (let i = 0; i < totalShelves; i++) {
-      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight;
+      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight; // גובה מלא
     }
-    const legHeight = totalY;
+    // קיצור הרגליים במידת הגובה של קורות המדפים
+    const legHeight = totalY - this.dynamicParams.beamHeight;
     
     
     // מיקום הרגליים - זהה לקובץ הראשי
