@@ -251,8 +251,8 @@
     bottom: 8px;
     left: 8px;
     border-radius: 50px !important; // rounded pill
-    border: 1px solid #ccc !important; // border אפור
-    background: white !important; // רקע לבן
+    border: none !important; // הסרת border
+    background: #2196f3 !important; // רקע כחול
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important; // צללה עדינה
     padding: 6px 16px !important;
     min-height: unset !important;
@@ -261,14 +261,15 @@
 }
 
 .continue-to-product-btn:hover {
-    background: #f5f5f5 !important;
+    background: #1976d2 !important; // כחול כהה יותר ב-hover
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
     transform: scale(1.02);
 }
 
 .continue-to-product-btn span {
-    color: #2196f3 !important; // צבע כחול
-    font-weight: bold !important; // bold
+    color: white !important; // טקסט לבן
+    font-weight: 700 !important; // bold יותר חזק
     text-shadow: none !important;
+    font-size: 16px !important;
     white-space: nowrap;
 }

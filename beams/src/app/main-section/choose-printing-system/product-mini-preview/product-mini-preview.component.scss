@@ -12,31 +12,30 @@
   padding: 0 4px;
 }
 
-// כפתורי מחזור בפינה הימנית העליונה של כל קטגוריה
+// כפתורי מחזור ממורכזים מעל הדופן השמאלית של כל כפתור
 .refresh-btn {
   position: absolute;
-  top: 1px;
-  right: 1px;
-  width: 24px;
-  height: 24px;
+  top: 13px;
+  left: -15px;
+  width: 22px;
+  height: 22px;
   border: none;
-  border-radius: 0;
-  background: transparent;
-  color: #2196f3;
+  border-radius: 50%;
+  background: #2196f3;
+  color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1001;
-  box-shadow: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
 
 .refresh-btn:hover {
-  background: transparent;
-  color: #1976d2;
-  transform: none;
-  box-shadow: none;
+  background: #1976d2;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .refresh-btn:active {
@@ -44,8 +43,9 @@
 }
 
 .refresh-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  stroke: white;
 }
 
 .frame-beam-control {

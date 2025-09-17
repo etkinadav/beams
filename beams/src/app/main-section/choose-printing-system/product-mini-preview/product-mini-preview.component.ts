@@ -514,7 +514,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       
       // שינוי רדיוס המצלמה
       this.spherical.radius += delta * zoomSpeed;
-      this.spherical.radius = Math.max(20, Math.min(200, this.spherical.radius)); // הגבלת טווח זום
+      this.spherical.radius = Math.max(5, Math.min(500, this.spherical.radius)); // הגבלת טווח זום מורחבת
       
       // עדכון מיקום המצלמה
       this.camera.position.setFromSpherical(this.spherical).add(this.target);
@@ -573,6 +573,80 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     container.addEventListener('mouseleave', () => {
       this.isMouseDown = false;
       container.style.cursor = 'grab';
+    });
+
+    // Mobile touch support
+    let lastTouchDist = 0;
+    let lastTouchAngle = 0;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+    let isTouchRotating = false;
+    let isTouchZooming = false;
+    let isTouchPanning = false;
+    
+    container.addEventListener('touchstart', (event: TouchEvent) => {
+      this.hasUserInteracted = true; // המשתמש התחיל להזיז
+      this.resetInactivityTimer(); // אפס את טיימר חוסר הפעילות
+      
+      if (event.touches.length === 1) {
+        isTouchRotating = true;
+        lastTouchX = event.touches[0].clientX;
+        lastTouchY = event.touches[0].clientY;
+      } else if (event.touches.length === 2) {
+        isTouchZooming = true;
+        const dx = event.touches[0].clientX - event.touches[1].clientX;
+        const dy = event.touches[0].clientY - event.touches[1].clientY;
+        lastTouchDist = Math.sqrt(dx * dx + dy * dy);
+        lastTouchAngle = Math.atan2(dy, dx);
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchmove', (event: TouchEvent) => {
+      event.preventDefault();
+      if (isTouchRotating && event.touches.length === 1) {
+        const touch = event.touches[0];
+        const dx = touch.clientX - lastTouchX;
+        const dy = touch.clientY - lastTouchY;
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+        const angleY = dx * 0.01;
+        const angleX = dy * 0.01;
+        const offset = this.camera.position.clone().sub(this.target);
+        const spherical = new THREE.Spherical().setFromVector3(offset);
+        spherical.theta -= angleY;
+        spherical.phi -= angleX;
+        spherical.phi = Math.max(0.01, Math.min(Math.PI - 0.01, spherical.phi));
+        this.camera.position.setFromSpherical(spherical).add(this.target);
+      } else if (isTouchZooming && event.touches.length === 2) {
+        const dx = event.touches[0].clientX - event.touches[1].clientX;
+        const dy = event.touches[0].clientY - event.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        // Pinch zoom
+        const deltaDist = dist - lastTouchDist;
+        const direction = new THREE.Vector3().subVectors(this.camera.position, this.target).normalize();
+        const distance = this.camera.position.distanceTo(this.target);
+        const zoomAmount = -deltaDist * 0.02 * (distance / 100);
+        let newDistance = distance + zoomAmount;
+        if (newDistance < 5) newDistance = 5; // הגבלה מינימלית נמוכה יותר
+        this.camera.position.copy(direction.multiplyScalar(newDistance).add(this.target));
+        lastTouchDist = dist;
+        // Two-finger rotate (optional)
+        const deltaAngle = angle - lastTouchAngle;
+        if (Math.abs(deltaAngle) > 0.01) {
+          const offset = this.camera.position.clone().sub(this.target);
+          const spherical = new THREE.Spherical().setFromVector3(offset);
+          spherical.theta -= deltaAngle;
+          this.camera.position.setFromSpherical(spherical).add(this.target);
+          lastTouchAngle = angle;
+        }
+      }
+    }, { passive: false });
+
+    container.addEventListener('touchend', (event: TouchEvent) => {
+      isTouchRotating = false;
+      isTouchZooming = false;
+      isTouchPanning = false;
     });
 
     // הגדרת סגנון עכבר
