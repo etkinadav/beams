@@ -9,7 +9,22 @@ exports.getAllProducts = async (req, res, next) => {
         console.log('Fetching all products');
         const products = await Product.find({});
         console.log(`Found ${products.length} products`);
-        res.status(200).json(products);
+        
+        // Populate beams for each product's params
+        const Beam = require('../models/beam');
+        const productsPopulated = await Promise.all(products.map(async product => {
+            const productObj = product.toObject();
+            const paramsPopulated = await Promise.all(productObj.params.map(async param => {
+                if ((param.type === 'beamArray' || param.type === 'beamSingle') && Array.isArray(param.beams) && param.beams.length > 0) {
+                    param.beams = await Beam.find({ _id: { $in: param.beams } });
+                }
+                return param;
+            }));
+            productObj.params = paramsPopulated;
+            return productObj;
+        }));
+        
+        res.status(200).json(productsPopulated);
     } catch (error) {
         console.error('Error fetching all products:', error);
         res.status(500).json({ message: "Error fetching products", error: error.message });

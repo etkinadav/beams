@@ -1,16 +1,20 @@
 <div class="preview-wrapper">
   <div #miniPreviewContainer class="mini-preview-container"></div>
-  <div class="width-control">
+  <div class="beam-control" (click)="$event.stopPropagation()">
+    <button (click)="changeBeamType()" class="control-btn-change">החלף</button>
+    <span class="beam-value">{{getCurrentBeamDisplayName()}}</span>
+  </div>
+  <div class="width-control" (click)="$event.stopPropagation()">
     <button (click)="decreaseWidth()" class="control-btn">-</button>
     <span class="width-value">רוחב {{dynamicParams.width}} ס"מ</span>
     <button (click)="increaseWidth()" class="control-btn">+</button>
   </div>
-  <div class="length-control">
+  <div class="length-control" (click)="$event.stopPropagation()">
     <button (click)="decreaseLength()" class="control-btn">-</button>
     <span class="length-value">אורך {{dynamicParams.length}} ס"מ</span>
     <button (click)="increaseLength()" class="control-btn">+</button>
   </div>
-  <div class="shelf-height-control">
+  <div class="shelf-height-control" (click)="$event.stopPropagation()">
     <button (click)="decreaseShelfHeight()" class="control-btn">-</button>
     <span class="shelf-height-value">גובה {{shelfGaps[2]}} ס"מ</span>
     <button (click)="increaseShelfHeight()" class="control-btn">+</button>

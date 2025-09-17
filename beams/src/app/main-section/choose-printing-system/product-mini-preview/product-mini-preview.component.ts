@@ -33,6 +33,10 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   // גבהי המדפים הנוכחיים
   public shelfGaps: number[] = [10, 50, 50];
   
+  // פרמטרים נוכחיים של הקורה
+  public currentBeamIndex: number = 0;
+  public currentBeamTypeIndex: number = 0;
+  
   // מרחק ברירת מחדל של המצלמה
   private defaultDistance: number = 0;
   
@@ -83,7 +87,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   ngOnChanges(changes: SimpleChanges) {
     if (changes['product'] && this.scene) {
       console.log('מוצר השתנה, מעדכן פרמטרים...');
-      this.initializeParamsFromProduct();
+      // השתמש ב-setTimeout כדי למנוע את השגיאה
+      setTimeout(() => {
+        this.initializeParamsFromProduct();
+        this.createSimpleProduct();
+      }, 0);
     }
   }
 
@@ -108,6 +116,103 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.hasUserInteracted = false; // החזרת הסיבוב האוטומטי
       console.log('החזרת סיבוב אוטומטי אחרי 5 שניות של חוסר פעילות');
     }, 5000); // 5 שניות
+  }
+
+  // פונקציה לקבלת שם התצוגה של הקורה הנוכחית
+  getCurrentBeamDisplayName(): string {
+    if (!this.product || !this.product.params) {
+      return 'קורה לא זמינה';
+    }
+    
+    // חיפוש קורות המדפים - נחפש בכל הפרמטרים
+    let currentBeam: any = null;
+    let currentBeamType: any = null;
+    
+    this.product.params.forEach((param: any) => {
+      // חיפוש פרמטר עם קורות מדפים
+      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
+        console.log('מצאתי קורות מדפים:', param.beams);
+        // נשתמש בקורה שנבחרה או הראשונה
+        const beamIndex = param.selectedBeamIndex || 0;
+        if (param.beams[beamIndex]) {
+          currentBeam = param.beams[beamIndex];
+          console.log('קורה נבחרה:', currentBeam);
+          
+          // נשתמש בסוג הקורה שנבחר או הראשון
+          const typeIndex = param.selectedBeamTypeIndex || 0;
+          if (currentBeam.types && currentBeam.types[typeIndex]) {
+            currentBeamType = currentBeam.types[typeIndex];
+            console.log('סוג קורה נבחר:', currentBeamType);
+          }
+        }
+      }
+    });
+    
+    // אם לא מצאנו קורה ספציפית, נחפש כל קורה זמינה
+    if (!currentBeam) {
+      this.product.params.forEach((param: any) => {
+        if (param.beams && param.beams.length > 0) {
+          currentBeam = param.beams[0];
+          if (currentBeam.types && currentBeam.types.length > 0) {
+            currentBeamType = currentBeam.types[0];
+          }
+        }
+      });
+    }
+    
+    if (!currentBeam) {
+      console.log('לא מצאתי קורה');
+      return 'קורה לא זמינה';
+    }
+    
+    if (currentBeamType) {
+      const result = `${currentBeam.translatedName} (${currentBeamType.translatedName})`;
+      console.log('תוצאת תצוגה:', result);
+      return result;
+    }
+    
+    const result = currentBeam.translatedName || 'קורה לא זמינה';
+    console.log('תוצאת תצוגה (ללא סוג):', result);
+    return result;
+  }
+
+  // פונקציה להחלפת סוג הקורה
+  changeBeamType() {
+    if (!this.product || !this.product.params) {
+      return;
+    }
+
+    // חיפוש קורות המדפים
+    let shelfBeams: any[] = [];
+    this.product.params.forEach((param: any) => {
+      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
+        shelfBeams = param.beams;
+      }
+    });
+
+    if (shelfBeams.length === 0) {
+      return;
+    }
+
+    // בחירת קורה רנדומלית
+    const randomBeamIndex = Math.floor(Math.random() * shelfBeams.length);
+    const beam = shelfBeams[randomBeamIndex];
+    
+    // בחירת סוג קורה רנדומלי אם יש סוגים זמינים
+    let randomTypeIndex = 0;
+    if (beam.types && beam.types.length > 0) {
+      randomTypeIndex = Math.floor(Math.random() * beam.types.length);
+    }
+
+    // עדכון הפרמטרים הדינמיים
+    if (beam.types && beam.types[randomTypeIndex]) {
+      const beamType = beam.types[randomTypeIndex];
+      this.dynamicParams.beamWidth = beamType.width / 10; // המרה ממ"מ לס"מ
+      this.dynamicParams.beamHeight = beamType.height / 10; // המרה ממ"מ לס"מ
+    }
+
+    // יצירת המודל מחדש עם הקורה החדשה
+    this.createSimpleProduct();
   }
 
   // פונקציות לשליטה ברוחב
@@ -318,6 +423,37 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (!this.product || !this.product.params) {
       // אם אין product או params, נשתמש בערכי ברירת מחדל
       return;
+    }
+
+    // אתחול אינדקס הקורה הנוכחית - תמיד הקורה הראשונה וה-type הראשון שלה
+    this.currentBeamIndex = 0;
+    this.currentBeamTypeIndex = 0;
+    
+    // אתחול הקורה הראשונה של המדפים אם יש קורות זמינות
+    let shelfBeams: any[] = [];
+    
+    // חיפוש קורות המדפים
+    this.product.params.forEach((param: any) => {
+      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
+        shelfBeams = param.beams;
+      }
+    });
+    
+    if (shelfBeams.length > 0) {
+      const firstBeam = shelfBeams[0];
+      
+      // אם יש types לקורה הראשונה, נשתמש ב-type הראשון
+      if (firstBeam.types && firstBeam.types.length > 0) {
+        const firstBeamType = firstBeam.types[0];
+        
+        // עדכון פרמטרים דינמיים מה-type הראשון
+        if (firstBeamType.width) {
+          this.dynamicParams.beamWidth = firstBeamType.width / 10; // המרה ממ"מ לס"מ
+        }
+        if (firstBeamType.height) {
+          this.dynamicParams.beamHeight = firstBeamType.height / 10; // המרה ממ"מ לס"מ
+        }
+      }
     }
 
     // אתחול הפרמטרים הדינמיים מהמוצר
