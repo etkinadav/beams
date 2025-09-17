@@ -34,11 +34,12 @@ import * as THREE from 'three';
       height: 100%;
       border-radius: 8px;
       overflow: hidden;
+      padding: 0 4px;
     }
       .width-control {
         position: absolute;
-        bottom: 20px;
-        right: 20px;
+        bottom: 5px;
+        right: 5px;
         width: 50%;
         z-index: 1000;
         display: flex;
@@ -52,8 +53,8 @@ import * as THREE from 'three';
       }
       .length-control {
         position: absolute;
-        bottom: 50px;
-        right: 20px;
+        bottom: 45px;
+        right: 5px;
         width: 50%;
         z-index: 1000;
         display: flex;
@@ -67,8 +68,8 @@ import * as THREE from 'three';
       }
       .shelf-height-control {
         position: absolute;
-        bottom: 80px;
-        right: 20px;
+        bottom: 85px;
+        right: 5px;
         width: 50%;
         z-index: 1000;
         display: flex;
