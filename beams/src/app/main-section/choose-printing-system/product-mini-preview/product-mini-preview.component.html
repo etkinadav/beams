@@ -1,10 +1,10 @@
-<div class="preview-wrapper">
+<div class="preview-wrapper" (click)="$event.stopPropagation()">
   <div #miniPreviewContainer class="mini-preview-container"></div>
   
   <!-- כפתורי החלפה בפינה הימנית העליונה של כל קטגוריה -->
   
-  <div class="frame-beam-control" (click)="$event.stopPropagation()">
-    <button (click)="changeFrameBeamType(); $event.stopPropagation()" class="refresh-btn frame-refresh-btn" title="החלף קורת חיזוק">
+  <div class="frame-beam-control" (click)="changeFrameBeamType(); $event.stopPropagation()" title="לחץ להחלפת קורת חיזוק">
+    <button class="refresh-btn frame-refresh-btn" title="החלף קורת חיזוק">
       <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
         <path d="M21 3v5h-5"/>
@@ -15,8 +15,8 @@
     <div class="control-label">קורת חיזוק</div>
     <span class="beam-value">{{getCurrentFrameBeamDisplayName()}}</span>
   </div>
-  <div class="shelf-beam-control" (click)="$event.stopPropagation()">
-    <button (click)="changeShelfBeamType(); $event.stopPropagation()" class="refresh-btn shelf-refresh-btn" title="החלף קורת מדפים">
+  <div class="shelf-beam-control" (click)="changeShelfBeamType(); $event.stopPropagation()" title="לחץ להחלפת קורת מדפים">
+    <button class="refresh-btn shelf-refresh-btn" title="החלף קורת מדפים">
       <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
         <path d="M21 3v5h-5"/>

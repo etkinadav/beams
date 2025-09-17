@@ -50,7 +50,7 @@
 
 .frame-beam-control {
   position: absolute;
-  bottom: 125px;
+  bottom: 130px;
   left: 5px;
   width: 50%;
   z-index: 1000;
@@ -62,11 +62,19 @@
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.frame-beam-control:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .shelf-beam-control {
   position: absolute;
-  bottom: 165px;
+  bottom: 180px;
   left: 5px;
   width: 50%;
   z-index: 1000;
@@ -78,6 +86,14 @@
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shelf-beam-control:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .control-label {

@@ -240,9 +240,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     private getWoodTexture(beamType: string): THREE.Texture {
         let texturePath = 'assets/textures/pine.jpg'; // default
         
-        if (beamType && beamType.toLowerCase().includes('oak')) {
-            texturePath = 'assets/textures/oak.jpg';
-        } else if (beamType && beamType.toLowerCase().includes('pine')) {
+        if (beamType) {
+            texturePath = 'assets/textures/' + beamType +'.jpg';
+        } else {
             texturePath = 'assets/textures/pine.jpg';
         }
         

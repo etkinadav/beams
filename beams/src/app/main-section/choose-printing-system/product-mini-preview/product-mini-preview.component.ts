@@ -218,12 +218,19 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // עדכון הפרמטרים הדינמיים
     if (beam.types && beam.types[randomTypeIndex]) {
       const beamType = beam.types[randomTypeIndex];
-      this.dynamicParams.frameWidth = beamType.height / 10; // height הופך ל-width
-      this.dynamicParams.frameHeight = beamType.width / 10; // width הופך ל-height
+      // בדיקות בטיחות למידות הקורה
+      const beamWidth = beamType.width || beam.width || 50; // ברירת מחדל 50 מ"מ
+      const beamHeight = beamType.height || beam.height || 50; // ברירת מחדל 50 מ"מ
+      this.dynamicParams.frameWidth = beamHeight / 10; // height הופך ל-width
+      this.dynamicParams.frameHeight = beamWidth / 10; // width הופך ל-height
+      console.log('עדכון מידות קורת חיזוק:', { beamWidth, beamHeight, frameWidthCm: this.dynamicParams.frameWidth, frameHeightCm: this.dynamicParams.frameHeight });
     } else {
       // אם אין types, נשתמש במידות הקורה עצמה
-      this.dynamicParams.frameWidth = beam.height / 10;
-      this.dynamicParams.frameHeight = beam.width / 10;
+      const beamWidth = beam.width || 50; // ברירת מחדל 50 מ"מ
+      const beamHeight = beam.height || 50; // ברירת מחדל 50 מ"מ
+      this.dynamicParams.frameWidth = beamHeight / 10;
+      this.dynamicParams.frameHeight = beamWidth / 10;
+      console.log('עדכון מידות קורת חיזוק (ללא types):', { beamWidth, beamHeight, frameWidthCm: this.dynamicParams.frameWidth, frameHeightCm: this.dynamicParams.frameHeight });
     }
 
     console.log(`החלפתי קורת חיזוק לקורה ${randomBeamIndex}, סוג ${randomTypeIndex}:`, beam);
@@ -269,12 +276,19 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     // עדכון הפרמטרים הדינמיים
     if (beam.types && beam.types[randomTypeIndex]) {
       const beamType = beam.types[randomTypeIndex];
-      this.dynamicParams.beamWidth = beamType.width / 10; // המרה ממ"מ לס"מ
-      this.dynamicParams.beamHeight = beamType.height / 10; // המרה ממ"מ לס"מ
+      // בדיקות בטיחות למידות הקורה
+      const beamWidth = beamType.width || beam.width || 100; // ברירת מחדל 100 מ"מ
+      const beamHeight = beamType.height || beam.height || 25; // ברירת מחדל 25 מ"מ
+      this.dynamicParams.beamWidth = beamWidth / 10; // המרה ממ"מ לס"מ
+      this.dynamicParams.beamHeight = beamHeight / 10; // המרה ממ"מ לס"מ
+      console.log('עדכון מידות קורת מדפים:', { beamWidth, beamHeight, beamWidthCm: this.dynamicParams.beamWidth, beamHeightCm: this.dynamicParams.beamHeight });
     } else {
       // אם אין types, נשתמש במידות הקורה עצמה
-      this.dynamicParams.beamWidth = beam.width / 10;
-      this.dynamicParams.beamHeight = beam.height / 10;
+      const beamWidth = beam.width || 100; // ברירת מחדל 100 מ"מ
+      const beamHeight = beam.height || 25; // ברירת מחדל 25 מ"מ
+      this.dynamicParams.beamWidth = beamWidth / 10;
+      this.dynamicParams.beamHeight = beamHeight / 10;
+      console.log('עדכון מידות קורת מדפים (ללא types):', { beamWidth, beamHeight, beamWidthCm: this.dynamicParams.beamWidth, beamHeightCm: this.dynamicParams.beamHeight });
     }
 
     console.log(`החלפתי קורת מדפים לקורה ${randomBeamIndex}, סוג ${randomTypeIndex}:`, beam);
@@ -581,12 +595,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         const firstBeamType = firstBeam.types[0];
         
         // עדכון פרמטרים דינמיים מה-type הראשון
-        if (firstBeamType.width) {
-          this.dynamicParams.beamWidth = firstBeamType.width / 10; // המרה ממ"מ לס"מ
-        }
-        if (firstBeamType.height) {
-          this.dynamicParams.beamHeight = firstBeamType.height / 10; // המרה ממ"מ לס"מ
-        }
+        const beamWidth = firstBeamType.width || firstBeam.width || 100; // ברירת מחדל 100 מ"מ
+        const beamHeight = firstBeamType.height || firstBeam.height || 25; // ברירת מחדל 25 מ"מ
+        this.dynamicParams.beamWidth = beamWidth / 10; // המרה ממ"מ לס"מ
+        this.dynamicParams.beamHeight = beamHeight / 10; // המרה ממ"מ לס"מ
+        console.log('אתחול מידות קורת מדפים:', { beamWidth, beamHeight, beamWidthCm: this.dynamicParams.beamWidth, beamHeightCm: this.dynamicParams.beamHeight });
       }
     }
 
@@ -613,18 +626,22 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
           const beam = param.beams[param.selectedBeamIndex || 0];
           console.log('beamSingle beam:', beam);
           // החלפה: width של הפרמטר הופך ל-height של הקורה, height של הפרמטר הופך ל-width של הקורה
-          this.dynamicParams.frameWidth = (beam.height / 10) || 5; // height הופך ל-width
-          this.dynamicParams.frameHeight = (beam.width / 10) || 5; // width הופך ל-height
-          console.log('frameWidth:', this.dynamicParams.frameWidth, 'frameHeight:', this.dynamicParams.frameHeight);
+          const beamWidth = beam.width || 50; // ברירת מחדל 50 מ"מ
+          const beamHeight = beam.height || 50; // ברירת מחדל 50 מ"מ
+          this.dynamicParams.frameWidth = beamHeight / 10; // height הופך ל-width
+          this.dynamicParams.frameHeight = beamWidth / 10; // width הופך ל-height
+          console.log('אתחול מידות קורת חיזוק:', { beamWidth, beamHeight, frameWidthCm: this.dynamicParams.frameWidth, frameHeightCm: this.dynamicParams.frameHeight });
         }
       } else if (param.type === 'beamArray' && param.name === 'shelfs') {
         if (param.beams && param.beams.length > 0) {
           const beam = param.beams[param.selectedBeamIndex || 0];
           console.log('shelfs beam:', beam);
           // המרה ממ"מ לס"מ כמו בקובץ הראשי
-          this.dynamicParams.beamWidth = (beam.width / 10) || 10; // ברירת מחדל 10 כמו בקובץ הראשי
-          this.dynamicParams.beamHeight = (beam.height / 10) || 2; // ברירת מחדל 2 כמו בקובץ הראשי
-          console.log('beamWidth:', this.dynamicParams.beamWidth, 'beamHeight:', this.dynamicParams.beamHeight);
+          const beamWidth = beam.width || 100; // ברירת מחדל 100 מ"מ
+          const beamHeight = beam.height || 25; // ברירת מחדל 25 מ"מ
+          this.dynamicParams.beamWidth = beamWidth / 10; // המרה ממ"מ לס"מ
+          this.dynamicParams.beamHeight = beamHeight / 10; // המרה ממ"מ לס"מ
+          console.log('אתחול מידות קורת מדפים:', { beamWidth, beamHeight, beamWidthCm: this.dynamicParams.beamWidth, beamHeightCm: this.dynamicParams.beamHeight });
         }
         // מספר מדפים
         this.dynamicParams.shelfCount = param.default || 3;
@@ -641,6 +658,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   }
 
   private createSimpleProduct() {
+    // בדיקות בטיחות למידות לפני יצירת המודל
+    this.validateDynamicParams();
+    
     // ניקוי המודל הקודם
     this.meshes.forEach(mesh => this.scene.remove(mesh));
     this.meshes = [];
@@ -784,6 +804,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
   // יצירת מוצר פשוט ללא עדכון מצלמה (לשימוש בכפתורי שליטה)
   private createSimpleProductWithoutCameraUpdate() {
+    // בדיקות בטיחות למידות לפני יצירת המודל
+    this.validateDynamicParams();
+    
     // ניקוי המודל הקודם
     this.meshes.forEach(mesh => this.scene.remove(mesh));
     this.meshes = [];
@@ -1188,5 +1211,44 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     this.camera.lookAt(this.target);
     
     console.log('זום עודכן ישירות למצלמה:', this.spherical.radius);
+  }
+
+  // פונקציה לבדיקת תקינות הפרמטרים הדינמיים
+  private validateDynamicParams() {
+    // בדיקת מידות בסיסיות
+    if (!this.dynamicParams.width || this.dynamicParams.width <= 0 || isNaN(this.dynamicParams.width)) {
+      console.warn('רוחב לא תקין, מגדיר לברירת מחדל:', this.dynamicParams.width);
+      this.dynamicParams.width = 100;
+    }
+    if (!this.dynamicParams.length || this.dynamicParams.length <= 0 || isNaN(this.dynamicParams.length)) {
+      console.warn('אורך לא תקין, מגדיר לברירת מחדל:', this.dynamicParams.length);
+      this.dynamicParams.length = 100;
+    }
+    if (!this.dynamicParams.height || this.dynamicParams.height <= 0 || isNaN(this.dynamicParams.height)) {
+      console.warn('גובה לא תקין, מגדיר לברירת מחדל:', this.dynamicParams.height);
+      this.dynamicParams.height = 100;
+    }
+
+    // בדיקת מידות קורות מדפים
+    if (!this.dynamicParams.beamWidth || this.dynamicParams.beamWidth <= 0 || isNaN(this.dynamicParams.beamWidth)) {
+      console.warn('רוחב קורת מדפים לא תקין, מגדיר לברירת מחדל:', this.dynamicParams.beamWidth);
+      this.dynamicParams.beamWidth = 10;
+    }
+    if (!this.dynamicParams.beamHeight || this.dynamicParams.beamHeight <= 0 || isNaN(this.dynamicParams.beamHeight)) {
+      console.warn('גובה קורת מדפים לא תקין, מגדיר לברירת מחדל:', this.dynamicParams.beamHeight);
+      this.dynamicParams.beamHeight = 2.5;
+    }
+
+    // בדיקת מידות קורות חיזוק
+    if (!this.dynamicParams.frameWidth || this.dynamicParams.frameWidth <= 0 || isNaN(this.dynamicParams.frameWidth)) {
+      console.warn('רוחב קורת חיזוק לא תקין, מגדיר לברירת מחדל:', this.dynamicParams.frameWidth);
+      this.dynamicParams.frameWidth = 5;
+    }
+    if (!this.dynamicParams.frameHeight || this.dynamicParams.frameHeight <= 0 || isNaN(this.dynamicParams.frameHeight)) {
+      console.warn('גובה קורת חיזוק לא תקין, מגדיר לברירת מחדל:', this.dynamicParams.frameHeight);
+      this.dynamicParams.frameHeight = 5;
+    }
+
+    console.log('פרמטרים דינמיים לאחר בדיקת תקינות:', this.dynamicParams);
   }
 }
