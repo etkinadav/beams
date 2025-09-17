@@ -4,14 +4,86 @@ import * as THREE from 'three';
 @Component({
   selector: 'app-product-mini-preview',
   template: `
-    <div #miniPreviewContainer class="mini-preview-container"></div>
+    <div class="preview-wrapper">
+      <div #miniPreviewContainer class="mini-preview-container"></div>
+      <div class="width-control">
+        <button (click)="decreaseWidth()" class="control-btn">-</button>
+        <span class="width-value">{{dynamicParams.width}} ס"מ</span>
+        <button (click)="increaseWidth()" class="control-btn">+</button>
+      </div>
+      <div class="length-control">
+        <button (click)="decreaseLength()" class="control-btn">-</button>
+        <span class="length-value">{{dynamicParams.length}} ס"מ</span>
+        <button (click)="increaseLength()" class="control-btn">+</button>
+      </div>
+    </div>
   `,
   styles: [`
-    .mini-preview-container {
+    .preview-wrapper {
+      position: relative;
       width: 200px;
       height: 200px;
+    }
+    .mini-preview-container {
+      width: 100%;
+      height: 100%;
       border-radius: 8px;
       overflow: hidden;
+    }
+    .width-control {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 6px 12px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      border: 1px solid #e0e0e0;
+    }
+    .length-control {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 6px 12px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      border: 1px solid #e0e0e0;
+    }
+    .control-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 50%;
+      background: #2196f3;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    .control-btn:hover {
+      background: #1976d2;
+    }
+    .width-value, .length-value {
+      font-size: 12px;
+      font-weight: 500;
+      color: #333;
+      min-width: 50px;
+      text-align: center;
     }
   `]
 })
@@ -26,7 +98,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   private textureLoader = new THREE.TextureLoader();
 
   // פרמטרים דינמיים - ערכי ברירת מחדל זהה לקובץ הראשי
-  private dynamicParams = {
+  public dynamicParams = {
     width: 100, // זהה לקובץ הראשי
     length: 100, // זהה לקובץ הראשי
     height: 100, // זהה לקובץ הראשי
@@ -96,6 +168,64 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     if (this.renderer) {
       this.renderer.dispose();
+    }
+  }
+
+  // פונקציות לשליטה ברוחב
+  increaseWidth() {
+    // שמירת המצב הנוכחי של המצלמה
+    const currentCameraState = this.saveCurrentCameraState();
+    
+    this.dynamicParams.width += 5; // הוספת 5 ס"מ
+    this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+    
+    // שחזור המצב של המצלמה
+    this.restoreCameraState(currentCameraState);
+    
+    console.log('רוחב הוגדל ל:', this.dynamicParams.width);
+  }
+
+  decreaseWidth() {
+    if (this.dynamicParams.width > 20) { // הגבלה מינימלית של 20 ס"מ
+      // שמירת המצב הנוכחי של המצלמה
+      const currentCameraState = this.saveCurrentCameraState();
+      
+      this.dynamicParams.width -= 5; // הפחתת 5 ס"מ
+      this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+      
+      // שחזור המצב של המצלמה
+      this.restoreCameraState(currentCameraState);
+      
+      console.log('רוחב הוקטן ל:', this.dynamicParams.width);
+    }
+  }
+
+  // פונקציות לשליטה באורך
+  increaseLength() {
+    // שמירת המצב הנוכחי של המצלמה
+    const currentCameraState = this.saveCurrentCameraState();
+    
+    this.dynamicParams.length += 5; // הוספת 5 ס"מ
+    this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+    
+    // שחזור המצב של המצלמה
+    this.restoreCameraState(currentCameraState);
+    
+    console.log('אורך הוגדל ל:', this.dynamicParams.length);
+  }
+
+  decreaseLength() {
+    if (this.dynamicParams.length > 20) { // הגבלה מינימלית של 20 ס"מ
+      // שמירת המצב הנוכחי של המצלמה
+      const currentCameraState = this.saveCurrentCameraState();
+      
+      this.dynamicParams.length -= 5; // הפחתת 5 ס"מ
+      this.createSimpleProductWithoutCameraUpdate(); // יצירת המודל מחדש ללא עדכון מצלמה
+      
+      // שחזור המצב של המצלמה
+      this.restoreCameraState(currentCameraState);
+      
+      console.log('אורך הוקטן ל:', this.dynamicParams.length);
     }
   }
 
@@ -400,6 +530,180 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     // התאמת מיקום המצלמה למידות האוביקט - זהה לקובץ הראשי
     this.updateCameraPosition();
+  }
+
+  // יצירת מוצר פשוט ללא עדכון מצלמה (לשימוש בכפתורי שליטה)
+  private createSimpleProductWithoutCameraUpdate() {
+    // ניקוי המודל הקודם
+    this.meshes.forEach(mesh => this.scene.remove(mesh));
+    this.meshes = [];
+
+    // יצירת מדפים דינמיים - זהה לקובץ הראשי
+    const minGap = 2; // רווח מינימלי בין קורות
+    let currentY = 0;
+    
+    // קבלת רשימת gaps מהמוצר
+    const shelfsParam = this.product?.params?.find((p: any) => p.type === 'shelfs');
+    const shelfGaps = shelfsParam?.default || [10, 50, 50]; // ברירת מחדל
+    const totalShelves = shelfGaps.length;
+
+    // קבלת סוג הקורה והעץ מהפרמטרים - זהה לקובץ הראשי
+    let shelfBeam = null;
+    let shelfType = null;
+    if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+      shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+      shelfType = shelfBeam.types && shelfBeam.types.length ? shelfBeam.types[shelfsParam.selectedTypeIndex || 0] : null;
+    }
+    
+    // קבלת טקסטורת עץ לקורות המדפים - זהה לקובץ הראשי
+    const shelfWoodTexture = this.getWoodTexture(shelfType ? shelfType.name : '');
+    
+    for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
+      const isTopShelf = shelfIndex === totalShelves - 1;
+      const shelfGap = shelfGaps[shelfIndex];
+      // הוספת gap לכל מדף - זהה לקובץ הראשי
+      currentY += shelfGap;
+      
+      // Surface beams (קורת משטח) - זהה לקובץ הראשי
+      const surfaceBeams = this.createSurfaceBeams(
+        this.dynamicParams.width,
+        this.dynamicParams.length,
+        this.dynamicParams.beamWidth,
+        this.dynamicParams.beamHeight,
+        minGap
+      );
+      
+      for (let i = 0; i < surfaceBeams.length; i++) {
+        let beam = { ...surfaceBeams[i] };
+        // Only shorten first and last beam in the length (depth) direction for non-top shelves
+        // Top shelf (last shelf) gets full-length beams
+        if (!isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) {
+          beam.depth = beam.depth - 2 * this.dynamicParams.frameWidth;
+        }
+        
+        const beamGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+        this.setCorrectTextureMapping(beamGeometry, beam.width, beam.height, beam.depth);
+        const beamMaterial = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
+        const beamMesh = new THREE.Mesh(beamGeometry, beamMaterial);
+        beamMesh.position.set(beam.x, currentY + this.dynamicParams.frameHeight + beam.height / 2, 0);
+        beamMesh.castShadow = true;
+        beamMesh.receiveShadow = true;
+        this.scene.add(beamMesh);
+        this.meshes.push(beamMesh);
+      }
+      
+      // Frame beams (קורת חיזוק) - זהה לקובץ הראשי
+      const frameBeams = this.createFrameBeams(
+        this.dynamicParams.width,
+        this.dynamicParams.length,
+        this.dynamicParams.frameWidth,
+        this.dynamicParams.frameHeight,
+        this.dynamicParams.frameWidth, // legWidth
+        this.dynamicParams.frameWidth  // legDepth
+      );
+      
+      for (const beam of frameBeams) {
+        const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+        this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
+        const frameMaterial = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
+        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+        frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
+        frameMesh.castShadow = true;
+        frameMesh.receiveShadow = true;
+        this.scene.add(frameMesh);
+        this.meshes.push(frameMesh);
+      }
+      
+      // Add the height of the shelf itself for the next shelf
+      currentY += this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+    }
+
+    // יצירת רגליים (legs) - זהה לקובץ הראשי
+    // קבלת סוג הקורה של הרגליים מהפרמטרים
+    const legParam = this.product?.params?.find((p: any) => p.type === 'leg');
+    let legBeam = null;
+    let legType = null;
+    if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+      legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
+      legType = legBeam.types && legBeam.types.length ? legBeam.types[legParam.selectedTypeIndex || 0] : null;
+    }
+    
+    // קבלת טקסטורת עץ לרגליים - זהה לקובץ הראשי
+    const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
+
+    // חישוב גובה הרגליים - זהה לקובץ הראשי
+    let totalY = 0;
+    for (let i = 0; i < totalShelves; i++) {
+      totalY += shelfGaps[i] + this.dynamicParams.frameHeight + this.dynamicParams.beamHeight;
+    }
+    const legHeight = totalY;
+    
+    // מיקום הרגליים - זהה לקובץ הראשי
+    const legPositions = [
+      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
+      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, -this.dynamicParams.length/2 + this.dynamicParams.frameWidth/2],
+      [-this.dynamicParams.width/2 + this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2],
+      [this.dynamicParams.width/2 - this.dynamicParams.frameWidth/2, 0, this.dynamicParams.length/2 - this.dynamicParams.frameWidth/2]
+    ];
+    
+    legPositions.forEach(pos => {
+      const legGeometry = new THREE.BoxGeometry(
+        this.dynamicParams.frameWidth,
+        legHeight,
+        this.dynamicParams.frameWidth
+      );
+      this.setCorrectTextureMapping(legGeometry, this.dynamicParams.frameWidth, legHeight, this.dynamicParams.frameWidth);
+      const legMaterial = new THREE.MeshStandardMaterial({ map: legWoodTexture });
+      const leg = new THREE.Mesh(legGeometry, legMaterial);
+      leg.position.set(pos[0], legHeight/2, pos[2]);
+      leg.castShadow = true;
+      leg.receiveShadow = true;
+      this.scene.add(leg);
+      this.meshes.push(leg);
+    });
+
+    // סיבוב המודל - זהה לקובץ הראשי
+    this.scene.rotation.y = Math.PI / 6; // 30 מעלות סיבוב
+    
+    // לא מעדכנים את מיקום המצלמה - שומרים על הזווית והסיבוב הנוכחיים
+  }
+
+  // שמירת המצב הנוכחי של המצלמה
+  private saveCurrentCameraState() {
+    return {
+      cameraPosition: this.camera.position.clone(),
+      target: this.target.clone(),
+      spherical: {
+        radius: this.spherical.radius,
+        theta: this.spherical.theta,
+        phi: this.spherical.phi
+      },
+      sceneRotation: {
+        x: this.scene.rotation.x,
+        y: this.scene.rotation.y,
+        z: this.scene.rotation.z
+      }
+    };
+  }
+
+  // שחזור המצב של המצלמה
+  private restoreCameraState(cameraState: any) {
+    // שחזור מיקום המצלמה
+    this.camera.position.copy(cameraState.cameraPosition);
+    this.target.copy(cameraState.target);
+    
+    // שחזור מצב spherical
+    this.spherical.radius = cameraState.spherical.radius;
+    this.spherical.theta = cameraState.spherical.theta;
+    this.spherical.phi = cameraState.spherical.phi;
+    
+    // שחזור סיבוב המודל
+    this.scene.rotation.x = cameraState.sceneRotation.x;
+    this.scene.rotation.y = cameraState.sceneRotation.y;
+    this.scene.rotation.z = cameraState.sceneRotation.z;
+    
+    // עדכון נקודת המבט
+    this.camera.lookAt(this.target);
   }
 
   // התאמת מיקום המצלמה למידות האוביקט - זהה לקובץ הראשי
