@@ -56,14 +56,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
   // Get wood texture based on beam type - זהה לקובץ הראשי
   private getWoodTexture(beamType: string): THREE.Texture {
-    let texturePath = 'assets/textures/pine.jpg'; // default
-    
-    if (beamType && beamType.toLowerCase().includes('oak')) {
-      texturePath = 'assets/textures/oak.jpg';
-    } else if (beamType && beamType.toLowerCase().includes('pine')) {
-      texturePath = 'assets/textures/pine.jpg';
-    }
-    
+    const texturePath = beamType ? `assets/textures/${beamType}.jpg` : 'assets/textures/pine.jpg';
     return this.textureLoader.load(texturePath);
   }
 
@@ -118,79 +111,142 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }, 5000); // 5 שניות
   }
 
-  // פונקציה לקבלת שם התצוגה של הקורה הנוכחית
-  getCurrentBeamDisplayName(): string {
+  // פונקציה לקבלת שם התצוגה של קורת החיזוק הנוכחית
+  getCurrentFrameBeamDisplayName(): string {
     if (!this.product || !this.product.params) {
-      return 'קורה לא זמינה';
+      return 'קורת חיזוק לא זמינה';
     }
     
-    // חיפוש קורות המדפים - נחפש בכל הפרמטרים
+    // חיפוש קורות החיזוק
     let currentBeam: any = null;
     let currentBeamType: any = null;
     
     this.product.params.forEach((param: any) => {
-      // חיפוש פרמטר עם קורות מדפים
-      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
-        console.log('מצאתי קורות מדפים:', param.beams);
-        // נשתמש בקורה שנבחרה או הראשונה
+      if (param.type === 'beamSingle' && param.beams && param.beams.length > 0) {
         const beamIndex = param.selectedBeamIndex || 0;
         if (param.beams[beamIndex]) {
           currentBeam = param.beams[beamIndex];
-          console.log('קורה נבחרה:', currentBeam);
-          
-          // נשתמש בסוג הקורה שנבחר או הראשון
           const typeIndex = param.selectedBeamTypeIndex || 0;
           if (currentBeam.types && currentBeam.types[typeIndex]) {
             currentBeamType = currentBeam.types[typeIndex];
-            console.log('סוג קורה נבחר:', currentBeamType);
           }
         }
       }
     });
     
-    // אם לא מצאנו קורה ספציפית, נחפש כל קורה זמינה
     if (!currentBeam) {
-      this.product.params.forEach((param: any) => {
-        if (param.beams && param.beams.length > 0) {
-          currentBeam = param.beams[0];
-          if (currentBeam.types && currentBeam.types.length > 0) {
-            currentBeamType = currentBeam.types[0];
-          }
-        }
-      });
-    }
-    
-    if (!currentBeam) {
-      console.log('לא מצאתי קורה');
-      return 'קורה לא זמינה';
+      return 'קורת חיזוק לא זמינה';
     }
     
     if (currentBeamType) {
-      const result = `${currentBeam.translatedName} (${currentBeamType.translatedName})`;
-      console.log('תוצאת תצוגה:', result);
-      return result;
+      return `${currentBeam.translatedName || currentBeam.name} (${currentBeamType.translatedName || currentBeamType.name})`;
     }
     
-    const result = currentBeam.translatedName || 'קורה לא זמינה';
-    console.log('תוצאת תצוגה (ללא סוג):', result);
-    return result;
+    return currentBeam.translatedName || currentBeam.name || 'קורת חיזוק לא זמינה';
   }
 
-  // פונקציה להחלפת סוג הקורה
-  changeBeamType() {
+  // פונקציה לקבלת שם התצוגה של קורת המדפים הנוכחית
+  getCurrentShelfBeamDisplayName(): string {
+    if (!this.product || !this.product.params) {
+      return 'קורת מדפים לא זמינה';
+    }
+    
+    // חיפוש קורות המדפים
+    let currentBeam: any = null;
+    let currentBeamType: any = null;
+    
+    this.product.params.forEach((param: any) => {
+      if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
+        const beamIndex = param.selectedBeamIndex || 0;
+        if (param.beams[beamIndex]) {
+          currentBeam = param.beams[beamIndex];
+          const typeIndex = param.selectedBeamTypeIndex || 0;
+          if (currentBeam.types && currentBeam.types[typeIndex]) {
+            currentBeamType = currentBeam.types[typeIndex];
+          }
+        }
+      }
+    });
+    
+    if (!currentBeam) {
+      return 'קורת מדפים לא זמינה';
+    }
+    
+    if (currentBeamType) {
+      return `${currentBeam.translatedName || currentBeam.name} (${currentBeamType.translatedName || currentBeamType.name})`;
+    }
+    
+    return currentBeam.translatedName || currentBeam.name || 'קורת מדפים לא זמינה';
+  }
+
+  // פונקציה להחלפת סוג קורת החיזוק
+  changeFrameBeamType() {
+    if (!this.product || !this.product.params) {
+      return;
+    }
+
+    // חיפוש קורות החיזוק
+    let frameBeams: any[] = [];
+    let frameParam: any = null;
+    this.product.params.forEach((param: any) => {
+      if (param.type === 'beamSingle' && param.beams && param.beams.length > 0) {
+        frameBeams = param.beams;
+        frameParam = param;
+      }
+    });
+
+    if (frameBeams.length === 0 || !frameParam) {
+      return;
+    }
+
+    // בחירת קורה רנדומלית
+    const randomBeamIndex = Math.floor(Math.random() * frameBeams.length);
+    const beam = frameBeams[randomBeamIndex];
+    
+    // בחירת סוג קורה רנדומלי אם יש סוגים זמינים
+    let randomTypeIndex = 0;
+    if (beam.types && beam.types.length > 0) {
+      randomTypeIndex = Math.floor(Math.random() * beam.types.length);
+    }
+
+    // עדכון האינדקסים בפרמטר
+    frameParam.selectedBeamIndex = randomBeamIndex;
+    frameParam.selectedBeamTypeIndex = randomTypeIndex;
+
+    // עדכון הפרמטרים הדינמיים
+    if (beam.types && beam.types[randomTypeIndex]) {
+      const beamType = beam.types[randomTypeIndex];
+      this.dynamicParams.frameWidth = beamType.height / 10; // height הופך ל-width
+      this.dynamicParams.frameHeight = beamType.width / 10; // width הופך ל-height
+    } else {
+      // אם אין types, נשתמש במידות הקורה עצמה
+      this.dynamicParams.frameWidth = beam.height / 10;
+      this.dynamicParams.frameHeight = beam.width / 10;
+    }
+
+    console.log(`החלפתי קורת חיזוק לקורה ${randomBeamIndex}, סוג ${randomTypeIndex}:`, beam);
+
+    // יצירת המודל מחדש עם הקורה החדשה
+    this.createSimpleProduct();
+  }
+
+  // פונקציה להחלפת סוג קורת המדפים
+  changeShelfBeamType() {
     if (!this.product || !this.product.params) {
       return;
     }
 
     // חיפוש קורות המדפים
     let shelfBeams: any[] = [];
+    let shelfParam: any = null;
     this.product.params.forEach((param: any) => {
       if (param.type === 'beamArray' && param.name === 'shelfs' && param.beams && param.beams.length > 0) {
         shelfBeams = param.beams;
+        shelfParam = param;
       }
     });
 
-    if (shelfBeams.length === 0) {
+    if (shelfBeams.length === 0 || !shelfParam) {
       return;
     }
 
@@ -204,12 +260,22 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       randomTypeIndex = Math.floor(Math.random() * beam.types.length);
     }
 
+    // עדכון האינדקסים בפרמטר
+    shelfParam.selectedBeamIndex = randomBeamIndex;
+    shelfParam.selectedBeamTypeIndex = randomTypeIndex;
+
     // עדכון הפרמטרים הדינמיים
     if (beam.types && beam.types[randomTypeIndex]) {
       const beamType = beam.types[randomTypeIndex];
       this.dynamicParams.beamWidth = beamType.width / 10; // המרה ממ"מ לס"מ
       this.dynamicParams.beamHeight = beamType.height / 10; // המרה ממ"מ לס"מ
+    } else {
+      // אם אין types, נשתמש במידות הקורה עצמה
+      this.dynamicParams.beamWidth = beam.width / 10;
+      this.dynamicParams.beamHeight = beam.height / 10;
     }
+
+    console.log(`החלפתי קורת מדפים לקורה ${randomBeamIndex}, סוג ${randomTypeIndex}:`, beam);
 
     // יצירת המודל מחדש עם הקורה החדשה
     this.createSimpleProduct();

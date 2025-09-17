@@ -12,20 +12,80 @@
   padding: 0 4px;
 }
 
-.beam-control {
+// כפתורי מחזור בפינה הימנית העליונה של כל קטגוריה
+.refresh-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  color: #333;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.refresh-btn:active {
+  transform: scale(0.95);
+}
+
+.refresh-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.frame-beam-control {
   position: absolute;
   bottom: 125px;
   left: 5px;
   width: 50%;
   z-index: 1000;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
   background: rgba(255, 255, 255, 0.8);
   padding: 4px 5px;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   font-size: 11px;
+}
+
+.shelf-beam-control {
+  position: absolute;
+  bottom: 165px;
+  left: 5px;
+  width: 50%;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 5px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  font-size: 11px;
+}
+
+.control-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 2px;
+  text-align: center;
 }
 
 .width-control {
@@ -117,11 +177,12 @@
 }
 
 .beam-value {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: #333;
   min-width: 80px;
   text-align: center;
+  margin-top: 2px;
 }
 
 .width-value, .length-value, .shelf-height-value {
