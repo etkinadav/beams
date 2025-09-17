@@ -212,6 +212,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     this.dynamicParams.width = Math.min(newValue, max);
     this.createSimpleProductWithoutCameraUpdate();
+    this.updateCameraPosition(); // עדכון מצלמה לשינויים אוטומטיים
     this.restoreRotation(); // שחזור הסיבוב
     
     console.log(`רוחב השתנה ל: ${this.dynamicParams.width} (טווח: ${min}-${max}, צעד: ${step})`);
@@ -235,6 +236,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     this.dynamicParams.length = Math.min(newValue, max);
     this.createSimpleProductWithoutCameraUpdate();
+    this.updateCameraPosition(); // עדכון מצלמה לשינויים אוטומטיים
     this.restoreRotation(); // שחזור הסיבוב
     
     console.log(`אורך השתנה ל: ${this.dynamicParams.length} (טווח: ${min}-${max}, צעד: ${step})`);
@@ -258,6 +260,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     this.shelfGaps[2] = Math.min(newValue, max);
     this.createSimpleProductWithoutCameraUpdate();
+    this.updateCameraPosition(); // עדכון מצלמה לשינויים אוטומטיים
     this.restoreRotation(); // שחזור הסיבוב
     
     console.log(`גובה השתנה ל: ${this.shelfGaps[2]} (טווח: ${min}-${max}, צעד: ${step})`);
@@ -311,6 +314,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
     
     this.createSimpleProductWithoutCameraUpdate();
+    this.updateCameraPosition(); // עדכון מצלמה לשינויים אוטומטיים
     this.restoreRotation(); // שחזור הסיבוב
   }
 
@@ -454,6 +458,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     // יצירת המודל מחדש ללא עדכון מצלמה
     this.createSimpleProductWithoutCameraUpdate();
+    this.updateCameraPosition(); // עדכון מצלמה לשינויים אוטומטיים
     
     // שחזור המצב של המצלמה
     this.restoreCameraState(currentCameraState);
@@ -518,6 +523,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     // יצירת המודל מחדש ללא עדכון מצלמה
     this.createSimpleProductWithoutCameraUpdate();
+    this.updateCameraPosition(); // עדכון מצלמה לשינויים אוטומטיים
     
     // שחזור המצב של המצלמה
     this.restoreCameraState(currentCameraState);
@@ -1022,6 +1028,10 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       actualFrameHeight = frameBeam.height ? frameBeam.height / 10 : this.dynamicParams.frameHeight;
     }
     
+    // בדיקות בטיחות למידות
+    actualFrameWidth = actualFrameWidth || 5; // ברירת מחדל 5 ס"מ
+    actualFrameHeight = actualFrameHeight || 5; // ברירת מחדל 5 ס"מ
+    
     console.log('מידות אמיתיות של קורת החיזוק:');
     console.log('actualFrameWidth:', actualFrameWidth);
     console.log('actualFrameHeight:', actualFrameHeight);
@@ -1094,13 +1104,16 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     console.log('frameWidth:', this.dynamicParams.frameWidth);
     console.log('frameHeight:', this.dynamicParams.frameHeight);
 
-    // חישוב גובה הרגליים - צריך להיות קצר יותר כי הרגליים לא מגיעות עד לקורות המדפים
+    // חישוב גובה הרגליים - הרגליים מגיעות רק עד לקורות החיזוק התחתונות
     let totalY = 0;
     for (let i = 0; i < totalShelves; i++) {
-      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight; // גובה מלא
+      const safeShelfGap = shelfGaps[i] || 30; // ברירת מחדל 30 ס"מ
+      const safeActualFrameHeight = actualFrameHeight || 5; // ברירת מחדל 5 ס"מ
+      const safeBeamHeight = this.dynamicParams.beamHeight || 2.5; // ברירת מחדל 2.5 ס"מ
+      totalY += safeShelfGap + safeActualFrameHeight + safeBeamHeight; // גובה מלא
     }
-    // קיצור הרגליים במידת הגובה של קורות המדפים
-    const legHeight = totalY - this.dynamicParams.beamHeight;
+    // הרגליים מגיעות רק עד לקורות החיזוק התחתונות (לא כולל קורות המדפים העליונות)
+    const legHeight = Math.max(totalY - (this.dynamicParams.beamHeight || 2.5), 20); // מינימום 20 ס"מ
     
     
     // מיקום הרגליים - זהה לקובץ הראשי
@@ -1112,10 +1125,14 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     ];
     
     legPositions.forEach(pos => {
+      // בדיקות בטיחות למידות הרגל
+      const safeLegHeight = legHeight || 10; // ברירת מחדל 10 ס"מ
+      const safeFrameWidth = actualFrameWidth || 5; // ברירת מחדל 5 ס"מ
+      
       const legGeometry = new THREE.BoxGeometry(
-        actualFrameWidth,
-        legHeight,
-        actualFrameWidth
+        safeFrameWidth,
+        safeLegHeight,
+        safeFrameWidth
       );
       this.setCorrectTextureMapping(legGeometry, actualFrameWidth, legHeight, actualFrameWidth);
       const legMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
@@ -1202,6 +1219,10 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       actualFrameHeight = frameBeam.height ? frameBeam.height / 10 : this.dynamicParams.frameHeight;
     }
     
+    // בדיקות בטיחות למידות
+    actualFrameWidth = actualFrameWidth || 5; // ברירת מחדל 5 ס"מ
+    actualFrameHeight = actualFrameHeight || 5; // ברירת מחדל 5 ס"מ
+    
     console.log('מידות אמיתיות של קורת החיזוק:');
     console.log('actualFrameWidth:', actualFrameWidth);
     console.log('actualFrameHeight:', actualFrameHeight);
@@ -1274,13 +1295,16 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     console.log('frameWidth:', this.dynamicParams.frameWidth);
     console.log('frameHeight:', this.dynamicParams.frameHeight);
 
-    // חישוב גובה הרגליים - צריך להיות קצר יותר כי הרגליים לא מגיעות עד לקורות המדפים
+    // חישוב גובה הרגליים - הרגליים מגיעות רק עד לקורות החיזוק התחתונות
     let totalY = 0;
     for (let i = 0; i < totalShelves; i++) {
-      totalY += shelfGaps[i] + actualFrameHeight + this.dynamicParams.beamHeight; // גובה מלא
+      const safeShelfGap = shelfGaps[i] || 30; // ברירת מחדל 30 ס"מ
+      const safeActualFrameHeight = actualFrameHeight || 5; // ברירת מחדל 5 ס"מ
+      const safeBeamHeight = this.dynamicParams.beamHeight || 2.5; // ברירת מחדל 2.5 ס"מ
+      totalY += safeShelfGap + safeActualFrameHeight + safeBeamHeight; // גובה מלא
     }
-    // קיצור הרגליים במידת הגובה של קורות המדפים
-    const legHeight = totalY - this.dynamicParams.beamHeight;
+    // הרגליים מגיעות רק עד לקורות החיזוק התחתונות (לא כולל קורות המדפים העליונות)
+    const legHeight = Math.max(totalY - (this.dynamicParams.beamHeight || 2.5), 20); // מינימום 20 ס"מ
     
     
     // מיקום הרגליים - זהה לקובץ הראשי
@@ -1292,10 +1316,14 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     ];
     
     legPositions.forEach(pos => {
+      // בדיקות בטיחות למידות הרגל
+      const safeLegHeight = legHeight || 10; // ברירת מחדל 10 ס"מ
+      const safeFrameWidth = actualFrameWidth || 5; // ברירת מחדל 5 ס"מ
+      
       const legGeometry = new THREE.BoxGeometry(
-        actualFrameWidth,
-        legHeight,
-        actualFrameWidth
+        safeFrameWidth,
+        safeLegHeight,
+        safeFrameWidth
       );
       this.setCorrectTextureMapping(legGeometry, actualFrameWidth, legHeight, actualFrameWidth);
       const legMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
