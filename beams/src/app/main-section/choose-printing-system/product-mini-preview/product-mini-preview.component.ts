@@ -187,6 +187,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       return;
     }
 
+    // שמירת המצב הנוכחי של המצלמה
+    const currentCameraState = this.saveCurrentCameraState();
+
     // חיפוש קורות החיזוק
     let frameBeams: any[] = [];
     let frameParam: any = null;
@@ -235,8 +238,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     console.log(`החלפתי קורת חיזוק לקורה ${randomBeamIndex}, סוג ${randomTypeIndex}:`, beam);
 
-    // יצירת המודל מחדש עם הקורה החדשה
-    this.createSimpleProduct();
+    // יצירת המודל מחדש ללא עדכון מצלמה
+    this.createSimpleProductWithoutCameraUpdate();
+    
+    // שחזור המצב של המצלמה
+    this.restoreCameraState(currentCameraState);
   }
 
   // פונקציה להחלפת סוג קורת המדפים
@@ -244,6 +250,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (!this.product || !this.product.params) {
       return;
     }
+
+    // שמירת המצב הנוכחי של המצלמה
+    const currentCameraState = this.saveCurrentCameraState();
 
     // חיפוש קורות המדפים
     let shelfBeams: any[] = [];
@@ -293,8 +302,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
 
     console.log(`החלפתי קורת מדפים לקורה ${randomBeamIndex}, סוג ${randomTypeIndex}:`, beam);
 
-    // יצירת המודל מחדש עם הקורה החדשה
-    this.createSimpleProduct();
+    // יצירת המודל מחדש ללא עדכון מצלמה
+    this.createSimpleProductWithoutCameraUpdate();
+    
+    // שחזור המצב של המצלמה
+    this.restoreCameraState(currentCameraState);
   }
 
   // פונקציות לשליטה ברוחב
