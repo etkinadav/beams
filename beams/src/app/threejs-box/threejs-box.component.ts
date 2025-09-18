@@ -1055,19 +1055,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         legWidth: number,
         legDepth: number
     ): { x: number, y: number, z: number, width: number, height: number, depth: number }[] {
-        // קבלת מידות קורות החיזוק מהפרמטרים (מפרמטר beamSingle)
-        const frameParam = this.params.find(p => p.type === 'beamSingle');
+        // השתמש במידות שמועברות כפרמטרים (כבר מחושבות נכון)
         let frameBeamWidth = frameWidth;
         let frameBeamHeight = frameHeight;
-        
-        if (frameParam && Array.isArray(frameParam.beams) && frameParam.beams.length) {
-            const frameBeam = frameParam.beams[frameParam.selectedBeamIndex || 0];
-            if (frameBeam) {
-                // החלפה: width של הפרמטר הופך ל-height של הקורה, height של הפרמטר הופך ל-width של הקורה
-                frameBeamWidth = frameBeam.height / 10;  // המרה ממ"מ לס"מ - height הופך ל-width
-                frameBeamHeight = frameBeam.width / 10;  // המרה ממ"מ לס"מ - width הופך ל-height
-            }
-        }
+        console.log('createFrameBeams called with:', { totalWidth, totalLength, frameWidth, frameHeight, legWidth, legDepth });
+        console.log('Using frameBeamWidth/Height:', frameBeamWidth, frameBeamHeight);
+        console.log('Is table in createFrameBeams:', this.isTable);
+        console.log('Frame beam dimensions will be:', frameBeamWidth, frameBeamHeight);
+        console.log('Leg width/depth:', legWidth, legDepth);
+        console.log('Total width/length:', totalWidth, totalLength);
         
         const beams = [];
         // X axis beams (front/back) - קורות אופקיות קדמיות ואחוריות
