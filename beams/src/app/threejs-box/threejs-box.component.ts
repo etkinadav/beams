@@ -1213,8 +1213,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 }
                 // גובה הרגליים בפועל (לא גובה השולחן)
                 const actualLegHeight = legPositions[0] ? legPositions[0].height : 0;
-                currentShelfY = actualLegHeight - (legWidth / 2); // גובה הרגליים פחות חצי ממידת הרוחב של קורת החיזוק
+                currentShelfY = actualLegHeight - legWidth; // גובה הרגליים פחות ממידת הרוחב של קורת החיזוק (יותר נמוך)
                 console.log('Table screw calculation:', { actualLegHeight, legWidth, currentShelfY });
+                console.log('Previous calculation would be:', actualLegHeight - (legWidth / 2), 'New calculation:', currentShelfY);
                 console.log('Leg positions for calculation:', legPositions[0]);
             } else {
                 currentShelfY = this.getShelfHeight(shelfIndex) - (this.beamHeight + (this.frameHeight / 2));
