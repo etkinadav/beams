@@ -47,10 +47,34 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.isTable = this.selectedProductName === 'table';
                 console.log('מוצר נבחר:', this.selectedProductName, 'שולחן:', this.isTable);
                 
+                // בדיקה אם זה מוצר שונה מהמוצר האחרון
+                const lastProduct = localStorage.getItem('lastSelectedProduct');
+                console.log('Last product from localStorage:', lastProduct, 'Current product:', this.selectedProductName);
+                
+                if (lastProduct && lastProduct !== this.selectedProductName) {
+                    console.log('מוצר שונה נבחר, מנקה ערכים:', lastProduct, '->', this.selectedProductName);
+                    this.clearUserConfiguration();
+                } else {
+                    console.log('Same product or first time, no need to clear configuration');
+                }
+                
+                // שמירת המוצר הנוכחי כברמוצר האחרון
+                localStorage.setItem('lastSelectedProduct', this.selectedProductName);
+                console.log('Saved current product to localStorage:', this.selectedProductName);
+                
                 // טעינת המוצר הנכון לפי השם
                 this.getProductByName(this.selectedProductName);
             } else {
-                this.getProductById('68a186bb0717136a1a9245de');
+                // אם אין פרמטר מוצר, נטען את המוצר האחרון או ברירת מחדל
+                const lastProduct = localStorage.getItem('lastSelectedProduct');
+                if (lastProduct) {
+                    console.log('טעינת מוצר אחרון:', lastProduct);
+                    this.selectedProductName = lastProduct;
+                    this.isTable = this.selectedProductName === 'table';
+                    this.getProductByName(this.selectedProductName);
+                } else {
+                    this.getProductById('68a186bb0717136a1a9245de');
+                }
             }
         });
     }
@@ -66,6 +90,27 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             this.isUserAuthenticated = false;
             console.log('User is not authenticated, using localStorage');
         }
+    }
+
+    // Clear user configuration when switching products
+    private clearUserConfiguration() {
+        // ניקוי כל ההגדרות הקשורות למוצר הקודם
+        console.log('Current localStorage keys:', Object.keys(localStorage));
+        
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('beamConfig_') || key.startsWith('userConfig_') || key.startsWith('beam_'))) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log('Removed configuration:', key);
+        });
+        
+        console.log('User configuration cleared for new product. Removed keys:', keysToRemove);
     }
 
     getProductById(id: string) {
@@ -304,6 +349,34 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // Example: set frameWidth/frameHeight if present in params
         // You can extend this to other params as needed
+        
+        // וידוא שהערכים מתאפסים לברירת המחדל כשעוברים למוצר חדש
+        this.resetParamsToDefaults();
+    }
+    
+    // Reset all parameters to their default values
+    private resetParamsToDefaults() {
+        console.log('Resetting parameters to defaults. Current params:', this.params);
+        
+        this.params.forEach(param => {
+            console.log('Resetting param:', param.name, 'current default:', param.default);
+            
+            // איפוס ערכי ברירת מחדל
+            if (param.default !== undefined) {
+                param.default = param.default; // שמירה על הערך המקורי
+            }
+            
+            // איפוס בחירות קורות
+            if (param.type === 'beamSingle' || param.name === 'shelfs') {
+                if (Array.isArray(param.beams) && param.beams.length) {
+                    param.selectedBeamIndex = 0;
+                    param.selectedTypeIndex = Array.isArray(param.beams[0].types) && param.beams[0].types.length ? 0 : null;
+                    console.log('Reset beam selection for:', param.name, 'to beam 0, type 0');
+                }
+            }
+        });
+        
+        console.log('Parameters reset to defaults for new product');
     }
 
     // Get wood texture based on beam type
