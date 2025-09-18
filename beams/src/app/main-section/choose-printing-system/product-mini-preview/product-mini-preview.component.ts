@@ -31,7 +31,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   };
 
   // גבהי המדפים הנוכחיים
-  public shelfGaps: number[] = [10, 50, 50];
+  public shelfGaps: number[] = [];
   
   // פרמטרים נוכחיים של הקורה
   public currentBeamIndex: number = 0;
@@ -1238,6 +1238,15 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       }
     });
 
+    // אתחול ברירת מחדל עבור שולחן אם shelfGaps עדיין ריק
+    if (isTable && this.shelfGaps.length === 0) {
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      const tableHeight = heightParam ? heightParam.default || 80 : 80;
+      this.shelfGaps = [tableHeight];
+      this.dynamicParams.height = tableHeight;
+      console.log('אתחול ברירת מחדל לגובה שולחן:', this.shelfGaps);
+    }
+
     console.log('פרמטרים מאותחלים מהמוצר:', this.dynamicParams);
   }
 
@@ -1263,10 +1272,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     let totalShelves = 0;
     
     if (isTable) {
-      // שולחן - יש רק מדף אחד בגובה שנקבע על ידי פרמטר height
-      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-      const tableHeight = heightParam ? this.dynamicParams.height : 80;
-      shelfGaps = [tableHeight]; // מדף אחד בגובה שנקבע
+      // שולחן - יש רק מדף אחד בגובה שנקבע על ידי shelfGaps[0]
+      shelfGaps = [this.shelfGaps[0]]; // מדף אחד בגובה שנקבע מ-shelfGaps
       totalShelves = 1;
       
       // עבור שולחן, נשתמש בפרמטר plata במקום shelfs
@@ -1558,10 +1565,8 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     let totalShelves = 0;
     
     if (isTable) {
-      // שולחן - יש רק מדף אחד בגובה שנקבע על ידי פרמטר height
-      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-      const tableHeight = heightParam ? this.dynamicParams.height : 80;
-      shelfGaps = [tableHeight]; // מדף אחד בגובה שנקבע
+      // שולחן - יש רק מדף אחד בגובה שנקבע על ידי shelfGaps[0]
+      shelfGaps = [this.shelfGaps[0]]; // מדף אחד בגובה שנקבע מ-shelfGaps
       totalShelves = 1;
       
       // עבור שולחן, נשתמש בפרמטר plata במקום shelfs
