@@ -68,7 +68,7 @@ button.mat-icon-hanburger-con {
   }
 }
 
-// Login button styling
+// Login button styling עם gradient עדין
 .zx-login-btn {
   font-size: 13px !important;
   font-weight: 600 !important;
@@ -77,16 +77,36 @@ button.mat-icon-hanburger-con {
   min-height: 34px !important;
   padding: 0 16px !important;
   border: 2px solid var(--zx-green) !important;
+  background: transparent !important;
   color: var(--zx-green) !important;
-  background-color: transparent !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.zx-login-btn::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(45deg, var(--zx-green), var(--zx-green-vivid-mid), var(--zx-green-vivid-light)) !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  z-index: -1 !important;
 }
 
 .zx-login-btn:hover {
-  background-color: var(--zx-green) !important;
   color: white !important;
+  border-color: var(--zx-green-vivid-light) !important;
+}
+
+.zx-login-btn:hover::before {
+  opacity: 1 !important;
 }
 
 @media (min-width: 576px) {
@@ -157,11 +177,33 @@ button.mat-icon-hanburger-con {
   }
 }
 
-mat-sidenav-container {
-  height: 100vh !important;
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
+// אנימציה להמבורגר - החלפת צבעים בגוונים של הלוגו
+.mat-icon-hanburger {
+  animation: hamburgerColorShift 4s ease-in-out infinite !important;
+  transition: all 0.3s ease !important;
+}
+
+@keyframes hamburgerColorShift {
+  0% {
+    color: var(--zx-green) !important;
+    transform: scale(1);
+  }
+  25% {
+    color: var(--zx-green-vivid-mid) !important;
+    transform: scale(1.05);
+  }
+  50% {
+    color: var(--zx-green-vivid-light) !important;
+    transform: scale(1.1);
+  }
+  75% {
+    color: var(--zx-green-vivid-mid) !important;
+    transform: scale(1.05);
+  }
+  100% {
+    color: var(--zx-green) !important;
+    transform: scale(1);
+  }
 }
 
 mat-sidenav-content {
