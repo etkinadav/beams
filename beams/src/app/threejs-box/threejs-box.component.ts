@@ -1675,13 +1675,17 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             -totalLength / 2 + legDepth / 2,    // קדמית - צמודה לקצה לפי מידות הרגליים
             totalLength / 2 - legDepth / 2      // אחורית - צמודה לקצה לפי מידות הרגליים
         ]) {
-            const beamWidth = this.isTable ? totalWidth - 2 * frameBeamHeight : totalWidth - 2 * frameBeamWidth;
+            // עבור שולחן: קיצור לפי גובה קורות החיזוק
+            // עבור ארון: קיצור לפי רוחב הרגליים (legWidth)
+            const beamWidth = this.isTable ? totalWidth - 2 * frameBeamHeight : totalWidth - 2 * legWidth;
             console.log('Creating horizontal frame beam:', {
                 isTable: this.isTable,
                 z: z,
                 beamWidth: beamWidth,
                 totalWidth: totalWidth,
                 legWidth: legWidth,
+                frameBeamHeight: frameBeamHeight,
+                frameBeamWidth: frameBeamWidth,
                 beamStart: -beamWidth / 2,
                 beamEnd: beamWidth / 2,
                 legStart: -totalWidth / 2 + legWidth / 2,
@@ -1691,7 +1695,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 x: 0,  // ממורכזות במרכז
                 y: 0,
                 z: z,  // מיקום זהה לארון
-                width: beamWidth,  // עבור שולחן וארון, רוחב מותאם לעובי הרגליים
+                width: beamWidth,  // עבור שולחן: קיצור לפי גובה קורות החיזוק, עבור ארון: קיצור לפי רוחב הרגליים
                 height: frameBeamHeight,           // גובה מקורות החיזוק
                 depth: frameBeamWidth              // עומק מקורות החיזוק
             });
