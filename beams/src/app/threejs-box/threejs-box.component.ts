@@ -73,7 +73,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     this.isTable = this.selectedProductName === 'table';
                     this.getProductByName(this.selectedProductName);
                 } else {
-                    this.getProductById('68a186bb0717136a1a9245de');
+        this.getProductById('68a186bb0717136a1a9245de');
                 }
             }
         });
@@ -242,12 +242,12 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             return [{ gap: 0 }];
         } else {
             // עבור ארון, נשתמש בפרמטר shelfs
-            const shelfsParam = this.getParam('shelfs');
-            if (shelfsParam && Array.isArray(shelfsParam.default)) {
-                // Model: bottom shelf is first (no reverse)
-                return shelfsParam.default.map((gap: number) => ({ gap }));
-            }
-            return [];
+        const shelfsParam = this.getParam('shelfs');
+        if (shelfsParam && Array.isArray(shelfsParam.default)) {
+            // Model: bottom shelf is first (no reverse)
+            return shelfsParam.default.map((gap: number) => ({ gap }));
+        }
+        return [];
         }
     }
 
@@ -899,14 +899,26 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.addScrewsToShelfBeam(beam, tableHeight, beamHeight, frameBeamWidth, "top");
             }
             
+            // Get leg beam dimensions for frame beams positioning
+            const tableLegParam = this.getParam('leg');
+            let legWidth = frameBeamWidth;
+            let legDepth = frameBeamWidth;
+            if (tableLegParam && Array.isArray(tableLegParam.beams) && tableLegParam.beams.length) {
+                const legBeam = tableLegParam.beams[tableLegParam.selectedBeamIndex || 0];
+                if (legBeam) {
+                    legWidth = legBeam.width / 10;   // המרה ממ"מ לס"מ
+                    legDepth = legBeam.height / 10; // המרה ממ"מ לס"מ
+                }
+            }
+            
             // Frame beams (קורת חיזוק) - מדף אחד בלבד
             const frameBeams = this.createFrameBeams(
                 this.surfaceWidth,
                 this.surfaceLength,
                 frameBeamWidth,
                 frameBeamHeight,
-                frameBeamWidth, // legWidth
-                frameBeamWidth  // legDepth
+                legWidth,  // רוחב הרגל האמיתי
+                legDepth   // עומק הרגל האמיתי
             );
             for (const beam of frameBeams) {
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
@@ -994,7 +1006,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             this.target.set(0, tableHeight / 2, 0);
         } else {
             // עבור ארון - הקוד המקורי
-            for (let shelfIndex = 0; shelfIndex < this.shelves.length; shelfIndex++) {
+        for (let shelfIndex = 0; shelfIndex < this.shelves.length; shelfIndex++) {
             const shelf = this.shelves[shelfIndex];
             currentY += shelf.gap;
             // Surface beams (קורת משטח)
@@ -1091,7 +1103,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 totalY = heightParam ? heightParam.default : 80;
             } else {
                 // עבור ארון, הגובה הכולל הוא סכום כל המדפים
-                for (const shelf of this.shelves) {
+            for (const shelf of this.shelves) {
                     totalY += shelf.gap + frameBeamHeight + beamHeight;
                 }
             }
@@ -1184,11 +1196,23 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             -totalLength / 2 + legDepth / 2,    // קדמית - צמודה לקצה לפי מידות הרגליים
             totalLength / 2 - legDepth / 2      // אחורית - צמודה לקצה לפי מידות הרגליים
         ]) {
+            const beamWidth = totalWidth - 2 * frameBeamWidth;
+            console.log('Creating horizontal frame beam:', {
+                isTable: this.isTable,
+                z: z,
+                beamWidth: beamWidth,
+                totalWidth: totalWidth,
+                legWidth: legWidth,
+                beamStart: -beamWidth / 2,
+                beamEnd: beamWidth / 2,
+                legStart: -totalWidth / 2 + legWidth / 2,
+                legEnd: totalWidth / 2 - legWidth / 2
+            });
             beams.push({
-                x: this.isTable ? 0 : 0,  // עבור שולחן, ממורכזות למרכז הרגל
+                x: 0,  // ממורכזות במרכז
                 y: 0,
-                z: z,  // החזרה למקום המקורי
-                width: this.isTable ? totalWidth - legWidth : totalWidth - 2 * legWidth,  // עבור שולחן, רוחב מותאם למרכז הרגל
+                z: z,  // מיקום זהה לארון
+                width: beamWidth,  // עבור שולחן וארון, רוחב מותאם לעובי הרגליים
                 height: frameBeamHeight,           // גובה מקורות החיזוק
                 depth: frameBeamWidth              // עומק מקורות החיזוק
             });
@@ -1375,15 +1399,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             return heightParam ? heightParam.default : 80;
         } else {
             // עבור ארון, הגובה הוא סכום כל המדפים עד המדף הנוכחי
-            let currentY = 0;
-            for (let i = 0; i < shelfIndex; i++) {
-                currentY += this.shelves[i].gap; // הוספת הרווח של המדף
-                currentY += this.frameHeight + this.beamHeight; // הוספת גובה קורת החיזוק + קורת המדף
-            }
-            // הוספת הרווח של המדף הנוכחי
-            currentY += this.shelves[shelfIndex].gap;
-            // החזרת הגובה של קורת החיזוק (כמו בקוד המקורי)
-            return currentY + this.frameHeight + (((shelfIndex > 0 ? shelfIndex : 0) / (this.shelves.length)) * this.beamHeight);
+        let currentY = 0;
+        for (let i = 0; i < shelfIndex; i++) {
+            currentY += this.shelves[i].gap; // הוספת הרווח של המדף
+            currentY += this.frameHeight + this.beamHeight; // הוספת גובה קורת החיזוק + קורת המדף
+        }
+        // הוספת הרווח של המדף הנוכחי
+        currentY += this.shelves[shelfIndex].gap;
+        // החזרת הגובה של קורת החיזוק (כמו בקוד המקורי)
+        return currentY + this.frameHeight + (((shelfIndex > 0 ? shelfIndex : 0) / (this.shelves.length)) * this.beamHeight);
         }
     }
 
