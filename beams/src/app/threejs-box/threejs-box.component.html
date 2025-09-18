@@ -13,7 +13,7 @@
                 <!-- כותרת מוצר -->
                 <div class="product-header" *ngIf="selectedProductName">
                     <h3 style="margin: 0; padding: 10px; background: #f5f5f5; border-radius: 8px; text-align: center;">
-                        מוצר: {{selectedProductName}}
+                        מוצר: {{product?.translatedName || selectedProductName}}
                     </h3>
                 </div>
                 
