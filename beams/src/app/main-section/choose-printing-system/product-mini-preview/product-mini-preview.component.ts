@@ -200,7 +200,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const step = this.getStep(widthParam.type || 0);
     // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
     const min = (widthParam.type === 0 || widthParam.type === undefined || widthParam.type === null) ? 
-      Math.max(widthParam.min || 45, 45) : (widthParam.min || 50);
+      Math.max(widthParam.min || 45, 45) : Math.max(widthParam.min || 50, 45);
     const max = Math.min(widthParam.max || 200, 200); // הגבלה מקסימלית של 200
     
     // בחירת ערך רנדומלי בטווח המלא
@@ -226,7 +226,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     const step = this.getStep(lengthParam.type || 0);
     // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
     const min = (lengthParam.type === 0 || lengthParam.type === undefined || lengthParam.type === null) ? 
-      Math.max(lengthParam.min || 45, 45) : (lengthParam.min || 50);
+      Math.max(lengthParam.min || 45, 45) : Math.max(lengthParam.min || 50, 45);
     const max = Math.min(lengthParam.max || 200, 200); // הגבלה מקסימלית של 200
     
     // בחירת ערך רנדומלי בטווח המלא
@@ -261,7 +261,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       const step = this.getStep(heightParam.type || 0);
       // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
       const min = (heightParam.type === 0 || heightParam.type === undefined || heightParam.type === null) ? 
-        Math.max(heightParam.min || 45, 45) : (heightParam.min || 50);
+        Math.max(heightParam.min || 45, 45) : Math.max(heightParam.min || 50, 45);
       const max = Math.min(heightParam.max || 120, 200);
       
       // בחירת ערך רנדומלי בטווח המלא
