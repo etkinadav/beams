@@ -1050,8 +1050,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const frameBeams = this.createFrameBeams(
                 this.surfaceWidth,
                 this.surfaceLength,
-                this.frameWidth,
-                this.frameHeight,
+                frameBeamWidth,
+                frameBeamHeight,
                 legWidth,
                 legDepth
             );
