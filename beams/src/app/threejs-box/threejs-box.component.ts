@@ -907,8 +907,19 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 const legBeam = tableLegParam.beams[tableLegParam.selectedBeamIndex || 0];
                 if (legBeam) {
                     legWidth = legBeam.width / 10;   // המרה ממ"מ לס"מ
-                    legDepth = legBeam.height / 10; // המרה ממ"מ לס"מ
+                    legDepth = (legBeam.depth || legBeam.height) / 10; // המרה ממ"מ לס"מ - fallback ל-height אם depth לא קיים
+                    console.log('Table leg dimensions:', { legWidth, legDepth, legBeam });
                 }
+            }
+            
+            // בדיקת תקינות הערכים
+            if (isNaN(legWidth) || legWidth <= 0) {
+                console.warn('Invalid legWidth, using frameBeamWidth:', legWidth);
+                legWidth = frameBeamWidth;
+            }
+            if (isNaN(legDepth) || legDepth <= 0) {
+                console.warn('Invalid legDepth, using frameBeamWidth:', legDepth);
+                legDepth = frameBeamWidth;
             }
             
             // Frame beams (קורת חיזוק) - מדף אחד בלבד
@@ -1183,6 +1194,33 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // השתמש במידות שמועברות כפרמטרים (כבר מחושבות נכון)
         let frameBeamWidth = frameWidth;
         let frameBeamHeight = frameHeight;
+        
+        // בדיקת תקינות כל הפרמטרים
+        if (isNaN(totalWidth) || totalWidth <= 0) {
+            console.error('Invalid totalWidth:', totalWidth);
+            return [];
+        }
+        if (isNaN(totalLength) || totalLength <= 0) {
+            console.error('Invalid totalLength:', totalLength);
+            return [];
+        }
+        if (isNaN(frameBeamWidth) || frameBeamWidth <= 0) {
+            console.error('Invalid frameBeamWidth:', frameBeamWidth);
+            return [];
+        }
+        if (isNaN(frameBeamHeight) || frameBeamHeight <= 0) {
+            console.error('Invalid frameBeamHeight:', frameBeamHeight);
+            return [];
+        }
+        if (isNaN(legWidth) || legWidth <= 0) {
+            console.error('Invalid legWidth:', legWidth);
+            return [];
+        }
+        if (isNaN(legDepth) || legDepth <= 0) {
+            console.error('Invalid legDepth:', legDepth);
+            return [];
+        }
+        
         console.log('createFrameBeams called with:', { totalWidth, totalLength, frameWidth, frameHeight, legWidth, legDepth });
         console.log('Using frameBeamWidth/Height:', frameBeamWidth, frameBeamHeight);
         console.log('Is table in createFrameBeams:', this.isTable);
@@ -1196,7 +1234,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             -totalLength / 2 + legDepth / 2,    // קדמית - צמודה לקצה לפי מידות הרגליים
             totalLength / 2 - legDepth / 2      // אחורית - צמודה לקצה לפי מידות הרגליים
         ]) {
-            const beamWidth = totalWidth - 2 * frameBeamWidth;
+            const beamWidth = this.isTable ? totalWidth - 2 * frameBeamHeight : totalWidth - 2 * frameBeamWidth;
             console.log('Creating horizontal frame beam:', {
                 isTable: this.isTable,
                 z: z,
