@@ -202,7 +202,7 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
   startTextRotation() {
     this.textChangeInterval = setInterval(() => {
       this.changeText();
-    }, 4000); // החלפה כל 4 שניות
+    }, 10000); // החלפה כל 10 שניות
   }
 
   stopTextRotation() {

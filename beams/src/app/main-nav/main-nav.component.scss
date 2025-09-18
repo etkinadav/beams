@@ -70,18 +70,32 @@ button.mat-icon-hanburger-con {
 
 // Login button styling
 .zx-login-btn {
-  font-size: 14px !important;
-  font-weight: normal !important;
-  line-height: 1.6 !important;
-  max-height: 36px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  height: 34px !important;
+  min-height: 34px !important;
   padding: 0 16px !important;
+  border: 2px solid var(--zx-green) !important;
+  color: var(--zx-green) !important;
+  background-color: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.zx-login-btn:hover {
+  background-color: var(--zx-green) !important;
+  color: white !important;
 }
 
 @media (min-width: 576px) {
   .zx-login-btn {
-    font-size: 16px !important;
-    line-height: 1.6 !important;
-    max-height: 40px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    height: 38px !important;
+    min-height: 38px !important;
     padding: 0 20px !important;
   }
 }
