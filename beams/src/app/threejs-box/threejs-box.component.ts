@@ -2,6 +2,7 @@
 import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute } from '@angular/router';
 import * as THREE from 'three';
 
 interface Shelf {
@@ -31,12 +32,31 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     drawerOpen: boolean = true;
     product: any = null;
     params: any[] = [];
+    selectedProductName: string = ''; // שם המוצר שנבחר מה-URL
+    isTable: boolean = false; // האם זה שולחן או ארון
 
-    constructor(private http: HttpClient, private snackBar: MatSnackBar) { } 
+    constructor(private http: HttpClient, private snackBar: MatSnackBar, private route: ActivatedRoute) { } 
 
     ngOnInit() {
         this.checkUserAuthentication();
-        this.getProductById('68a186bb0717136a1a9245de');
+        
+        // קבלת פרמטר המוצר מה-URL
+        this.route.queryParams.subscribe(params => {
+            if (params['product']) {
+                this.selectedProductName = params['product'];
+                this.isTable = this.selectedProductName === 'table';
+                console.log('מוצר נבחר:', this.selectedProductName, 'שולחן:', this.isTable);
+                
+                // טעינת המוצר הנכון לפי השם
+                if (this.isTable) {
+                    this.getProductById('68a186bb0717136a1a9245de'); // שולחן
+                } else {
+                    this.getProductById('68a186bb0717136a1a9245de'); // ארון (זמנית)
+                }
+            } else {
+                this.getProductById('68a186bb0717136a1a9245de');
+            }
+        });
     }
 
     // Check if user is authenticated
@@ -71,6 +91,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 });
                 this.initParamsFromProduct();
                 console.log('Product loaded:', data);
+                console.log('פרמטרים נטענו:', this.params);
+                console.log('זה שולחן?', this.isTable);
+                
+                // בדיקת פרמטרים ספציפיים
+                const heightParam = this.params.find(p => p.name === 'height');
+                const plataParam = this.params.find(p => p.name === 'plata');
+                console.log('פרמטר height:', heightParam);
+                console.log('פרמטר plata:', plataParam);
                 // Load saved configuration after product is loaded
                 this.loadConfiguration();
                 this.updateBeams();
@@ -358,7 +386,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.initThree();
         this.onResize();
         window.addEventListener('resize', this.onResizeBound);
-        this.animate();
         this.rendererContainer.nativeElement.addEventListener('wheel', (event: WheelEvent) => {
             event.preventDefault();
             const delta = event.deltaY;
@@ -480,6 +507,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             isTouchZooming = false;
             isTouchPanning = false;
         });
+        
+        // Start animation loop
+        this.animate();
     }
 
     ngOnDestroy() {
@@ -643,8 +673,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             return;
         }
 
-        // Get shelf beam and type from params
-        const shelfsParam = this.getParam('shelfs');
+        // Get shelf beam and type from params (for cabinet) or plata beam (for table)
+        let shelfsParam = null;
+        if (this.isTable) {
+            // עבור שולחן, נשתמש בפרמטר plata במקום shelfs
+            shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'plata');
+        } else {
+            // עבור ארון, נשתמש בפרמטר shelfs
+            shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+        }
+        
         let shelfBeam = null;
         let shelfType = null;
         if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
@@ -685,7 +723,87 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             }
         }
         
-        for (let shelfIndex = 0; shelfIndex < this.shelves.length; shelfIndex++) {
+        // עבור שולחן, נציג מדף אחד בלבד בגובה שנקבע בפרמטר height
+        if (this.isTable) {
+            const heightParam = this.getParam('height');
+            const tableHeight = heightParam ? heightParam.default : 80; // גובה ברירת מחדל
+            
+            // Surface beams (קורת משטח) - מדף אחד בלבד
+            const surfaceBeams = this.createSurfaceBeams(
+                this.surfaceWidth,
+                this.surfaceLength,
+                beamWidth,
+                beamHeight,
+                this.minGap
+            );
+            for (let i = 0; i < surfaceBeams.length; i++) {
+                const beam = { ...surfaceBeams[i] };
+                const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+                const material = new THREE.MeshStandardMaterial({ map: shelfWoodTexture });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.position.set(beam.x, tableHeight + beam.height / 2, 0);
+                this.scene.add(mesh);
+                this.beamMeshes.push(mesh);
+                
+                // הוספת ברגים לקורת המדף
+                this.addScrewsToShelfBeam(beam, tableHeight, beamHeight, frameBeamWidth, "top");
+            }
+            
+            // Frame beams (קורת חיזוק) - מדף אחד בלבד
+            const frameBeams = this.createFrameBeams(
+                this.surfaceWidth,
+                this.surfaceLength,
+                this.frameWidth,
+                this.frameHeight,
+                this.frameWidth, // legWidth
+                this.frameWidth  // legDepth
+            );
+            for (const beam of frameBeams) {
+                const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+                const material = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.position.set(beam.x, tableHeight - beam.height / 2, beam.z);
+                this.scene.add(mesh);
+                this.beamMeshes.push(mesh);
+            }
+            
+            // רגליים (legs) - עבור שולחן
+            const legParam = this.getParam('leg');
+            let legBeam = null;
+            let legType = null;
+            if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+                legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
+                legType = legBeam.types && legBeam.types.length ? legBeam.types[legParam.selectedTypeIndex || 0] : null;
+            }
+            
+            const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
+            const legs = this.createLegBeams(
+                this.surfaceWidth,
+                this.surfaceLength,
+                this.frameWidth,
+                this.frameHeight,
+                tableHeight // גובה הרגליים = גובה השולחן
+            );
+            for (const leg of legs) {
+                const geometry = new THREE.BoxGeometry(leg.width, leg.height, leg.depth);
+                const material = new THREE.MeshStandardMaterial({ map: legWoodTexture });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.position.set(leg.x, leg.height / 2, leg.z);
+                this.scene.add(mesh);
+                this.beamMeshes.push(mesh);
+            }
+            
+            // Focus camera at the vertical center of the table
+            this.target.set(0, tableHeight / 2, 0);
+        } else {
+            // עבור ארון - הקוד המקורי
+            for (let shelfIndex = 0; shelfIndex < this.shelves.length; shelfIndex++) {
             const shelf = this.shelves[shelfIndex];
             currentY += shelf.gap;
             // Surface beams (קורת משטח)
@@ -803,9 +921,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             // Focus camera at the vertical center of the structure
             this.target.set(0, totalY / 2, 0);
         }
+        }
         
         // Ensure scene rotation is maintained after updates
         this.scene.rotation.y = Math.PI / 6; // 30 degrees rotation
+    }
+
+    // Update model when any parameter changes (alias for updateBeams)
+    updateModel() {
+        this.updateBeams();
     }
 
     animate() {
