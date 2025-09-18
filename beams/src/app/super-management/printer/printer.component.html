@@ -1213,8 +1213,8 @@
                                 <!-- image -->
                                 <article
                                   class="zx-order-summery-image-con d-flex flex-column align-items-center position-relative p-1 p-lg-2 rounded-1 bg-white zx-border-gray-v-v-light shadow-85-light"
-                                  [class.justify-content-between]="order.user !== 'Eazix'"
-                                  [class.justify-content-center]="order.user === 'Eazix'">
+                                  [class.justify-content-between]="order.user !== 'OnDe'"
+                                  [class.justify-content-center]="order.user === 'OnDe'">
 
                                   <!-- -----===----- thumbnail 1/1 [plotter] -----===----- -->
                                   <div class="d-flex zx-medium-plus-icon-size rounded-1" mat-ripple
@@ -1224,7 +1224,7 @@
                                       (error)="plotterImageErrors[o][i][j] = true"
                                       class="w-100 h-100 object-fit-contain" [src]="image.thumbnailPath">
                                     <!-- error finding image src? -->
-                                    <div *ngIf="plotterImageErrors[o][i][j] && order.user !== 'Eazix'"
+                                    <div *ngIf="plotterImageErrors[o][i][j] && order.user !== 'OnDe'"
                                       class="d-flex flex-column align-items-center"
                                       matTooltip="{{ 'my-orders.no-img-src-explain' | translate }}"
                                       matTooltipPosition="below" matTooltipClass="centered-tooltip">
@@ -1234,14 +1234,14 @@
                                         {{ "my-orders.no-img-src" | translate }}
                                       </b>
                                     </div>
-                                    <b *ngIf="order.user === 'Eazix'" class="zx-text-tiny-tiny text-green text-center">
+                                    <b *ngIf="order.user === 'OnDe'" class="zx-text-tiny-tiny text-green text-center">
                                       {{ "su-management.management-order" | translate }}
                                     </b>
                                     <!-- // error finding image src? -->
                                   </div>
                                   <!-- -----===----- // thumbnail 1/1 [plotter] -----===----- -->
 
-                                  <div *ngIf="order.user !== 'Eazix'"
+                                  <div *ngIf="order.user !== 'OnDe'"
                                     class="d-flex w-100 align-items-center justify-content-center pt-1 pt-lg-2">
                                     <span class="zx-text-tiny" [class.zx-ltr]="!isRTL">
                                       <span>{{roundDownTowDecimalCeil(image.imageHeight * (2.54 / 300)) }}</span>
@@ -2243,7 +2243,7 @@
                               <span class="zx-text-small zx-text-sm-medium">
                                 {{ "my-profile.probider-local" | translate }}
                               </span>
-                              <img class="zx-small-icon-size" src="assets/images/onde-logo-small.svg" alt="Eazix Logo">
+                              <img class="zx-small-icon-size" src="assets/images/onde-logo-small.svg" alt="OnDe Logo">
                             </div>
                           </div>
                         </div>
