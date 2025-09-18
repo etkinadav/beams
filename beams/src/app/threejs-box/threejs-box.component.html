@@ -200,4 +200,19 @@
         </div>
         <div #rendererContainer class="renderer-container" [class.expanded]="!drawerOpen"></div>
     </div>
+    
+    <!-- אזור חישוב המחיר -->
+    <div class="price-calculation-area">
+        <button class="fullscreen-btn" mat-icon-button color="primary" aria-label="מסך מלא">
+            <mat-icon>fullscreen</mat-icon>
+        </button>
+        <div class="price-info">
+            <div class="price-display">
+                <span class="price-label">מחיר:</span>
+                <div class="price-loader">
+                    <mat-spinner diameter="20"></mat-spinner>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
