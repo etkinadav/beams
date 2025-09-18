@@ -1013,6 +1013,52 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             console.log('Calling addScrewsToLegs for table with legs:', legs.length);
             this.addScrewsToLegs(1, legs, frameBeamHeight, 0);
             
+            // הוספת ברגים נוספים לקורות החיזוק המשוכפלות (extraBeam) - עבור שולחן בלבד
+            if (extraBeamParam && extraBeamParam.default > 0) {
+                const extraBeamDistance = extraBeamParam.default;
+                const totalDistance = extraBeamDistance + frameBeamHeight;
+                console.log('Adding extra screws for table extra beams at distance:', totalDistance);
+                
+                // יצירת ברגים נוספים באותם מיקומים X ו-Z אבל בגובה של קורות החיזוק המשוכפלות
+                legs.forEach((leg, legIndex) => {
+                    const isEven = legIndex % 2 === 0;
+                    const extraScrewY = tableHeight - frameBeamHeight / 2 - totalDistance; // גובה מרכז קורות החיזוק המשוכפלות
+                    
+                    // 2 ברגים לכל רגל (אחד לכל קורת חיזוק - קדמית ואחורית)
+                    const extraScrewPositions = [
+                        // בורג לקורת חיזוק קדמית
+                        {
+                            x: leg.x, // מרכז רוחב הרגל
+                            y: extraScrewY, // מרכז קורות החיזוק המשוכפלות
+                            z: isEven ? (leg.z - (leg.depth / 2 + this.headHeight)) : (leg.z + (leg.depth / 2 + this.headHeight)) // צד חיצוני של הרגל (קדמי)
+                        },
+                        {
+                            x: leg.x + ((leg.width / 2 + this.headHeight) * (legIndex > 1 ? 1 : -1)), // מרכז רוחב הרגל
+                            y: extraScrewY, // מרכז קורות החיזוק המשוכפלות
+                            z: (isEven ? (leg.z - (leg.depth / 2 + this.headHeight)) : (leg.z + (leg.depth / 2 + this.headHeight))) +
+                            ((isEven ? 1 : -1) * (leg.depth / 2 + this.headHeight)) // צד חיצוני של הרגל (קדמי)
+                        }
+                    ];
+                    
+                    extraScrewPositions.forEach((pos, screwIndex) => {
+                        const screwGroup = this.createHorizontalScrewGeometry();
+                        
+                        // הברגים אופקיים ומיושרים ל-X (מאונכים לדופן Z)
+                        screwGroup.position.set(pos.x, pos.y, pos.z);
+                        if (screwIndex === 0) {
+                            screwGroup.rotation.y =  Math.PI / 2 * (isEven ? 1 : -1);
+                        } else {
+                            screwGroup.rotation.y =  legIndex > 1 ? 0 : Math.PI;
+                        }
+                        
+                        this.scene.add(screwGroup);
+                        this.beamMeshes.push(screwGroup);
+                        
+                        console.log(`Extra screw - Leg ${legIndex + 1}, Screw ${screwIndex + 1}: x=${pos.x.toFixed(1)}, y=${pos.y.toFixed(1)}, z=${pos.z.toFixed(1)}`);
+                    });
+                });
+            }
+            
             // Focus camera at the vertical center of the table
             this.target.set(0, tableHeight / 2, 0);
         } else {
