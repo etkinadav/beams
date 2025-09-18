@@ -203,7 +203,10 @@
     
     <!-- אזור חישוב המחיר -->
     <div class="price-calculation-area">
-        <button class="fullscreen-btn" mat-icon-button color="primary" aria-label="מסך מלא">
+        <button class="fullscreen-btn" mat-icon-button color="primary" 
+                [matTooltip]="'price-calculation.tooltip' | translate" 
+                matTooltipPosition="left"
+                aria-label="מסך מלא">
             <mat-icon>fullscreen</mat-icon>
         </button>
         <div class="price-info">
