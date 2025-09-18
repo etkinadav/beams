@@ -917,8 +917,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.surfaceLength,
                 frameBeamWidth,
                 frameBeamHeight,
-                legWidth,  // רוחב הרגל האמיתי
-                legDepth   // עומק הרגל האמיתי
+                legWidth,  // רוחב הרגל האמיתי - חזרה למצב התקין
+                legDepth   // עומק הרגל האמיתי - חזרה למצב התקין
             );
             for (const beam of frameBeams) {
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
@@ -946,8 +946,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     this.surfaceLength,
                     frameBeamWidth,
                     frameBeamHeight,
-                    frameBeamWidth, // legWidth
-                    frameBeamWidth  // legDepth
+                    legWidth, // legWidth - כמו בקורות המקוריות התקינות
+                    legDepth  // legDepth - כמו בקורות המקוריות התקינות
                 );
                 // המרחק הכולל = הנתון החדש + רוחב קורות החיזוק
                 const totalDistance = extraBeamDistance + frameBeamHeight;
@@ -1222,13 +1222,23 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             -totalWidth / 2 + legWidth / 2,     // שמאלית - צמודה לקצה לפי מידות הרגליים
             totalWidth / 2 - legWidth / 2       // ימנית - צמודה לקצה לפי מידות הרגליים
         ]) {
+            const originalX = x;
+            const adjustedX = x;  // עבור שולחן וארון - מיקום זהה
+            console.log('Creating vertical frame beam:', {
+                isTable: this.isTable,
+                originalX: originalX,
+                adjustedX: adjustedX,
+                legWidth: legWidth,
+                adjustment: this.isTable ? (x < 0 ? legWidth / 2 : -legWidth / 2) : 0,
+                beamDepth: this.isTable ? totalLength - legDepth : totalLength - 2 * legDepth
+            });
             beams.push({
-                x: this.isTable ? (x < 0 ? x + (frameBeamWidth / 2) : x - (frameBeamWidth / 2)) : x,  // עבור שולחן, שתי הקורות זוזות למרכז
+                x: adjustedX,  // עבור שולחן, שתי הקורות ממורכזות למרכז הרגל
                 y: 0,
                 z: 0,
                 width: frameBeamWidth,              // רוחב מקורות החיזוק
                 height: frameBeamHeight,           // גובה מקורות החיזוק
-                depth: this.isTable ? totalLength - legDepth : totalLength - 2 * legDepth  // עבור שולחן, עומק מותאם למרכז הרגל
+                depth: totalLength - 2 * legDepth  // עומק זהה לארון
             });
         }
         return beams;
