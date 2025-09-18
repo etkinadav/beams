@@ -41,6 +41,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     isTable: boolean = false; // האם זה שולחן או ארון
     isPriceManuOpen: boolean = false; // האם תפריט המחיר פתוח
 
+    // נתונים לחישוב מחיר
+    BeamsDataForPricing: any[] = []; // מערך של נתוני קורות לחישוב מחיר
+
     constructor(private http: HttpClient, private snackBar: MatSnackBar, private route: ActivatedRoute) { } 
 
     ngOnInit() {
@@ -765,6 +768,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // Save current configuration to localStorage
         this.saveConfiguration();
         
+        // חישוב מחיר אחרי עדכון המודל
+        this.calculatePricing();
+        
         this.beamMeshes.forEach(mesh => {
             this.scene.remove(mesh);
             
@@ -1203,6 +1209,389 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     // Update model when any parameter changes (alias for updateBeams)
     updateModel() {
         this.updateBeams();
+        this.calculatePricing(); // הוספת חישוב מחיר בכל עדכון
+    }
+    
+    // פונקציה לחישוב חומרים (קורות) לחישוב מחיר
+    calculatePricing() {
+        console.log('Starting price calculation...');
+        this.calculateBeamsData();
+    }
+    
+    // חישוב נתוני הקורות לחישוב מחיר
+    calculateBeamsData() {
+        this.BeamsDataForPricing = [];
+        
+        // איסוף כל הקורות מהמודל התלת מימדי
+        const allBeams: any[] = [];
+        
+        console.log('=== DEBUG: Starting calculateBeamsData ===');
+        console.log('isTable:', this.isTable);
+        console.log('surfaceWidth:', this.surfaceWidth);
+        console.log('surfaceLength:', this.surfaceLength);
+        
+        // קבלת נתוני הקורות מהפרמטרים
+        const shelfParam = this.isTable 
+            ? this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'plata')
+            : this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+        
+        const frameParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'frame');
+        const legParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'leg');
+        const extraParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'extraBeam');
+        
+        console.log('=== DEBUG: Found parameters ===');
+        console.log('shelfParam (plata):', shelfParam);
+        console.log('frameParam:', frameParam);
+        console.log('legParam:', legParam);
+        console.log('extraParam:', extraParam);
+        
+        // קורות משטח/מדפים (surface/shelf beams)
+        if (this.surfaceWidth && this.surfaceLength && shelfParam) {
+            const selectedBeam = shelfParam.beams?.[shelfParam.selectedBeamIndex || 0];
+            const selectedType = selectedBeam?.types?.[shelfParam.selectedTypeIndex || 0];
+            
+            if (selectedBeam && selectedType) {
+                const beamWidth = selectedType.width / 10 || this.beamWidth; // המרה ממ"מ לס"מ
+                const beamHeight = selectedType.height / 10 || this.beamHeight;
+                
+                // חישוב קורות המשטח
+                const surfaceBeams = this.createSurfaceBeams(
+                    this.surfaceWidth,
+                    this.surfaceLength,
+                    beamWidth,
+                    beamHeight,
+                    this.minGap
+                );
+                
+                if (this.isTable) {
+                    // עבור שולחן - מדף אחד בלבד
+                    surfaceBeams.forEach(beam => {
+                        allBeams.push({
+                            type: selectedType,
+                            length: beam.depth, // אורך הקורה
+                            width: beam.width,
+                            height: beam.height,
+                            name: 'Table Surface Beam'
+                        });
+                    });
+                } else {
+                    // עבור ארון - קורות לכל מדף
+                    this.shelves.forEach((shelf, index) => {
+                        surfaceBeams.forEach(beam => {
+                            allBeams.push({
+                                type: selectedType,
+                                length: beam.depth,
+                                width: beam.width,
+                                height: beam.height,
+                                name: `Shelf ${index + 1} Beam`
+                            });
+                        });
+                    });
+                }
+            }
+        }
+        
+        // קורות חיזוק (frame beams)
+        if (this.surfaceWidth && this.surfaceLength) {
+            let frameParamForCalculation = null;
+            
+            if (this.isTable) {
+                // עבור שולחן, קורות החיזוק הן קורות הרגליים
+                frameParamForCalculation = this.params.find(p => p.type === 'beamSingle' && p.name === 'leg');
+            } else {
+                // עבור ארון, קורות החיזוק הן פרמטר beamSingle שאינו shelfs
+                frameParamForCalculation = this.params.find(p => p.type === 'beamSingle' && p.name !== 'shelfs');
+            }
+            
+            if (frameParamForCalculation && Array.isArray(frameParamForCalculation.beams) && frameParamForCalculation.beams.length) {
+                const selectedBeam = frameParamForCalculation.beams[frameParamForCalculation.selectedBeamIndex || 0];
+                const selectedType = selectedBeam?.types?.[frameParamForCalculation.selectedTypeIndex || 0];
+                
+                if (selectedBeam && selectedType) {
+                    const frameWidth = selectedType.height / 10 || this.frameWidth; // המרה ממ"מ לס"מ
+                    const frameHeight = selectedType.width / 10 || this.frameHeight;
+                    
+                    if (this.isTable) {
+                        // עבור שולחן - 4 קורות חיזוק בלבד
+                        // קורות רוחב
+                        allBeams.push({
+                            type: selectedType,
+                            length: this.surfaceWidth,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Width 1'
+                        });
+                        allBeams.push({
+                            type: selectedType,
+                            length: this.surfaceWidth,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Width 2'
+                        });
+                        
+                        // קורות אורך
+                        allBeams.push({
+                            type: selectedType,
+                            length: this.surfaceLength,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Length 1'
+                        });
+                        allBeams.push({
+                            type: selectedType,
+                            length: this.surfaceLength,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Length 2'
+                        });
+                    } else {
+                        // עבור ארון - קורות חיזוק לכל מדף
+                        this.shelves.forEach((shelf, shelfIndex) => {
+                            // 4 קורות חיזוק לכל מדף (2 לרוחב, 2 לאורך)
+                            // קורות רוחב
+                            allBeams.push({
+                                type: selectedType,
+                                length: this.surfaceWidth,
+                                width: frameWidth,
+                                height: frameHeight,
+                                name: `Frame Beam Width 1 - Shelf ${shelfIndex + 1}`
+                            });
+                            allBeams.push({
+                                type: selectedType,
+                                length: this.surfaceWidth,
+                                width: frameWidth,
+                                height: frameHeight,
+                                name: `Frame Beam Width 2 - Shelf ${shelfIndex + 1}`
+                            });
+                            
+                            // קורות אורך
+                            allBeams.push({
+                                type: selectedType,
+                                length: this.surfaceLength,
+                                width: frameWidth,
+                                height: frameHeight,
+                                name: `Frame Beam Length 1 - Shelf ${shelfIndex + 1}`
+                            });
+                            allBeams.push({
+                                type: selectedType,
+                                length: this.surfaceLength,
+                                width: frameWidth,
+                                height: frameHeight,
+                                name: `Frame Beam Length 2 - Shelf ${shelfIndex + 1}`
+                            });
+                        });
+                    }
+                }
+            }
+        }
+        
+        // קורות רגליים (leg beams) - לשולחן ולארון
+        if (legParam) {
+            console.log('=== DEBUG: Processing leg beams ===');
+            const selectedBeam = legParam.beams?.[legParam.selectedBeamIndex || 0];
+            const selectedType = selectedBeam?.types?.[legParam.selectedTypeIndex || 0];
+            
+            // חיפוש פרמטר גובה - נסה כמה אפשרויות
+            let heightParam = this.getParam('height');
+            if (!heightParam) {
+                heightParam = this.params.find(p => p.type === 'height' || p.name?.toLowerCase().includes('height') || p.name?.toLowerCase().includes('גובה'));
+            }
+            
+            // חישוב הגובה בפועל
+            let actualHeight = 80; // ברירת מחדל
+            if (this.isTable) {
+                // עבור שולחן - קח את הגובה מהפרמטר או ברירת מחדל
+                actualHeight = heightParam?.default || 80;
+            } else {
+                // עבור ארון - חשב את הגובה הכולל של כל המדפים
+                if (this.shelves && this.shelves.length > 0) {
+                    actualHeight = 0;
+                    this.shelves.forEach(shelf => {
+                        actualHeight += shelf.gap || 50; // רווח בין מדפים
+                    });
+                    actualHeight += (this.shelves.length * 5); // עובי המדפים עצמם
+                } else {
+                    actualHeight = heightParam?.default || 150; // גובה ברירת מחדל לארון
+                }
+            }
+            
+            console.log('selectedBeam:', selectedBeam);
+            console.log('selectedType:', selectedType);
+            console.log('heightParam:', heightParam);
+            console.log('actualHeight calculated:', actualHeight);
+            console.log('isTable:', this.isTable);
+            console.log('shelves:', this.shelves);
+            
+            if (selectedBeam && selectedType) {
+                const legWidth = selectedType.width / 10 || 5; // המרה ממ"מ לס"מ
+                const legHeight = selectedType.height / 10 || 5;
+                
+                console.log('legWidth:', legWidth, 'legHeight:', legHeight, 'actualHeight:', actualHeight);
+                
+                // 4 רגליים לשולחן או לארון
+                const numLegs = 4;
+                for (let i = 0; i < numLegs; i++) {
+                    allBeams.push({
+                        type: selectedType,
+                        length: actualHeight,
+                        width: legWidth,
+                        height: legHeight,
+                        name: this.isTable ? `Table Leg ${i + 1}` : `Cabinet Leg ${i + 1}`
+                    });
+                }
+                console.log(`Added ${numLegs} leg beams to allBeams with length ${actualHeight}`);
+            } else {
+                console.log('Leg beams not added - missing beam or type data');
+                console.log('selectedBeam exists:', !!selectedBeam);
+                console.log('selectedType exists:', !!selectedType);
+            }
+        } else {
+            console.log('Leg beams not processed - no legParam found');
+        }
+        
+        // קורות נוספות (extra beams) - רק לשולחן
+        if (this.isTable && extraParam && extraParam.default > 0) {
+            const selectedBeam = extraParam.beams?.[extraParam.selectedBeamIndex || 0];
+            const selectedType = selectedBeam?.types?.[extraParam.selectedTypeIndex || 0];
+            
+            if (selectedBeam && selectedType) {
+                const extraWidth = selectedType.height / 10 || 5; // המרה ממ"מ לס"מ
+                const extraHeight = selectedType.width / 10 || 5;
+                
+                // 4 קורות נוספות (כמו קורות החיזוק הרגילות)
+                // קורות רוחב
+                allBeams.push({
+                    type: selectedType,
+                    length: this.surfaceWidth,
+                    width: extraWidth,
+                    height: extraHeight,
+                    name: 'Extra Frame Beam Width 1'
+                });
+                allBeams.push({
+                    type: selectedType,
+                    length: this.surfaceWidth,
+                    width: extraWidth,
+                    height: extraHeight,
+                    name: 'Extra Frame Beam Width 2'
+                });
+                
+                // קורות אורך
+                allBeams.push({
+                    type: selectedType,
+                    length: this.surfaceLength,
+                    width: extraWidth,
+                    height: extraHeight,
+                    name: 'Extra Frame Beam Length 1'
+                });
+                allBeams.push({
+                    type: selectedType,
+                    length: this.surfaceLength,
+                    width: extraWidth,
+                    height: extraHeight,
+                    name: 'Extra Frame Beam Length 2'
+                });
+            }
+        }
+        
+        // קיבוץ קורות לפי סוג (type) - רק לפי ID של הקורה
+        const beamTypesMap = new Map();
+        
+        allBeams.forEach(beam => {
+            // שימוש ב-ID של הקורה כמפתח יחיד
+            const typeKey = beam.type?._id || beam.type?.id || 'unknown';
+            
+            if (!beamTypesMap.has(typeKey)) {
+                beamTypesMap.set(typeKey, {
+                    type: beam.type,
+                    sizes: []
+                });
+            }
+            
+            beamTypesMap.get(typeKey).sizes.push(beam.length);
+        });
+        
+        // המרה למערך הסופי
+        beamTypesMap.forEach((beamData, typeKey) => {
+            this.BeamsDataForPricing.push({
+                type: beamData.type,
+                sizes: beamData.sizes
+            });
+        });
+        
+        // איחוד קורות זהות - השוואה שיטתית של כל קורה לכל קורה אחרת
+        console.log('=== DEBUG: Before merging identical beams ===');
+        console.log('BeamsDataForPricing before merge:', this.BeamsDataForPricing.length);
+        
+        for (let i = 0; i < this.BeamsDataForPricing.length; i++) {
+            for (let j = i + 1; j < this.BeamsDataForPricing.length; j++) {
+                const beam1 = this.BeamsDataForPricing[i];
+                const beam2 = this.BeamsDataForPricing[j];
+                
+                // בדיקה אם שתי הקורות זהות - לפי ID ייחודי של ה-type
+                const beam1TypeId = beam1.type?._id || beam1.type?.id || '';
+                const beam2TypeId = beam2.type?._id || beam2.type?.id || '';
+                
+                // גם בדיקה לפי מידות הקורה (width ו-height)
+                const beam1Width = beam1.type?.width || 0;
+                const beam2Width = beam2.type?.width || 0;
+                const beam1Height = beam1.type?.height || 0;
+                const beam2Height = beam2.type?.height || 0;
+                
+                if (beam1TypeId === beam2TypeId && beam1Width === beam2Width && beam1Height === beam2Height) {
+                    console.log(`Merging identical beams: ${beam1.type?.name} (${beam1.type?.translatedName}) - ID: ${beam1TypeId}`);
+                    console.log(`Beam 1 sizes:`, beam1.sizes);
+                    console.log(`Beam 2 sizes:`, beam2.sizes);
+                    console.log(`Dimensions: ${beam1Width}x${beam1Height}mm`);
+                    
+                    // איחוד ה-sizes
+                    beam1.sizes = [...beam1.sizes, ...beam2.sizes];
+                    
+                    // מחיקת הקורה השנייה
+                    this.BeamsDataForPricing.splice(j, 1);
+                    
+                    // חזרה לאינדקס הקודם כי הסרנו קורה
+                    j--;
+                    
+                    console.log(`Merged sizes:`, beam1.sizes);
+                }
+            }
+        }
+        
+        console.log('=== DEBUG: After merging identical beams ===');
+        console.log('BeamsDataForPricing after merge:', this.BeamsDataForPricing.length);
+        
+        console.log('=== DEBUG: Final results ===');
+        console.log('Total beams collected:', allBeams.length);
+        console.log('allBeams:', allBeams);
+        
+        // הדפסה מפורטת של כל קורה
+        allBeams.forEach((beam, index) => {
+            console.log(`Beam ${index + 1}:`, {
+                name: beam.name,
+                typeId: beam.type?._id,
+                typeName: beam.type?.name,
+                length: beam.length,
+                width: beam.width,
+                height: beam.height
+            });
+        });
+        
+        console.log('BeamsDataForPricing calculated:', this.BeamsDataForPricing);
+        
+        // הדפסה מפורטת לכל סוג קורה
+        this.BeamsDataForPricing.forEach((beamData, index) => {
+            console.log(`Beam Type ${index + 1}:`, {
+                id: beamData.type?._id,
+                name: beamData.type?.name,
+                translatedName: beamData.type?.translatedName,
+                sizes: beamData.sizes,
+                totalBeams: beamData.sizes.length,
+                width: beamData.type?.width,
+                height: beamData.type?.height,
+                material: beamData.type?.material,
+                length: beamData.type?.length
+            });
+        });
     }
 
     animate() {
