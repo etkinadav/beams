@@ -1240,23 +1240,109 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
         console.log('Creating wireframe cube with dimensions:', { length, width, height });
 
-        // Create wireframe cube geometry
-        const cubeGeometry = new THREE.BoxGeometry(width, height, length);
+        // Create custom wireframe without diagonal lines
+        const wireframeGroup = new THREE.Group();
         const wireframeMaterial = new THREE.LineBasicMaterial({
-            color: 0xff0000, // Red color
+            color: 0x0066cc, // Blue color
             linewidth: 2
         });
-        const wireframe = new THREE.WireframeGeometry(cubeGeometry);
-        const wireframeMesh = new THREE.LineSegments(wireframe, wireframeMaterial);
-        
-        // Position the cube at the center of the product
-        wireframeMesh.position.set(0, height / 2, 0);
-        wireframeMesh.name = 'productWireframe';
+
+        // Create 12 edges of the cube (without diagonals)
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
+        const halfLength = length / 2;
+
+        // Bottom face edges (4 edges)
+        const bottomEdges = [
+            // Front edge
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, -halfHeight, halfLength),
+                new THREE.Vector3(halfWidth, -halfHeight, halfLength)
+            ),
+            // Back edge
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),
+                new THREE.Vector3(halfWidth, -halfHeight, -halfLength)
+            ),
+            // Left edge
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),
+                new THREE.Vector3(-halfWidth, -halfHeight, halfLength)
+            ),
+            // Right edge
+            new THREE.Line3(
+                new THREE.Vector3(halfWidth, -halfHeight, -halfLength),
+                new THREE.Vector3(halfWidth, -halfHeight, halfLength)
+            )
+        ];
+
+        // Top face edges (4 edges)
+        const topEdges = [
+            // Front edge
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, halfHeight, halfLength),
+                new THREE.Vector3(halfWidth, halfHeight, halfLength)
+            ),
+            // Back edge
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, halfHeight, -halfLength),
+                new THREE.Vector3(halfWidth, halfHeight, -halfLength)
+            ),
+            // Left edge
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, halfHeight, -halfLength),
+                new THREE.Vector3(-halfWidth, halfHeight, halfLength)
+            ),
+            // Right edge
+            new THREE.Line3(
+                new THREE.Vector3(halfWidth, halfHeight, -halfLength),
+                new THREE.Vector3(halfWidth, halfHeight, halfLength)
+            )
+        ];
+
+        // Vertical edges (4 edges)
+        const verticalEdges = [
+            // Front-left
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, -halfHeight, halfLength),
+                new THREE.Vector3(-halfWidth, halfHeight, halfLength)
+            ),
+            // Front-right
+            new THREE.Line3(
+                new THREE.Vector3(halfWidth, -halfHeight, halfLength),
+                new THREE.Vector3(halfWidth, halfHeight, halfLength)
+            ),
+            // Back-left
+            new THREE.Line3(
+                new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),
+                new THREE.Vector3(-halfWidth, halfHeight, -halfLength)
+            ),
+            // Back-right
+            new THREE.Line3(
+                new THREE.Vector3(halfWidth, -halfHeight, -halfLength),
+                new THREE.Vector3(halfWidth, halfHeight, -halfLength)
+            )
+        ];
+
+        // Create line segments for all edges
+        const allEdges = [...bottomEdges, ...topEdges, ...verticalEdges];
+        allEdges.forEach(edge => {
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                edge.start,
+                edge.end
+            ]);
+            const line = new THREE.Line(geometry, wireframeMaterial);
+            wireframeGroup.add(line);
+        });
+
+        // Position the wireframe at the center of the product
+        wireframeGroup.position.set(0, height / 2, 0);
+        wireframeGroup.name = 'productWireframe';
         
         // Add to scene
-        this.scene.add(wireframeMesh);
+        this.scene.add(wireframeGroup);
         
-        console.log('Wireframe cube added to scene at position:', wireframeMesh.position);
+        console.log('Custom wireframe cube added to scene at position:', wireframeGroup.position);
     }
 
     // Update model when any parameter changes (alias for updateBeams)
