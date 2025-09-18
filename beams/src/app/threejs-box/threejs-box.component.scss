@@ -286,6 +286,10 @@ mat-form-field {
     background: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
+    width: calc(100% - 20px);
+    max-width: 250px;
+    margin-left: auto;
+    margin-right: auto;
     
     h3 {
         margin: 0 0 12px 0;
