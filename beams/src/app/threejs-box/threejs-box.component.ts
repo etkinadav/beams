@@ -29,11 +29,17 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.drawerOpen = !this.drawerOpen;
         setTimeout(() => this.onResize(), 310); // Wait for transition to finish
     }
+    
+    // פונקציה לפתיחת/סגירת תפריט המחיר
+    togglePriceMenu() {
+        this.isPriceManuOpen = !this.isPriceManuOpen;
+    }
     drawerOpen: boolean = true;
     product: any = null;
     params: any[] = [];
     selectedProductName: string = ''; // שם המוצר שנבחר מה-URL
     isTable: boolean = false; // האם זה שולחן או ארון
+    isPriceManuOpen: boolean = false; // האם תפריט המחיר פתוח
 
     constructor(private http: HttpClient, private snackBar: MatSnackBar, private route: ActivatedRoute) { } 
 

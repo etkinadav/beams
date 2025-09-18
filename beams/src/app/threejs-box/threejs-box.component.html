@@ -55,7 +55,16 @@
                                 </mat-select>
                             </mat-form-field>
                         </div>
-                        <div class="shelf-measurements-container">
+                        <div class="add-shelf-btn-container">
+                            <button class="add-shelf-btn" (click)="param.default.push(param.min); updateBeams()">
+                                <svg viewBox="0 0 16 16" width="14" height="14">
+                                    <circle cx="8" cy="8" r="7" fill="#fff" />
+                                    <line x1="8" y1="4" x2="8" y2="12" stroke="#333" stroke-width="2" />
+                                    <line x1="4" y1="8" x2="12" y2="8" stroke="#333" stroke-width="2" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="shelf-measurements-container beam-array-container">
                             <div *ngFor="let i of [].constructor(param.default.length); let idx = index" class="shelf-row">
                                 <div class="shelf-gap-field-wrapper">
                                     <mat-form-field appearance="outline" class="shelf-gap-field">
@@ -75,15 +84,6 @@
                                         </svg>
                                     </button>
                                 </div>
-                            </div>
-                            <div class="add-shelf-btn-container">
-                                <button class="add-shelf-btn" (click)="param.default.push(param.min); updateBeams()">
-                                    <svg viewBox="0 0 16 16" width="14" height="14">
-                                        <circle cx="8" cy="8" r="7" fill="#fff" />
-                                        <line x1="8" y1="4" x2="8" y2="12" stroke="#333" stroke-width="2" />
-                                        <line x1="4" y1="8" x2="12" y2="8" stroke="#333" stroke-width="2" />
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -206,6 +206,7 @@
         <button class="fullscreen-btn" mat-icon-button color="primary" 
                 [matTooltip]="'price-calculation.tooltip' | translate" 
                 matTooltipPosition="left"
+                (click)="togglePriceMenu()"
                 aria-label="מסך מלא">
             <mat-icon>fullscreen</mat-icon>
         </button>
@@ -216,6 +217,12 @@
                     <mat-spinner diameter="20"></mat-spinner>
                 </div>
             </div>
+        </div>
+        
+        <!-- קופסא נוספת שמופיעה כשהתפריט פתוח -->
+        <div class="price-menu-box" *ngIf="isPriceManuOpen">
+            <span class="thinking-text">{{ 'price-calculation.first-title' | translate }}...</span>
+            <br>
         </div>
     </div>
 </div>
