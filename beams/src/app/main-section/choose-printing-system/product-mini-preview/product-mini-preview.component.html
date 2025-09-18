@@ -28,18 +28,18 @@
     <span class="beam-value">{{getCurrentShelfBeamDisplayName()}}</span>
   </div>
   <div class="width-control" (click)="$event.stopPropagation()">
-    <button (click)="decreaseWidth()" class="control-btn">-</button>
+    <button (click)="decreaseWidth()" class="control-btn" [disabled]="isWidthAtMinimum()">-</button>
     <span class="width-value">רוחב {{dynamicParams.width}} ס"מ</span>
-    <button (click)="increaseWidth()" class="control-btn">+</button>
+    <button (click)="increaseWidth()" class="control-btn" [disabled]="isWidthAtMaximum()">+</button>
   </div>
   <div class="length-control" (click)="$event.stopPropagation()">
-    <button (click)="decreaseLength()" class="control-btn">-</button>
+    <button (click)="decreaseLength()" class="control-btn" [disabled]="isLengthAtMinimum()">-</button>
     <span class="length-value">אורך {{dynamicParams.length}} ס"מ</span>
-    <button (click)="increaseLength()" class="control-btn">+</button>
+    <button (click)="increaseLength()" class="control-btn" [disabled]="isLengthAtMaximum()">+</button>
   </div>
   <div class="shelf-height-control" (click)="$event.stopPropagation()">
-    <button (click)="decreaseShelfHeight()" class="control-btn">-</button>
+    <button (click)="decreaseShelfHeight()" class="control-btn" [disabled]="isShelfHeightAtMinimum()">-</button>
     <span class="shelf-height-value">גובה {{product?.name === 'table' ? shelfGaps[0] : shelfGaps[2]}} ס"מ</span>
-    <button (click)="increaseShelfHeight()" class="control-btn">+</button>
+    <button (click)="increaseShelfHeight()" class="control-btn" [disabled]="isShelfHeightAtMaximum()">+</button>
   </div>
 </div>

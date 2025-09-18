@@ -196,6 +196,18 @@
   background: #1976d2;
 }
 
+.control-btn:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.control-btn:disabled:hover {
+  background: #ccc;
+  transform: none;
+}
+
 .control-btn-change {
   width: 40px;
   height: 20px;

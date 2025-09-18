@@ -723,11 +723,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   }
 
   decreaseWidth() {
-    // חיפוש פרמטר הרוחב כדי לבדוק את ה-type
+    // חיפוש פרמטר הרוחב כדי לבדוק את המינימום המקורי
     const widthParam = this.product?.params?.find((p: any) => p.name === 'width');
-    const minWidth = (widthParam?.type === 0 || widthParam?.type === undefined || widthParam?.type === null) ? 45 : 20; // מינימום 45 ס"מ לפרמטרים עם type = 0
+    const minWidth = widthParam?.min || 0; // מינימום מקורי של הפרמטר
     
-    if (this.dynamicParams.width > minWidth) { // הגבלה מינימלית דינמית
+    if (this.dynamicParams.width > minWidth) { // הגבלה מינימלית מקורית
       // עצירת האנימציה האוטומטית למשך 30 שניות
       this.hasUserInteracted = true;
       this.resetInactivityTimer();
@@ -764,11 +764,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   }
 
   decreaseLength() {
-    // חיפוש פרמטר האורך כדי לבדוק את ה-type
+    // חיפוש פרמטר האורך כדי לבדוק את המינימום המקורי
     const lengthParam = this.product?.params?.find((p: any) => p.name === 'depth');
-    const minLength = (lengthParam?.type === 0 || lengthParam?.type === undefined || lengthParam?.type === null) ? 45 : 20; // מינימום 45 ס"מ לפרמטרים עם type = 0
+    const minLength = lengthParam?.min || 0; // מינימום מקורי של הפרמטר
     
-    if (this.dynamicParams.length > minLength) { // הגבלה מינימלית דינמית
+    if (this.dynamicParams.length > minLength) { // הגבלה מינימלית מקורית
       // עצירת האנימציה האוטומטית למשך 30 שניות
       this.hasUserInteracted = true;
       this.resetInactivityTimer();
@@ -825,11 +825,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     if (isTable) {
       // שולחן - הקטנת גובה המדף היחיד
-      // חיפוש פרמטר הגובה כדי לבדוק את ה-type
+      // חיפוש פרמטר הגובה כדי לבדוק את המינימום המקורי
       const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-      const minHeight = (heightParam?.type === 0 || heightParam?.type === undefined || heightParam?.type === null) ? 45 : 10; // מינימום 45 ס"מ לפרמטרים עם type = 0
+      const minHeight = heightParam?.min || 0; // מינימום מקורי של הפרמטר
       
-      if (this.shelfGaps[0] > minHeight) { // הגבלה מינימלית דינמית
+      if (this.shelfGaps[0] > minHeight) { // הגבלה מינימלית מקורית
         // שמירת המצב הנוכחי של המצלמה
         const currentCameraState = this.saveCurrentCameraState();
         
@@ -844,11 +844,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       }
     } else {
       // ארון - הקטנת גובה המדף השלישי
-      // חיפוש פרמטר הגובה כדי לבדוק את ה-type
-      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-      const minHeight = (heightParam?.type === 0 || heightParam?.type === undefined || heightParam?.type === null) ? 45 : 10; // מינימום 45 ס"מ לפרמטרים עם type = 0
+      // חיפוש פרמטר הגובה כדי לבדוק את המינימום המקורי
+      const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+      const minHeight = shelfsParam?.min || 0; // מינימום מקורי של הפרמטר
       
-      if (this.shelfGaps[2] > minHeight) { // הגבלה מינימלית דינמית
+      if (this.shelfGaps[2] > minHeight) { // הגבלה מינימלית מקורית
         // שמירת המצב הנוכחי של המצלמה
         const currentCameraState = this.saveCurrentCameraState();
         
@@ -2169,5 +2169,74 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     }
 
     console.log('פרמטרים דינמיים לאחר בדיקת תקינות:', this.dynamicParams);
+  }
+
+  // פונקציות לבדיקת גבולות עבור disabled של כפתורים
+  isWidthAtMinimum(): boolean {
+    const widthParam = this.product?.params?.find((p: any) => p.name === 'width');
+    if (!widthParam) return true;
+    
+    const minWidth = widthParam.min || 0;
+    return this.dynamicParams.width <= minWidth;
+  }
+
+  isWidthAtMaximum(): boolean {
+    const widthParam = this.product?.params?.find((p: any) => p.name === 'width');
+    if (!widthParam) return true;
+    
+    const maxWidth = widthParam.max || 200;
+    return this.dynamicParams.width >= maxWidth;
+  }
+
+  isLengthAtMinimum(): boolean {
+    const lengthParam = this.product?.params?.find((p: any) => p.name === 'depth');
+    if (!lengthParam) return true;
+    
+    const minLength = lengthParam.min || 0;
+    return this.dynamicParams.length <= minLength;
+  }
+
+  isLengthAtMaximum(): boolean {
+    const lengthParam = this.product?.params?.find((p: any) => p.name === 'depth');
+    if (!lengthParam) return true;
+    
+    const maxLength = lengthParam.max || 200;
+    return this.dynamicParams.length >= maxLength;
+  }
+
+  isShelfHeightAtMinimum(): boolean {
+    const isTable = this.product?.name === 'table';
+    
+    if (isTable) {
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      if (!heightParam) return true;
+      
+      const minHeight = heightParam.min || 0;
+      return this.shelfGaps[0] <= minHeight;
+    } else {
+      const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+      if (!shelfsParam) return true;
+      
+      const minHeight = shelfsParam.min || 0;
+      return this.shelfGaps[2] <= minHeight;
+    }
+  }
+
+  isShelfHeightAtMaximum(): boolean {
+    const isTable = this.product?.name === 'table';
+    
+    if (isTable) {
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      if (!heightParam) return true;
+      
+      const maxHeight = heightParam.max || 200;
+      return this.shelfGaps[0] >= maxHeight;
+    } else {
+      const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+      if (!shelfsParam) return true;
+      
+      const maxHeight = shelfsParam.max || 200;
+      return this.shelfGaps[2] >= maxHeight;
+    }
   }
 }
