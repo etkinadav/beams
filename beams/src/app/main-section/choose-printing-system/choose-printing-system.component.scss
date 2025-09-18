@@ -146,50 +146,7 @@
   }
 }
 
-// אנימציה עדינה לכפתורי "המשך ל-"
-.continue-to-product-btn {
-  animation: gentleShake 3s ease-in-out infinite !important;
-}
-
-@keyframes gentleShake {
-  0% {
-    transform: translateX(0) scale(1);
-    background-color: var(--zx-green) !important;
-  }
-  25% {
-    transform: translateX(-1px) scale(1.01);
-    background-color: var(--zx-green-vivid-mid) !important;
-  }
-  50% {
-    transform: translateX(1px) scale(1.02);
-    background-color: var(--zx-green-vivid-light) !important;
-  }
-  75% {
-    transform: translateX(-1px) scale(1.01);
-    background-color: var(--zx-green-vivid-mid) !important;
-  }
-  100% {
-    transform: translateX(0) scale(1);
-    background-color: var(--zx-green) !important;
-  }
-}
-
-// אנימציה נוספת - שינוי גוון רקע
-@keyframes colorShift {
-  0% {
-    background-color: var(--zx-green) !important;
-  }
-  50% {
-    background-color: var(--zx-green-vivid-mid) !important;
-  }
-  100% {
-    background-color: var(--zx-green) !important;
-  }
-}
-
-.continue-to-product-btn {
-  animation: gentleShake 3s ease-in-out infinite, colorShift 2s ease-in-out infinite !important;
-}
+// Gradient לכפתורי "המשך ל" - עבר ל-styles.scss גלובלי
 
 .text-con-product {
     padding: 12px 5px 0 5px;

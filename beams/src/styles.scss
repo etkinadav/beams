@@ -33,6 +33,37 @@ $dark-warn: mat.define-palette(palette.$dark-warn);
 
 /* -----------------------------===---------------------------------- ONDE PALLETE ----===---- */
 
+// Gradient לכפתורי "המשך ל"
+.continue-to-product-btn {
+  background: linear-gradient(135deg, var(--zx-green), var(--zx-green-vivid-mid), var(--zx-green-vivid-light)) !important;
+  background-size: 200% 200% !important;
+  animation: gradientFlow 4s ease-in-out infinite !important;
+  color: white !important;
+  border: 2px solid var(--zx-green-vivid-light) !important;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50% !important;
+  }
+  50% {
+    background-position: 100% 50% !important;
+  }
+  100% {
+    background-position: 0% 50% !important;
+  }
+}
+
+.continue-to-product-btn:hover {
+  background: linear-gradient(135deg, var(--zx-green-vivid-light), var(--zx-green-vivid-mid), var(--zx-green)) !important;
+  animation-play-state: paused !important;
+  border-color: var(--zx-green) !important;
+}
+
+.continue-to-product-btn span {
+  color: white !important;
+}
+
 :root {
     /* -----------------------------===---------------------------------- DARK */
     --zx-dark: #262626;
