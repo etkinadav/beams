@@ -880,6 +880,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.beamMeshes.push(mesh);
             }
             
+            // הוספת ברגים לרגליים עבור שולחן
+            console.log('Calling addScrewsToLegs for table with legs:', legs.length);
+            this.addScrewsToLegs(1, legs, frameBeamHeight, 0);
+            
             // Focus camera at the vertical center of the table
             this.target.set(0, tableHeight / 2, 0);
         } else {
@@ -1196,10 +1200,31 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // לכל מדף, נוסיף ברגים לרגליים
         for (let shelfIndex = 0; shelfIndex < totalShelves; shelfIndex++) {
-            const currentShelfY = this.getShelfHeight(shelfIndex) - (this.beamHeight + (this.frameHeight / 2));            
+            let currentShelfY;
+            if (this.isTable) {
+                // עבור שולחן, הברגים צריכים להיות בגובה הרגליים פחות חצי ממידת הרוחב של קורת החיזוק
+                const legParam = this.getParam('leg');
+                let legWidth = frameBeamHeight; // ברירת מחדל
+                if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
+                    const legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
+                    if (legBeam) {
+                        legWidth = legBeam.width / 10; // המרה ממ"מ לס"מ
+                    }
+                }
+                // גובה הרגליים בפועל (לא גובה השולחן)
+                const actualLegHeight = legPositions[0] ? legPositions[0].height : 0;
+                currentShelfY = actualLegHeight - (legWidth / 2); // גובה הרגליים פחות חצי ממידת הרוחב של קורת החיזוק
+                console.log('Table screw calculation:', { actualLegHeight, legWidth, currentShelfY });
+                console.log('Leg positions for calculation:', legPositions[0]);
+            } else {
+                currentShelfY = this.getShelfHeight(shelfIndex) - (this.beamHeight + (this.frameHeight / 2));
+            }
+            console.log('Shelf index:', shelfIndex, 'Current shelf Y:', currentShelfY);
+            console.log('Leg positions count:', legPositions.length);
                     
             legPositions.forEach((leg, legIndex) => {
                 const isEven = legIndex % 2 === 0;
+                console.log('Processing leg:', legIndex, 'Position:', leg);
                 // 2 ברגים לכל רגל (אחד לכל קורת חיזוק - קדמית ואחורית)
                 const screwPositions = [
                     // בורג לקורת חיזוק קדמית
