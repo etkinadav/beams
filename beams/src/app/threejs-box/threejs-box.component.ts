@@ -886,7 +886,24 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // עבור שולחן, נציג מדף אחד בלבד בגובה שנקבע בפרמטר height
         if (this.isTable) {
             const heightParam = this.getParam('height');
-            const tableHeight = heightParam ? heightParam.default : 80; // גובה ברירת מחדל
+            const baseTableHeight = heightParam ? heightParam.default : 80; // גובה ברירת מחדל
+            
+            // הפחתת גובה קורות הפלטה כדי שהפרמטר "גובה משטח" ייצג את הגובה הסופי של החלק העליון
+            const plataParam = this.getParam('plata');
+            let plataBeamHeight = this.beamHeight; // ברירת מחדל
+            if (plataParam && Array.isArray(plataParam.beams) && plataParam.beams.length) {
+                const plataBeam = plataParam.beams[plataParam.selectedBeamIndex || 0];
+                if (plataBeam) {
+                    plataBeamHeight = plataBeam.height / 10; // המרה ממ"מ לס"מ
+                }
+            }
+            
+            const tableHeight = baseTableHeight - plataBeamHeight; // הפחתת גובה קורות הפלטה
+            console.log('Table height calculation:', { 
+                baseTableHeight, 
+                plataBeamHeight, 
+                finalTableHeight: tableHeight 
+            });
             
             // Surface beams (קורת משטח) - מדף אחד בלבד
             const surfaceBeams = this.createSurfaceBeams(
@@ -1958,25 +1975,11 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         let totalHeight = 0;
         
         if (this.isTable) {
-            // עבור שולחן - הגובה הוא גובה הרגליים מהפרמטר "גובה משטח" + גובה קורות הפלטה
+            // עבור שולחן - הגובה הוא פשוט הפרמטר "גובה משטח" (כי כבר הורדנו את גובה קורות הפלטה)
             const heightParam = this.getParam('height');
-            const tableHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
-            
-            // הוספת גובה קורות הפלטה
-            const plataParam = this.getParam('plata');
-            let plataBeamHeight = this.beamHeight; // ברירת מחדל
-            if (plataParam && Array.isArray(plataParam.beams) && plataParam.beams.length) {
-                const plataBeam = plataParam.beams[plataParam.selectedBeamIndex || 0];
-                if (plataBeam) {
-                    plataBeamHeight = plataBeam.height / 10; // המרה ממ"מ לס"מ
-                }
-            }
-            
-            totalHeight = tableHeight + plataBeamHeight;
+            totalHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
             console.log('Table total height calculation:', { 
                 heightParam: heightParam?.default, 
-                tableHeight, 
-                plataBeamHeight, 
                 totalHeight 
             });
         } else {
