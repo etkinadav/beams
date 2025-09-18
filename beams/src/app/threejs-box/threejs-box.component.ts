@@ -329,9 +329,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // Frame beams (example: can be set in params if needed)
     frameWidth: number = 5;
-    frameHeight: number = 5;
     private target: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
     beamWidth: number = 10;
+    frameHeight: number = 5;
     beamHeight: number = 2;
     private beamMeshes: THREE.Mesh[] = [];
     @ViewChild('rendererContainer', { static: true }) rendererContainer!: ElementRef;
@@ -1204,6 +1204,42 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // Ensure scene rotation is maintained after updates
         this.scene.rotation.y = Math.PI / 6; // 30 degrees rotation
+        
+        // Add wireframe cube showing product dimensions
+        this.addWireframeCube();
+    }
+
+    // Add wireframe cube showing product dimensions
+    private addWireframeCube() {
+        // Remove existing wireframe cube if it exists
+        const existingWireframe = this.scene.getObjectByName('productWireframe');
+        if (existingWireframe) {
+            this.scene.remove(existingWireframe);
+        }
+
+        // Get product dimensions
+        const dimensions = this.getProductDimensionsRaw();
+        const { length, width, height } = dimensions;
+
+        console.log('Creating wireframe cube with dimensions:', { length, width, height });
+
+        // Create wireframe cube geometry
+        const cubeGeometry = new THREE.BoxGeometry(width, height, length);
+        const wireframeMaterial = new THREE.LineBasicMaterial({
+            color: 0xff0000, // Red color
+            linewidth: 2
+        });
+        const wireframe = new THREE.WireframeGeometry(cubeGeometry);
+        const wireframeMesh = new THREE.LineSegments(wireframe, wireframeMaterial);
+        
+        // Position the cube at the center of the product
+        wireframeMesh.position.set(0, height / 2, 0);
+        wireframeMesh.name = 'productWireframe';
+        
+        // Add to scene
+        this.scene.add(wireframeMesh);
+        
+        console.log('Wireframe cube added to scene at position:', wireframeMesh.position);
     }
 
     // Update model when any parameter changes (alias for updateBeams)
@@ -1910,8 +1946,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     headHeight: number = 0.2; // 2 מ"מ = 0.2 ס"מ (גובה הראש)
     headRadius: number = 0.3; // 3 מ"מ = 0.3 ס"מ (רדיוס הראש)
 
-    // חישוב מידות המוצר הסופי
-    getProductDimensions(): { length: string, width: string, height: string, beamCount: string, gapBetweenBeams: string, shelfCount: string, shelfHeights: string, totalScrews: string } {
+    // חישוב מידות המוצר הגולמיות (ללא פורמטינג)
+    getProductDimensionsRaw(): { length: number, width: number, height: number, beamCount: number, gapBetweenBeams: number, shelfCount: number, shelfHeights: number[], totalScrews: number } {
         // רוחב כולל
         const totalWidth = this.surfaceWidth;
         
@@ -1920,13 +1956,50 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // גובה כולל
         let totalHeight = 0;
-        const beamHeight = this.beamHeight;
-        const frameHeight = this.frameHeight;
         
-        for (let i = 0; i < this.shelves.length; i++) {
-            totalHeight += this.shelves[i].gap;
-            totalHeight += frameHeight + beamHeight;
+        if (this.isTable) {
+            // עבור שולחן - הגובה הוא גובה הרגליים מהפרמטר "גובה משטח" + גובה קורות הפלטה
+            const heightParam = this.getParam('height');
+            const tableHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
+            
+            // הוספת גובה קורות הפלטה
+            const plataParam = this.getParam('plata');
+            let plataBeamHeight = this.beamHeight; // ברירת מחדל
+            if (plataParam && Array.isArray(plataParam.beams) && plataParam.beams.length) {
+                const plataBeam = plataParam.beams[plataParam.selectedBeamIndex || 0];
+                if (plataBeam) {
+                    plataBeamHeight = plataBeam.height / 10; // המרה ממ"מ לס"מ
+                }
+            }
+            
+            totalHeight = tableHeight + plataBeamHeight;
+            console.log('Table total height calculation:', { 
+                heightParam: heightParam?.default, 
+                tableHeight, 
+                plataBeamHeight, 
+                totalHeight 
+            });
+        } else {
+            // עבור ארון - חישוב גובה לפי סכום המדפים (זהה לחישוב גובה הרגליים)
+            const beamHeight = this.beamHeight;
+            const frameBeamHeight = this.frameHeight; // שימוש באותו משתנה כמו בחישוב הרגליים
+            
+            console.log('Cabinet total height calculation:', { beamHeight, frameBeamHeight });
+            
+            for (let i = 0; i < this.shelves.length; i++) {
+                totalHeight += this.shelves[i].gap + frameBeamHeight + beamHeight;
+                console.log(`Cabinet shelf ${i}: gap=${this.shelves[i].gap}, frameBeamHeight=${frameBeamHeight}, beamHeight=${beamHeight}, totalHeight=${totalHeight}`);
+            }
+            
+            // הוספת הגובה המלא של המדף העליון (כי הוא לא נכלל בלולאה)
+            // המדף העליון ממוקם ב-currentY + frameBeamHeight + beamHeight/2
+            // אז הקצה העליון שלו הוא ב-currentY + frameBeamHeight + beamHeight
+            // אבל הלולאה שלנו כבר כוללת את beamHeight, אז צריך להוסיף עוד beamHeight/2
+            totalHeight += beamHeight / 2;
+            console.log(`Added top shelf height adjustment: +${beamHeight / 2}, final totalHeight=${totalHeight}`);
         }
+        
+        console.log('Final totalHeight:', totalHeight);
         
         // חישוב כמות קורות המדף
         const beamWidth = this.beamWidth;
@@ -1943,13 +2016,12 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // כמות המדפים
         const shelfCount = this.shelves.length;
         
-        // גבהי המדפים (רשימה מופרדת בפסיקים, מלמעלה למטה)
-        const shelfHeightsList: string[] = [];
+        // גבהי המדפים (רשימה של מספרים)
+        const shelfHeights: number[] = [];
         for (let i = 0; i < this.shelves.length; i++) {
             const shelfHeight = this.getShelfHeight(i);
-            shelfHeightsList.push(`${this.formatNumber(shelfHeight)} <small>ס"מ</small>`);
+            shelfHeights.push(shelfHeight);
         }
-        const shelfHeights = shelfHeightsList.join('<br>');
         
         // חישוב כמות ברגים כוללת
         let totalScrews = 0;
@@ -1966,14 +2038,37 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         totalScrews += legScrews;
         
         return {
-            length: `${this.formatNumber(totalLength)} <small>ס"מ</small>`,
-            width: `${this.formatNumber(totalWidth)} <small>ס"מ</small>`,
-            height: `${this.formatNumber(totalHeight)} <small>ס"מ</small>`,
-            beamCount: `${beamCount} <small>קורות</small>`,
-            gapBetweenBeams: `${this.formatNumber(gapBetweenBeams)} <small>ס"מ</small>`,
-            shelfCount: `${shelfCount} <small>מדפים</small>`,
+            length: totalLength,
+            width: totalWidth,
+            height: totalHeight,
+            beamCount: beamCount,
+            gapBetweenBeams: gapBetweenBeams,
+            shelfCount: shelfCount,
             shelfHeights: shelfHeights,
-            totalScrews: `${totalScrews} <small>ברגים</small>`
+            totalScrews: totalScrews
+        };
+    }
+
+    // חישוב מידות המוצר הסופי (עם פורמטינג טקסטואלי)
+    getProductDimensions(): { length: string, width: string, height: string, beamCount: string, gapBetweenBeams: string, shelfCount: string, shelfHeights: string, totalScrews: string } {
+        const rawDimensions = this.getProductDimensionsRaw();
+        
+        // גבהי המדפים (רשימה מופרדת בפסיקים, מלמעלה למטה)
+        const shelfHeightsList: string[] = [];
+        for (let i = 0; i < rawDimensions.shelfHeights.length; i++) {
+            shelfHeightsList.push(`${this.formatNumber(rawDimensions.shelfHeights[i])} <small>ס"מ</small>`);
+        }
+        const shelfHeights = shelfHeightsList.join('<br>');
+        
+        return {
+            length: `${this.formatNumber(rawDimensions.length)} <small>ס"מ</small>`,
+            width: `${this.formatNumber(rawDimensions.width)} <small>ס"מ</small>`,
+            height: `${this.formatNumber(rawDimensions.height)} <small>ס"מ</small>`,
+            beamCount: `${rawDimensions.beamCount} <small>קורות</small>`,
+            gapBetweenBeams: `${this.formatNumber(rawDimensions.gapBetweenBeams)} <small>ס"מ</small>`,
+            shelfCount: `${rawDimensions.shelfCount} <small>מדפים</small>`,
+            shelfHeights: shelfHeights,
+            totalScrews: `${rawDimensions.totalScrews} <small>ברגים</small>`
         };
     }
     
