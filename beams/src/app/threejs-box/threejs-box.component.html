@@ -27,7 +27,8 @@
                             <mat-label>{{param.translatedName}}</mat-label>
                             <input matInput type="number" [(ngModel)]="param.default" 
                                    [min]="param.min" [max]="param.max" 
-                                   (ngModelChange)="updateModel()">
+                                   (ngModelChange)="updateModel()"
+                                   (input)="updateModel()">
                         </mat-form-field>
                     </div>
                     
@@ -71,6 +72,8 @@
                                         <mat-label>מידה {{param.default.length - idx}} - {{getUnitForParameter(param)}}</mat-label>
                                         <input matInput type="number" [min]="param.min" [max]="param.max" [step]="1"
                                             [(ngModel)]="param.default[param.default.length - 1 - idx]"
+                                            (ngModelChange)="updateShelfParameterValue(param, param.default[param.default.length - 1 - idx], param.default.length - 1 - idx)"
+                                            (input)="updateShelfParameterValue(param, param.default[param.default.length - 1 - idx], param.default.length - 1 - idx)"
                                             (blur)="updateShelfParameterValue(param, param.default[param.default.length - 1 - idx], param.default.length - 1 - idx)"
                                             (keyup.enter)="updateShelfParameterValue(param, param.default[param.default.length - 1 - idx], param.default.length - 1 - idx)">
                                     </mat-form-field>
@@ -142,6 +145,8 @@
                                 <mat-label>{{param.translatedName}} - {{getUnitForParameter(param)}}</mat-label>
                                 <input matInput type="number" [min]="param.min" [max]="param.max"
                                     [step]="getStep(param.type)" [(ngModel)]="param.default" 
+                                    (ngModelChange)="updateParameterValue(param, param.default)"
+                                    (input)="updateParameterValue(param, param.default)"
                                     (blur)="updateParameterValue(param, param.default)"
                                     (keyup.enter)="updateParameterValue(param, param.default)">
                             </mat-form-field>
@@ -156,6 +161,8 @@
                                 <mat-label>{{param.translatedName}} - {{getUnitForParameter(param)}}</mat-label>
                                 <input matInput type="number" [min]="param.min" [max]="param.max"
                                     [step]="getStep(param.type)" [(ngModel)]="param.default" 
+                                    (ngModelChange)="updateParameterValue(param, param.default)"
+                                    (input)="updateParameterValue(param, param.default)"
                                     (blur)="updateParameterValue(param, param.default)"
                                     (keyup.enter)="updateParameterValue(param, param.default)">
                             </mat-form-field>
