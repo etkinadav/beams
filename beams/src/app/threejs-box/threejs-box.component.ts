@@ -859,12 +859,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             }
             
             const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
+            // עבור שולחן, נוסיף את גובה קורות המדפים לגובה הרגליים
+            const shelfBeamHeight = beamHeight; // זה כבר מחושב למעלה
+            console.log('Table leg calculation:', { tableHeight, shelfBeamHeight, totalLegHeight: tableHeight + shelfBeamHeight });
             const legs = this.createLegBeams(
                 this.surfaceWidth,
                 this.surfaceLength,
                 frameBeamWidth,
                 frameBeamHeight,
-                tableHeight // גובה הרגליים = גובה השולחן
+                tableHeight + shelfBeamHeight // גובה הרגליים = גובה השולחן + גובה קורות המדפים
             );
             for (const leg of legs) {
                 const geometry = new THREE.BoxGeometry(leg.width, leg.height, leg.depth);
@@ -1128,11 +1131,13 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         frameHeight: number,
         topHeight: number
     ): { x: number, y: number, z: number, width: number, height: number, depth: number }[] {
+        console.log('createLegBeams called with topHeight:', topHeight, 'isTable:', this.isTable);
         // קבלת מידות קורות הרגליים מהפרמטרים
         const legParam = this.getParam('leg');
         let legWidth = frameWidth;
         let legHeight = topHeight;
         let legDepth = frameWidth;
+        console.log('Initial leg dimensions:', { legWidth, legHeight, legDepth });
         
         if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
             const legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
@@ -1141,6 +1146,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 legDepth = legBeam.height / 10; // המרה ממ"מ לס"מ
             }
         }
+        console.log('After leg param processing:', { legWidth, legHeight, legDepth });
         
         // קבלת עובי קורות המדפים כדי לקצר את הרגליים
         const shelfsParam = this.getParam('shelfs');
@@ -1151,9 +1157,11 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
             }
         }
+        console.log('Shelf beam height for shortening:', shelfBeamHeight);
         
         // קיצור הרגליים בעובי קורות המדפים - הרגליים צריכות להגיע רק עד לתחתית המדף העליון
         legHeight = topHeight - shelfBeamHeight;
+        console.log('Final leg height after shortening:', legHeight);
         
         // 4 פינות - מיקום צמוד לקצה בהתאם לעובי הרגל בפועל
         const xVals = [
