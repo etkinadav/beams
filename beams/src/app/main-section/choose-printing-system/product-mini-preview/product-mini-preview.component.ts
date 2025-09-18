@@ -1147,26 +1147,28 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         this.meshes.push(beamMesh);
       }
       
-      // Frame beams (קורת חיזוק) - זהה לקובץ הראשי
-      const frameBeams = this.createFrameBeams(
-        this.dynamicParams.width,
-        this.dynamicParams.length,
-        actualFrameWidth,
-        actualFrameHeight,
-        actualFrameWidth, // legWidth
-        actualFrameWidth  // legDepth
-      );
-      
-      for (const beam of frameBeams) {
-        const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
-        this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
-        const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
-        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
-        frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
-        frameMesh.castShadow = true;
-        frameMesh.receiveShadow = true;
-        this.scene.add(frameMesh);
-        this.meshes.push(frameMesh);
+      // Frame beams (קורת חיזוק) - רק עבור ארון, לא עבור שולחן
+      if (!isTable) {
+        const frameBeams = this.createFrameBeams(
+          this.dynamicParams.width,
+          this.dynamicParams.length,
+          actualFrameWidth,
+          actualFrameHeight,
+          actualFrameWidth, // legWidth
+          actualFrameWidth  // legDepth
+        );
+        
+        for (const beam of frameBeams) {
+          const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+          this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
+          const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+          const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+          frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
+          frameMesh.castShadow = true;
+          frameMesh.receiveShadow = true;
+          this.scene.add(frameMesh);
+          this.meshes.push(frameMesh);
+        }
       }
       
       // Add the height of the shelf itself for the next shelf
@@ -1205,25 +1207,36 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     });
     
     
+    // קבלת מידות הרגליים מקורת הפלטה עבור שולחן
+    let legWidth = actualFrameWidth;
+    let legDepth = actualFrameWidth;
+    if (isTable && shelfBeam) {
+      // עבור שולחן, נשתמש במידות קורת הפלטה
+      legWidth = shelfBeam.width ? shelfBeam.width / 10 : actualFrameWidth; // רוחב הרגל
+      legDepth = shelfBeam.height ? shelfBeam.height / 10 : actualFrameWidth; // עומק הרגל
+      console.log('מידות רגליים משולחן:', { legWidth, legDepth, shelfBeam });
+    }
+
     // מיקום הרגליים - זהה לקובץ הראשי
     const legPositions = [
-      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
-      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
-      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2],
-      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2]
+      [-this.dynamicParams.width/2 + legWidth/2, 0, -this.dynamicParams.length/2 + legDepth/2],
+      [this.dynamicParams.width/2 - legWidth/2, 0, -this.dynamicParams.length/2 + legDepth/2],
+      [-this.dynamicParams.width/2 + legWidth/2, 0, this.dynamicParams.length/2 - legDepth/2],
+      [this.dynamicParams.width/2 - legWidth/2, 0, this.dynamicParams.length/2 - legDepth/2]
     ];
-    
+
     legPositions.forEach(pos => {
       // בדיקות בטיחות למידות הרגל
       const safeLegHeight = legHeight || 10; // ברירת מחדל 10 ס"מ
-      const safeFrameWidth = actualFrameWidth || 5; // ברירת מחדל 5 ס"מ
+      const safeLegWidth = legWidth || 5; // ברירת מחדל 5 ס"מ
+      const safeLegDepth = legDepth || 5; // ברירת מחדל 5 ס"מ
       
       const legGeometry = new THREE.BoxGeometry(
-        safeFrameWidth,
+        safeLegWidth,
         safeLegHeight,
-        safeFrameWidth
+        safeLegDepth
       );
-      this.setCorrectTextureMapping(legGeometry, actualFrameWidth, legHeight, actualFrameWidth);
+      this.setCorrectTextureMapping(legGeometry, legWidth, legHeight, legDepth);
       const legMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
       const leg = new THREE.Mesh(legGeometry, legMaterial);
       leg.position.set(pos[0], legHeight/2, pos[2]);
@@ -1233,7 +1246,66 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.meshes.push(leg);
     });
 
-
+    // יצירת קורות חיזוק עבור שולחן - אחרי הרגליים
+    if (isTable) {
+      // סט ראשון: קורות חיזוק מתחת למדף (בגובה הרגליים)
+      const frameBeams = this.createFrameBeams(
+        this.dynamicParams.width,
+        this.dynamicParams.length,
+        actualFrameWidth,
+        actualFrameHeight,
+        legWidth, // legWidth - מידות נכונות מהפלטה
+        legDepth  // legDepth - מידות נכונות מהפלטה
+      );
+      
+      for (const beam of frameBeams) {
+        const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+        this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
+        const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+        // מיקום קורות החיזוק מתחת למדף (בגובה הרגליים)
+        frameMesh.position.set(beam.x, currentY - beam.height / 2, beam.z);
+        frameMesh.castShadow = true;
+        frameMesh.receiveShadow = true;
+        this.scene.add(frameMesh);
+        this.meshes.push(frameMesh);
+      }
+      
+      // סט שני: קורות חיזוק נוספות (extraBeam) מתחת לסט הראשון
+      const extraBeamParam = this.product?.params?.find((p: any) => p.name === 'extraBeam');
+      if (extraBeamParam && extraBeamParam.default > 0) {
+        const extraBeamDistance = extraBeamParam.default;
+        console.log('Adding extra frame beams for table with distance:', extraBeamDistance);
+        
+        // יצירת קורות חיזוק נוספות באותו מיקום אבל יותר נמוך
+        const extraFrameBeams = this.createFrameBeams(
+          this.dynamicParams.width,
+          this.dynamicParams.length,
+          actualFrameWidth,
+          actualFrameHeight,
+          legWidth, // legWidth - מידות נכונות מהפלטה
+          legDepth  // legDepth - מידות נכונות מהפלטה
+        );
+        
+        // המרחק הכולל = הנתון החדש + גובה קורות החיזוק
+        const totalDistance = extraBeamDistance + actualFrameHeight;
+        console.log('Extra beam calculation:', { extraBeamDistance, actualFrameHeight, totalDistance });
+        
+        for (const beam of extraFrameBeams) {
+          const extraFrameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+          this.setCorrectTextureMapping(extraFrameGeometry, beam.width, beam.height, beam.depth);
+          const extraFrameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+          const extraFrameMesh = new THREE.Mesh(extraFrameGeometry, extraFrameMaterial);
+          // מיקום יותר נמוך במידת totalDistance (הנתון החדש + גובה קורות החיזוק)
+          extraFrameMesh.position.set(beam.x, currentY - beam.height / 2 - totalDistance, beam.z);
+          extraFrameMesh.castShadow = true;
+          extraFrameMesh.receiveShadow = true;
+          this.scene.add(extraFrameMesh);
+          this.meshes.push(extraFrameMesh);
+          console.log('Created extra frame beam at position:', beam.x, currentY - beam.height / 2 - totalDistance, beam.z);
+        }
+      }
+    }
 
     // סיבוב המודל - זהה לקובץ הראשי
     this.scene.rotation.y = Math.PI / 6; // 30 מעלות סיבוב
@@ -1370,26 +1442,28 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
         this.meshes.push(beamMesh);
       }
       
-      // Frame beams (קורת חיזוק) - זהה לקובץ הראשי
-      const frameBeams = this.createFrameBeams(
-        this.dynamicParams.width,
-        this.dynamicParams.length,
-        actualFrameWidth,
-        actualFrameHeight,
-        actualFrameWidth, // legWidth
-        actualFrameWidth  // legDepth
-      );
-      
-      for (const beam of frameBeams) {
-        const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
-        this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
-        const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
-        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
-        frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
-        frameMesh.castShadow = true;
-        frameMesh.receiveShadow = true;
-        this.scene.add(frameMesh);
-        this.meshes.push(frameMesh);
+      // Frame beams (קורת חיזוק) - רק עבור ארון, לא עבור שולחן
+      if (!isTable) {
+        const frameBeams = this.createFrameBeams(
+          this.dynamicParams.width,
+          this.dynamicParams.length,
+          actualFrameWidth,
+          actualFrameHeight,
+          actualFrameWidth, // legWidth
+          actualFrameWidth  // legDepth
+        );
+        
+        for (const beam of frameBeams) {
+          const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+          this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
+          const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+          const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+          frameMesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
+          frameMesh.castShadow = true;
+          frameMesh.receiveShadow = true;
+          this.scene.add(frameMesh);
+          this.meshes.push(frameMesh);
+        }
       }
       
       // Add the height of the shelf itself for the next shelf
@@ -1428,25 +1502,36 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     });
     
     
+    // קבלת מידות הרגליים מקורת הפלטה עבור שולחן
+    let legWidth = actualFrameWidth;
+    let legDepth = actualFrameWidth;
+    if (isTable && shelfBeam) {
+      // עבור שולחן, נשתמש במידות קורת הפלטה
+      legWidth = shelfBeam.width ? shelfBeam.width / 10 : actualFrameWidth; // רוחב הרגל
+      legDepth = shelfBeam.height ? shelfBeam.height / 10 : actualFrameWidth; // עומק הרגל
+      console.log('מידות רגליים משולחן:', { legWidth, legDepth, shelfBeam });
+    }
+
     // מיקום הרגליים - זהה לקובץ הראשי
     const legPositions = [
-      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
-      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, -this.dynamicParams.length/2 + actualFrameWidth/2],
-      [-this.dynamicParams.width/2 + actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2],
-      [this.dynamicParams.width/2 - actualFrameWidth/2, 0, this.dynamicParams.length/2 - actualFrameWidth/2]
+      [-this.dynamicParams.width/2 + legWidth/2, 0, -this.dynamicParams.length/2 + legDepth/2],
+      [this.dynamicParams.width/2 - legWidth/2, 0, -this.dynamicParams.length/2 + legDepth/2],
+      [-this.dynamicParams.width/2 + legWidth/2, 0, this.dynamicParams.length/2 - legDepth/2],
+      [this.dynamicParams.width/2 - legWidth/2, 0, this.dynamicParams.length/2 - legDepth/2]
     ];
-    
+
     legPositions.forEach(pos => {
       // בדיקות בטיחות למידות הרגל
       const safeLegHeight = legHeight || 10; // ברירת מחדל 10 ס"מ
-      const safeFrameWidth = actualFrameWidth || 5; // ברירת מחדל 5 ס"מ
+      const safeLegWidth = legWidth || 5; // ברירת מחדל 5 ס"מ
+      const safeLegDepth = legDepth || 5; // ברירת מחדל 5 ס"מ
       
       const legGeometry = new THREE.BoxGeometry(
-        safeFrameWidth,
+        safeLegWidth,
         safeLegHeight,
-        safeFrameWidth
+        safeLegDepth
       );
-      this.setCorrectTextureMapping(legGeometry, actualFrameWidth, legHeight, actualFrameWidth);
+      this.setCorrectTextureMapping(legGeometry, legWidth, legHeight, legDepth);
       const legMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
       const leg = new THREE.Mesh(legGeometry, legMaterial);
       leg.position.set(pos[0], legHeight/2, pos[2]);
@@ -1455,6 +1540,67 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.scene.add(leg);
       this.meshes.push(leg);
     });
+
+    // יצירת קורות חיזוק עבור שולחן - אחרי הרגליים
+    if (isTable) {
+      // סט ראשון: קורות חיזוק מתחת למדף (בגובה הרגליים)
+      const frameBeams = this.createFrameBeams(
+        this.dynamicParams.width,
+        this.dynamicParams.length,
+        actualFrameWidth,
+        actualFrameHeight,
+        legWidth, // legWidth - מידות נכונות מהפלטה
+        legDepth  // legDepth - מידות נכונות מהפלטה
+      );
+      
+      for (const beam of frameBeams) {
+        const frameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+        this.setCorrectTextureMapping(frameGeometry, beam.width, beam.height, beam.depth);
+        const frameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+        const frameMesh = new THREE.Mesh(frameGeometry, frameMaterial);
+        // מיקום קורות החיזוק מתחת למדף (בגובה הרגליים)
+        frameMesh.position.set(beam.x, currentY - beam.height / 2, beam.z);
+        frameMesh.castShadow = true;
+        frameMesh.receiveShadow = true;
+        this.scene.add(frameMesh);
+        this.meshes.push(frameMesh);
+      }
+      
+      // סט שני: קורות חיזוק נוספות (extraBeam) מתחת לסט הראשון
+      const extraBeamParam = this.product?.params?.find((p: any) => p.name === 'extraBeam');
+      if (extraBeamParam && extraBeamParam.default > 0) {
+        const extraBeamDistance = extraBeamParam.default;
+        console.log('Adding extra frame beams for table with distance:', extraBeamDistance);
+        
+        // יצירת קורות חיזוק נוספות באותו מיקום אבל יותר נמוך
+        const extraFrameBeams = this.createFrameBeams(
+          this.dynamicParams.width,
+          this.dynamicParams.length,
+          actualFrameWidth,
+          actualFrameHeight,
+          legWidth, // legWidth - מידות נכונות מהפלטה
+          legDepth  // legDepth - מידות נכונות מהפלטה
+        );
+        
+        // המרחק הכולל = הנתון החדש + גובה קורות החיזוק
+        const totalDistance = extraBeamDistance + actualFrameHeight;
+        console.log('Extra beam calculation:', { extraBeamDistance, actualFrameHeight, totalDistance });
+        
+        for (const beam of extraFrameBeams) {
+          const extraFrameGeometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+          this.setCorrectTextureMapping(extraFrameGeometry, beam.width, beam.height, beam.depth);
+          const extraFrameMaterial = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+          const extraFrameMesh = new THREE.Mesh(extraFrameGeometry, extraFrameMaterial);
+          // מיקום יותר נמוך במידת totalDistance (הנתון החדש + גובה קורות החיזוק)
+          extraFrameMesh.position.set(beam.x, currentY - beam.height / 2 - totalDistance, beam.z);
+          extraFrameMesh.castShadow = true;
+          extraFrameMesh.receiveShadow = true;
+          this.scene.add(extraFrameMesh);
+          this.meshes.push(extraFrameMesh);
+          console.log('Created extra frame beam at position:', beam.x, currentY - beam.height / 2 - totalDistance, beam.z);
+        }
+      }
+    }
 
     // סיבוב המודל - זהה לקובץ הראשי
     this.scene.rotation.y = Math.PI / 6; // 30 מעלות סיבוב
