@@ -247,11 +247,16 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     // זיהוי סוג המוצר
     const isTable = this.product?.name === 'table';
+    console.log('changeRandomShelfHeight נקרא - סוג מוצר:', isTable ? 'שולחן' : 'ארון');
     
     if (isTable) {
       // שולחן - שינוי גובה המדף היחיד
       const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-      if (!heightParam) return;
+      console.log('פרמטר גובה שולחן:', heightParam);
+      if (!heightParam) {
+        console.log('לא נמצא פרמטר גובה לשולחן');
+        return;
+      }
       
       const step = this.getStep(heightParam.type || 0);
       // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
@@ -268,23 +273,23 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       this.dynamicParams.height = this.shelfGaps[0]; // עדכון פרמטר הגובה
       console.log(`גובה שולחן השתנה ל: ${this.shelfGaps[0]} (טווח: ${min}-${max}, צעד: ${step})`);
     } else {
-      // ארון - שינוי גובה המדף השלישי
-      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
-      if (!heightParam) return;
+      // ארון - שינוי גובה המדף התחתון (השלישי)
+      // עבור ארון, נשתמש בטווח של פרמטר shelfs או נגדיר טווח ברירת מחדל
+      const shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+      console.log('פרמטר shelfs ארון:', shelfsParam);
       
-      const step = this.getStep(heightParam.type || 0);
-      // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
-      const min = (heightParam.type === 0 || heightParam.type === undefined || heightParam.type === null) ? 
-        Math.max(heightParam.min || 45, 45) : (heightParam.min || 20);
-      const max = Math.min(heightParam.max || 100, 200);
+      // הגדרת טווח ברירת מחדל עבור ארון
+      const min = 20; // מינימום 20 ס"מ למדף תחתון
+      const max = 120; // מקסימום 120 ס"מ למדף תחתון
+      const step = 1; // צעד של 1 ס"מ
       
       // בחירת ערך רנדומלי בטווח המלא
       const range = max - min;
       const randomSteps = Math.floor(Math.random() * (range / step)) + 1;
       const newValue = min + (randomSteps * step);
       
-      this.shelfGaps[2] = Math.min(newValue, max); // ארון - מדף שלישי
-      console.log(`גובה השתנה ל: ${this.shelfGaps[2]} (טווח: ${min}-${max}, צעד: ${step})`);
+      this.shelfGaps[2] = Math.min(newValue, max); // ארון - מדף תחתון (שלישי)
+      console.log(`גובה המדף התחתון השתנה ל: ${this.shelfGaps[2]} (טווח: ${min}-${max}, צעד: ${step})`);
     }
     
     this.createSimpleProductWithoutCameraUpdate();

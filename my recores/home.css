@@ -1688,7 +1688,7 @@ input[type="color"]:focus,
 }
 
 .logo-white {
-    background-image: url(eazix-logo-white.svg);
+    background-image: url(onde-logo-white.svg);
 }
 
 .reset-pass-icon {
@@ -1835,11 +1835,11 @@ input[type="color"]:focus,
 }
 
 .small-logo {
-    background-image: url(eazix-logo-small.svg);
+    background-image: url(onde-logo-small.svg);
 }
 
 .full-logo {
-    background: center/cover url("eazix-logo.png");
+    background: center/cover url("onde-logo.png");
 }
 
 .q-and-a-photoshop-1 {

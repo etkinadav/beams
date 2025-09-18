@@ -11,7 +11,7 @@
     <mat-nav-list class="d-flex flex-column vh-100 pb-5">
 
       <div class="w-100 d-flex justify-content-center zx-z-index-1 c-pointer" (click)="goToHome()">
-        <img src="assets/images/eazix-logo.png" alt="Eazix Logo" class="eazix-logo c-pointer">
+        <img src="assets/images/onde-logo.png" alt="Eazix Logo" class="onde-logo c-pointer">
       </div>
 
       <a class="d-sm-none" mat-list-item (click)="goToNewOrder()">
@@ -267,12 +267,12 @@
 
       <div (click)="goToHome()"
         class="d-flex align-items-center gap-2 zx-flex-grow-lg-1 justify-content-lg-center mx-lg-2">
-        <img *ngIf="userName !== ''" src="assets/images/eazix-logo-small.svg" alt="Eazix Logo"
+        <img *ngIf="userName !== ''" src="assets/images/onde-logo.png" alt="Eazix Logo"
           class="d-flex d-md-none small-logo c-pointer mx-2">
-        <img *ngIf="userName !== ''" src="assets/images/eazix-logo.png" alt="Eazix Logo"
-          class="d-none d-md-flex eazix-logo c-pointer mx-2">
-        <img *ngIf="userName === ''" src="assets/images/eazix-logo.png" alt="Eazix Logo"
-          class="d-flex eazix-logo c-pointer mx-2">
+        <img *ngIf="userName !== ''" src="assets/images/onde-logo.png" alt="Eazix Logo"
+          class="d-none d-md-flex onde-logo c-pointer mx-2">
+        <img *ngIf="userName === ''" src="assets/images/onde-logo.png" alt="Eazix Logo"
+          class="d-flex onde-logo c-pointer mx-2">
 
         <span *ngIf="userName !== ''" class="zx-text-tiny text-green px-lg-3" [class.zx-rtl]="isRTL">
           <span>{{ 'main-nav.greeting.' + greeting | translate }}, </span>
