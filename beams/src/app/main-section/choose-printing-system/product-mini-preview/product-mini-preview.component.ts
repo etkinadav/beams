@@ -280,7 +280,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       
       // הגדרת טווח ברירת מחדל עבור ארון
       const min = 20; // מינימום 20 ס"מ למדף תחתון
-      const max = 120; // מקסימום 120 ס"מ למדף תחתון
+      const max = 100; // מקסימום 100 ס"מ למדף תחתון
       const step = 1; // צעד של 1 ס"מ
       
       // בחירת ערך רנדומלי בטווח המלא
