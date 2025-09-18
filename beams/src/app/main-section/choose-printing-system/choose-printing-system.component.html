@@ -117,8 +117,10 @@
                             [class.fade-out]="isTextChanging">
                             {{ getCurrentTitle() | translate }}
                         </h6>
-                        <img [src]="'assets/images/system-empty.svg'" [alt]="'Choose Printing Service'"
-                            class="zx-system-empty-icon canvas-image">
+                        <div class="image-container">
+                            <img [src]="'assets/images/system-empty.svg'" [alt]="'Choose Printing Service'"
+                                class="zx-system-empty-icon canvas-image">
+                        </div>
                         <h2 class="zx-text-big m-0 text-center animated-text canvas-text" 
                             [class.zx-rtl]="isRTL"
                             [class.fade-out]="isTextChanging">

@@ -216,7 +216,7 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.currentTextIndex = (this.currentTextIndex + 1) % 5; // 5 טקסטים
       this.isTextChanging = false;
-    }, 500); // חצי שנייה לאנימציה
+    }, 800); // זמן ארוך יותר לאנימציה חלקה
   }
 
   getCurrentTitle(): string {

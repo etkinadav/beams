@@ -1,36 +1,49 @@
 // אנימציות לטקסטים מתחלפים
 .animated-text {
-  transition: opacity 0.5s ease-in-out;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 1;
+  transform: translateY(0);
 }
 
 .fade-out {
   opacity: 0;
+  transform: translateY(-20px);
 }
 
-@keyframes fadeInOut {
+@keyframes fadeInUp {
   0% {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(30px);
   }
-  50% {
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
-  100% {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
 }
 
-.animated-text.fade-out {
-  animation: fadeInOut 0.5s ease-in-out;
+.animated-text:not(.fade-out) {
+  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 // עיצוב הקנבס החדש
 .canvas-content {
   padding: 2rem 3rem;
   animation: fadeInOnLoad 1s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+// יצירת מקום קבוע לתמונה
+.image-container {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0;
+  flex-shrink: 0;
 }
 
 @keyframes fadeInOnLoad {
@@ -85,6 +98,9 @@
   margin: 1rem 0;
   transition: transform 0.3s ease-in-out;
   cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .canvas-image:hover {
@@ -99,6 +115,10 @@
     min-height: 168px !important;
     max-width: 240px !important;
     max-height: 168px !important;
+  }
+  
+  .image-container {
+    height: 200px;
   }
   
   .canvas-content {
