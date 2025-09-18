@@ -39,7 +39,7 @@
   </div>
   <div class="shelf-height-control" (click)="$event.stopPropagation()">
     <button (click)="decreaseShelfHeight()" class="control-btn">-</button>
-    <span class="shelf-height-value">גובה {{shelfGaps[2]}} ס"מ</span>
+    <span class="shelf-height-value">גובה {{product?.name === 'table' ? shelfGaps[0] : shelfGaps[2]}} ס"מ</span>
     <button (click)="increaseShelfHeight()" class="control-btn">+</button>
   </div>
 </div>
