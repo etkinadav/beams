@@ -103,18 +103,15 @@ button.mat-icon-hanburger-con {
 // // button hamburger
 
 .small-logo {
-  max-width: 35px;
-  min-width: 35px;
-  max-height: 35px;
-  min-height: 35px;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
 @media only screen and (min-width: 576px) {
   .small-logo {
-    max-width: 45px;
-    min-width: 45px;
-    max-height: 45px;
-    min-height: 45px;
+    width: 50px;
+    height: 50px;
   }
 }
 
@@ -137,9 +134,27 @@ button.mat-icon-hanburger-con {
 }
 
 .onde-logo {
-  width: 150px;
-  height: 75px;
-  object-fit: cover;
+  width: 130px;
+  height: 43px;
+  object-fit: contain;
+}
+
+.onde-logo-small {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+@media only screen and (max-width: 768px) {
+  .onde-logo {
+    width: 105px;
+    height: 35px;
+  }
+  
+  .onde-logo-small {
+    width: 35px;
+    height: 35px;
+  }
 }
 
 mat-sidenav-container {

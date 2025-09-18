@@ -267,12 +267,14 @@
 
       <div (click)="goToHome()"
         class="d-flex align-items-center gap-2 zx-flex-grow-lg-1 justify-content-lg-center mx-lg-2">
+        <img *ngIf="userName !== ''" src="assets/images/onde-logo-small.png" alt="OnDe Logo"
+          class="d-flex d-sm-none onde-logo-small c-pointer mx-2">
         <img *ngIf="userName !== ''" src="assets/images/onde-logo.png" alt="OnDe Logo"
-          class="d-flex d-md-none small-logo c-pointer mx-2">
-        <img *ngIf="userName !== ''" src="assets/images/onde-logo.png" alt="OnDe Logo"
-          class="d-none d-md-flex onde-logo c-pointer mx-2">
+          class="d-none d-sm-flex onde-logo c-pointer mx-2">
+        <img *ngIf="userName === ''" src="assets/images/onde-logo-small.png" alt="OnDe Logo"
+          class="d-flex d-sm-none onde-logo-small c-pointer mx-2">
         <img *ngIf="userName === ''" src="assets/images/onde-logo.png" alt="OnDe Logo"
-          class="d-flex onde-logo c-pointer mx-2">
+          class="d-none d-sm-flex onde-logo c-pointer mx-2">
 
         <span *ngIf="userName !== ''" class="zx-text-tiny text-green px-lg-3" [class.zx-rtl]="isRTL">
           <span>{{ 'main-nav.greeting.' + greeting | translate }}, </span>
