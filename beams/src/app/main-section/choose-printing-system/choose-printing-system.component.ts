@@ -39,6 +39,11 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
   selectedProduct: any = null;
   hoveredProduct: any = null;
 
+  // משתנים לטקסטים מתחלפים
+  currentTextIndex: number = 0;
+  textChangeInterval: any;
+  isTextChanging: boolean = false;
+
   constructor(
     private directionService: DirectionService,
     private dataSharingService: DataSharingService,
@@ -82,10 +87,15 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
         this.userIsAuthenticated = isAuthenticated;
         this.userId = this.authService.getUserId();
       });
+
+    // התחלת רוטציית הטקסטים
+    this.startTextRotation();
   }
 
   ngOnDestroy() {
     // this.authStatusSub.unsubscribe();
+    // עצירת רוטציית הטקסטים
+    this.stopTextRotation();
   }
 
   onHoverPrintingService(value: string) {
@@ -186,6 +196,60 @@ export class ChoosePrintingSystemComponent implements OnInit, OnDestroy {
       // אם אין שם מוצר, ניווט לעמוד הכללי
       window.location.href = '/beams';
     }
+  }
+
+  // פונקציות לטקסטים מתחלפים
+  startTextRotation() {
+    this.textChangeInterval = setInterval(() => {
+      this.changeText();
+    }, 4000); // החלפה כל 4 שניות
+  }
+
+  stopTextRotation() {
+    if (this.textChangeInterval) {
+      clearInterval(this.textChangeInterval);
+    }
+  }
+
+  changeText() {
+    this.isTextChanging = true;
+    setTimeout(() => {
+      this.currentTextIndex = (this.currentTextIndex + 1) % 5; // 5 טקסטים
+      this.isTextChanging = false;
+    }, 500); // חצי שנייה לאנימציה
+  }
+
+  getCurrentTitle(): string {
+    const titles = [
+      'choose-system.empty-title-1',
+      'choose-system.empty-title-2', 
+      'choose-system.empty-title-3',
+      'choose-system.empty-title-4',
+      'choose-system.empty-title-5'
+    ];
+    return titles[this.currentTextIndex];
+  }
+
+  getCurrentText(): string {
+    const texts = [
+      'choose-system.empty-text-1',
+      'choose-system.empty-text-2',
+      'choose-system.empty-text-3', 
+      'choose-system.empty-text-4',
+      'choose-system.empty-text-5'
+    ];
+    return texts[this.currentTextIndex];
+  }
+
+  getCurrentSubtitle(): string {
+    const subtitles = [
+      'choose-system.empty-subtitle-1',
+      'choose-system.empty-subtitle-2',
+      'choose-system.empty-subtitle-3',
+      'choose-system.empty-subtitle-4',
+      'choose-system.empty-subtitle-5'
+    ];
+    return subtitles[this.currentTextIndex];
   }
   // ==================
 }

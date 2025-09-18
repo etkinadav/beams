@@ -1,3 +1,123 @@
+// אנימציות לטקסטים מתחלפים
+.animated-text {
+  transition: opacity 0.5s ease-in-out;
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animated-text.fade-out {
+  animation: fadeInOut 0.5s ease-in-out;
+}
+
+// עיצוב הקנבס החדש
+.canvas-content {
+  padding: 2rem 3rem;
+  animation: fadeInOnLoad 1s ease-in-out;
+}
+
+@keyframes fadeInOnLoad {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.canvas-title {
+  color: var(--zx-green) !important;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-text {
+  color: var(--zx-green) !important;
+  font-size: 1.2rem;
+  font-weight: 500;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-subtitle {
+  color: var(--zx-green) !important;
+  font-size: 1rem;
+  font-weight: 400;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.canvas-image {
+  width: 120px !important;
+  height: 84px !important;
+  min-width: 120px !important;
+  min-height: 84px !important;
+  max-width: 120px !important;
+  max-height: 84px !important;
+  margin: 1rem 0;
+  transition: transform 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.canvas-image:hover {
+  transform: scale(1.05);
+}
+
+@media only screen and (min-width: 1120px) {
+  .canvas-image {
+    width: 240px !important;
+    height: 168px !important;
+    min-width: 240px !important;
+    min-height: 168px !important;
+    max-width: 240px !important;
+    max-height: 168px !important;
+  }
+  
+  .canvas-content {
+    padding: 3rem 4rem;
+  }
+  
+  .canvas-title {
+    font-size: 2.2rem;
+  }
+  
+  .canvas-text {
+    font-size: 1.4rem;
+  }
+  
+  .canvas-subtitle {
+    font-size: 1.1rem;
+  }
+}
+
 // Responsive flex direction for product items
 .step-item-trans-product {
   @media only screen and (max-width: 767px) {

@@ -107,19 +107,28 @@
                 class="zx-canvas shadow-85 rounded-3 d-flex justify-content-center align-items-center position-relative"
                 [class.zx-canvas-dark]="isDarkMode">
                 <article
-                    class="w-100 flex-grow-1 d-flex flex-column align-items-center flex-shrink-0 justify-content-between pt-5 gap-5 px-lg-2 px-xl-3">
+                    class="w-100 flex-grow-1 d-flex flex-column align-items-center flex-shrink-0 justify-content-between gap-5 px-lg-2 px-xl-3">
 
                     <!-- empty -->
                     <div *ngIf="hoveredPrintingService === ''"
-                        class="w-100 d-flex flex-column align-items-center justify-content-center gap-2 pb-3">
-                        <h6 class="zx-text-big fw-bold m-0 text-center" [class.zx-rtl]="isRTL">
-                            {{ 'choose-system.empty' | translate }}
+                        class="w-100 d-flex flex-column align-items-center justify-content-center gap-3 pb-3 canvas-content">
+                        <h6 class="zx-text-big fw-bold m-0 text-center animated-text canvas-title" 
+                            [class.zx-rtl]="isRTL"
+                            [class.fade-out]="isTextChanging">
+                            {{ getCurrentTitle() | translate }}
                         </h6>
                         <img [src]="'assets/images/system-empty.svg'" [alt]="'Choose Printing Service'"
-                            class="zx-system-empty-icon">
-                        <h2 class="zx-text-big m-0 text-center" [class.zx-rtl]="isRTL">
-                            {{ 'choose-system.empty-explain' | translate }}
+                            class="zx-system-empty-icon canvas-image">
+                        <h2 class="zx-text-big m-0 text-center animated-text canvas-text" 
+                            [class.zx-rtl]="isRTL"
+                            [class.fade-out]="isTextChanging">
+                            {{ getCurrentText() | translate }}
                         </h2>
+                        <h3 class="zx-text-medium m-0 text-center animated-text canvas-subtitle" 
+                            [class.zx-rtl]="isRTL"
+                            [class.fade-out]="isTextChanging">
+                            {{ getCurrentSubtitle() | translate }}
+                        </h3>
                     </div>
                     <!-- // empty -->
 
