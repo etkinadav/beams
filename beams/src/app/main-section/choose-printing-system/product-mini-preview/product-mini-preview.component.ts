@@ -1347,7 +1347,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
           actualFrameWidth,
           actualFrameHeight,
           actualFrameWidth, // legWidth
-          actualFrameWidth  // legDepth
+          actualFrameHeight  // legDepth - עומק הרגל מקורת החיזוק
         );
         
         for (const beam of frameBeams) {
@@ -1399,14 +1399,14 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     });
     
     
-    // קבלת מידות הרגליים מקורת הפלטה עבור שולחן
+    // קבלת מידות הרגליים מקורת החיזוק (לא מקורת הפלטה)
     let legWidth = actualFrameWidth;
-    let legDepth = actualFrameWidth;
-    if (isTable && shelfBeam) {
+    let legDepth = actualFrameHeight;
+    if (isTable && frameBeam) {
       // עבור שולחן, נשתמש במידות קורת הפלטה
-      legWidth = shelfBeam.width ? shelfBeam.width / 10 : actualFrameWidth; // רוחב הרגל
-      legDepth = shelfBeam.height ? shelfBeam.height / 10 : actualFrameWidth; // עומק הרגל
-      console.log('מידות רגליים משולחן:', { legWidth, legDepth, shelfBeam });
+      legWidth = frameBeam.width ? frameBeam.width / 10 : actualFrameWidth; // רוחב הרגל מקורת החיזוק
+      legDepth = frameBeam.height ? frameBeam.height / 10 : actualFrameHeight; // עומק הרגל מקורת החיזוק
+      console.log('מידות רגליים משולחן (מקורת חיזוק):', { legWidth, legDepth, frameBeam });
     }
 
     // מיקום הרגליים - זהה לקובץ הראשי
@@ -1642,7 +1642,7 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
           actualFrameWidth,
           actualFrameHeight,
           actualFrameWidth, // legWidth
-          actualFrameWidth  // legDepth
+          actualFrameHeight  // legDepth - עומק הרגל מקורת החיזוק
         );
         
         for (const beam of frameBeams) {
@@ -1694,14 +1694,14 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     });
     
     
-    // קבלת מידות הרגליים מקורת הפלטה עבור שולחן
+    // קבלת מידות הרגליים מקורת החיזוק (לא מקורת הפלטה)
     let legWidth = actualFrameWidth;
-    let legDepth = actualFrameWidth;
-    if (isTable && shelfBeam) {
+    let legDepth = actualFrameHeight;
+    if (isTable && frameBeam) {
       // עבור שולחן, נשתמש במידות קורת הפלטה
-      legWidth = shelfBeam.width ? shelfBeam.width / 10 : actualFrameWidth; // רוחב הרגל
-      legDepth = shelfBeam.height ? shelfBeam.height / 10 : actualFrameWidth; // עומק הרגל
-      console.log('מידות רגליים משולחן:', { legWidth, legDepth, shelfBeam });
+      legWidth = frameBeam.width ? frameBeam.width / 10 : actualFrameWidth; // רוחב הרגל מקורת החיזוק
+      legDepth = frameBeam.height ? frameBeam.height / 10 : actualFrameHeight; // עומק הרגל מקורת החיזוק
+      console.log('מידות רגליים משולחן (מקורת חיזוק):', { legWidth, legDepth, frameBeam });
     }
 
     // מיקום הרגליים - זהה לקובץ הראשי
