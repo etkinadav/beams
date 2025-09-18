@@ -198,7 +198,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (!widthParam) return; // אם לא נמצא פרמטר רוחב, לא נשנה כלום
     
     const step = this.getStep(widthParam.type || 0);
-    const min = widthParam.min || 50;
+    // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
+    const min = (widthParam.type === 0 || widthParam.type === undefined || widthParam.type === null) ? 
+      Math.max(widthParam.min || 45, 45) : (widthParam.min || 50);
     const max = Math.min(widthParam.max || 200, 200); // הגבלה מקסימלית של 200
     
     // בחירת ערך רנדומלי בטווח המלא
@@ -222,7 +224,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     if (!lengthParam) return; // אם לא נמצא פרמטר אורך, לא נשנה כלום
     
     const step = this.getStep(lengthParam.type || 0);
-    const min = lengthParam.min || 50;
+    // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
+    const min = (lengthParam.type === 0 || lengthParam.type === undefined || lengthParam.type === null) ? 
+      Math.max(lengthParam.min || 45, 45) : (lengthParam.min || 50);
     const max = Math.min(lengthParam.max || 200, 200); // הגבלה מקסימלית של 200
     
     // בחירת ערך רנדומלי בטווח המלא
@@ -250,7 +254,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       if (!heightParam) return;
       
       const step = this.getStep(heightParam.type || 0);
-      const min = heightParam.min || 50;
+      // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
+      const min = (heightParam.type === 0 || heightParam.type === undefined || heightParam.type === null) ? 
+        Math.max(heightParam.min || 45, 45) : (heightParam.min || 50);
       const max = Math.min(heightParam.max || 120, 200);
       
       // בחירת ערך רנדומלי בטווח המלא
@@ -267,7 +273,9 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       if (!heightParam) return;
       
       const step = this.getStep(heightParam.type || 0);
-      const min = heightParam.min || 20;
+      // מינימום של 45 ס"מ לפרמטרים עם type = 0 (או undefined/null)
+      const min = (heightParam.type === 0 || heightParam.type === undefined || heightParam.type === null) ? 
+        Math.max(heightParam.min || 45, 45) : (heightParam.min || 20);
       const max = Math.min(heightParam.max || 100, 200);
       
       // בחירת ערך רנדומלי בטווח המלא
@@ -710,7 +718,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   }
 
   decreaseWidth() {
-    if (this.dynamicParams.width > 20) { // הגבלה מינימלית של 20 ס"מ
+    // חיפוש פרמטר הרוחב כדי לבדוק את ה-type
+    const widthParam = this.product?.params?.find((p: any) => p.name === 'width');
+    const minWidth = (widthParam?.type === 0 || widthParam?.type === undefined || widthParam?.type === null) ? 45 : 20; // מינימום 45 ס"מ לפרמטרים עם type = 0
+    
+    if (this.dynamicParams.width > minWidth) { // הגבלה מינימלית דינמית
       // עצירת האנימציה האוטומטית למשך 30 שניות
       this.hasUserInteracted = true;
       this.resetInactivityTimer();
@@ -747,7 +759,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
   }
 
   decreaseLength() {
-    if (this.dynamicParams.length > 20) { // הגבלה מינימלית של 20 ס"מ
+    // חיפוש פרמטר האורך כדי לבדוק את ה-type
+    const lengthParam = this.product?.params?.find((p: any) => p.name === 'depth');
+    const minLength = (lengthParam?.type === 0 || lengthParam?.type === undefined || lengthParam?.type === null) ? 45 : 20; // מינימום 45 ס"מ לפרמטרים עם type = 0
+    
+    if (this.dynamicParams.length > minLength) { // הגבלה מינימלית דינמית
       // עצירת האנימציה האוטומטית למשך 30 שניות
       this.hasUserInteracted = true;
       this.resetInactivityTimer();
@@ -804,7 +820,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
     
     if (isTable) {
       // שולחן - הקטנת גובה המדף היחיד
-      if (this.shelfGaps[0] > 10) { // הגבלה מינימלית של 10 ס"מ
+      // חיפוש פרמטר הגובה כדי לבדוק את ה-type
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      const minHeight = (heightParam?.type === 0 || heightParam?.type === undefined || heightParam?.type === null) ? 45 : 10; // מינימום 45 ס"מ לפרמטרים עם type = 0
+      
+      if (this.shelfGaps[0] > minHeight) { // הגבלה מינימלית דינמית
         // שמירת המצב הנוכחי של המצלמה
         const currentCameraState = this.saveCurrentCameraState();
         
@@ -819,7 +839,11 @@ export class ProductMiniPreviewComponent implements AfterViewInit, OnDestroy, On
       }
     } else {
       // ארון - הקטנת גובה המדף השלישי
-      if (this.shelfGaps[2] > 10) { // הגבלה מינימלית של 10 ס"מ
+      // חיפוש פרמטר הגובה כדי לבדוק את ה-type
+      const heightParam = this.product?.params?.find((p: any) => p.name === 'height');
+      const minHeight = (heightParam?.type === 0 || heightParam?.type === undefined || heightParam?.type === null) ? 45 : 10; // מינימום 45 ס"מ לפרמטרים עם type = 0
+      
+      if (this.shelfGaps[2] > minHeight) { // הגבלה מינימלית דינמית
         // שמירת המצב הנוכחי של המצלמה
         const currentCameraState = this.saveCurrentCameraState();
         
