@@ -899,11 +899,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             }
             
             const tableHeight = baseTableHeight - plataBeamHeight; // הפחתת גובה קורות הפלטה
-            console.log('Table height calculation:', { 
-                baseTableHeight, 
-                plataBeamHeight, 
-                finalTableHeight: tableHeight 
-            });
             
             // Surface beams (קורת משטח) - מדף אחד בלבד
             const surfaceBeams = this.createSurfaceBeams(
@@ -937,7 +932,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 if (legBeam) {
                     legWidth = legBeam.width / 10;   // המרה ממ"מ לס"מ
                     legDepth = (legBeam.depth || legBeam.height) / 10; // המרה ממ"מ לס"מ - fallback ל-height אם depth לא קיים
-                    console.log('Table leg dimensions:', { legWidth, legDepth, legBeam });
                 }
             }
             
@@ -963,9 +957,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             for (const beam of frameBeams) {
                 const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
                 const material = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
-                console.log('Creating frame beam with texture:', frameType ? frameType.name : 'default');
-                console.log('Frame wood texture object:', frameWoodTexture);
-                console.log('Frame beam dimensions:', beam.width, beam.height, beam.depth);
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
@@ -978,7 +969,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const extraBeamParam = this.getParam('extraBeam');
             if (extraBeamParam && extraBeamParam.default > 0) {
                 const extraBeamDistance = extraBeamParam.default;
-                console.log('Adding extra frame beams for table with distance:', extraBeamDistance);
                 
                 // יצירת קורות חיזוק נוספות באותו מיקום אבל יותר נמוך
                 const extraFrameBeams = this.createFrameBeams(
@@ -991,7 +981,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 );
                 // המרחק הכולל = הנתון החדש + רוחב קורות החיזוק
                 const totalDistance = extraBeamDistance + frameBeamHeight;
-                console.log('Extra beam calculation:', { extraBeamDistance, frameBeamHeight, totalDistance });
                 
                 for (const beam of extraFrameBeams) {
                     const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
@@ -1003,7 +992,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     mesh.position.set(beam.x, tableHeight - beam.height / 2 - totalDistance, beam.z);
                     this.scene.add(mesh);
                     this.beamMeshes.push(mesh);
-                    console.log('Created extra frame beam at position:', beam.x, tableHeight - beam.height / 2 - totalDistance, beam.z);
                 }
             }
             
@@ -1019,7 +1007,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const legWoodTexture = this.getWoodTexture(legType ? legType.name : '');
             // עבור שולחן, נוסיף את גובה קורות המדפים לגובה הרגליים
             const shelfBeamHeight = beamHeight; // זה כבר מחושב למעלה
-            console.log('Table leg calculation:', { tableHeight, shelfBeamHeight, totalLegHeight: tableHeight + shelfBeamHeight });
             const legs = this.createLegBeams(
                 this.surfaceWidth,
                 this.surfaceLength,
@@ -1039,14 +1026,12 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             }
             
             // הוספת ברגים לרגליים עבור שולחן
-            console.log('Calling addScrewsToLegs for table with legs:', legs.length);
             this.addScrewsToLegs(1, legs, frameBeamHeight, 0);
             
             // הוספת ברגים נוספים לקורות החיזוק המשוכפלות (extraBeam) - עבור שולחן בלבד
             if (extraBeamParam && extraBeamParam.default > 0) {
                 const extraBeamDistance = extraBeamParam.default;
                 const totalDistance = extraBeamDistance + frameBeamHeight;
-                console.log('Adding extra screws for table extra beams at distance:', totalDistance);
                 
                 // יצירת ברגים נוספים באותם מיקומים X ו-Z אבל בגובה של קורות החיזוק המשוכפלות
                 legs.forEach((leg, legIndex) => {
@@ -1082,8 +1067,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         
                         this.scene.add(screwGroup);
                         this.beamMeshes.push(screwGroup);
-                        
-                        console.log(`Extra screw - Leg ${legIndex + 1}, Screw ${screwIndex + 1}: x=${pos.x.toFixed(1)}, y=${pos.y.toFixed(1)}, z=${pos.z.toFixed(1)}`);
                     });
                 });
             }
@@ -1238,8 +1221,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         const dimensions = this.getProductDimensionsRaw();
         const { length, width, height } = dimensions;
 
-        console.log('Creating wireframe cube with dimensions:', { length, width, height });
-
         // Create custom wireframe without diagonal lines
         const wireframeGroup = new THREE.Group();
         const wireframeMaterial = new THREE.LineBasicMaterial({
@@ -1341,8 +1322,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // Add to scene
         this.scene.add(wireframeGroup);
-        
-        console.log('Custom wireframe cube added to scene at position:', wireframeGroup.position);
     }
 
     // Update model when any parameter changes (alias for updateBeams)
@@ -1658,8 +1637,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         });
         
         // איחוד קורות זהות - השוואה שיטתית של כל קורה לכל קורה אחרת
-        console.log('=== DEBUG: Before merging identical beams ===');
-        console.log('BeamsDataForPricing before merge:', this.BeamsDataForPricing.length);
         
         for (let i = 0; i < this.BeamsDataForPricing.length; i++) {
             for (let j = i + 1; j < this.BeamsDataForPricing.length; j++) {
@@ -1677,11 +1654,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 const beam2Height = beam2.type?.height || 0;
                 
                 if (beam1TypeId === beam2TypeId && beam1Width === beam2Width && beam1Height === beam2Height) {
-                    console.log(`Merging identical beams: ${beam1.type?.name} (${beam1.type?.translatedName}) - ID: ${beam1TypeId}`);
-                    console.log(`Beam 1 sizes:`, beam1.sizes);
-                    console.log(`Beam 2 sizes:`, beam2.sizes);
-                    console.log(`Dimensions: ${beam1Width}x${beam1Height}mm`);
-                    
                     // איחוד ה-sizes
                     beam1.sizes = [...beam1.sizes, ...beam2.sizes];
                     
@@ -1690,47 +1662,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     
                     // חזרה לאינדקס הקודם כי הסרנו קורה
                     j--;
-                    
-                    console.log(`Merged sizes:`, beam1.sizes);
                 }
             }
         }
-        
-        console.log('=== DEBUG: After merging identical beams ===');
-        console.log('BeamsDataForPricing after merge:', this.BeamsDataForPricing.length);
-        
-        console.log('=== DEBUG: Final results ===');
-        console.log('Total beams collected:', allBeams.length);
-        console.log('allBeams:', allBeams);
-        
-        // הדפסה מפורטת של כל קורה
-        allBeams.forEach((beam, index) => {
-            console.log(`Beam ${index + 1}:`, {
-                name: beam.name,
-                typeId: beam.type?._id,
-                typeName: beam.type?.name,
-                length: beam.length,
-                width: beam.width,
-                height: beam.height
-            });
-        });
-        
-        console.log('BeamsDataForPricing calculated:', this.BeamsDataForPricing);
-        
-        // הדפסה מפורטת לכל סוג קורה
-        this.BeamsDataForPricing.forEach((beamData, index) => {
-            console.log(`Beam Type ${index + 1}:`, {
-                id: beamData.type?._id,
-                name: beamData.type?.name,
-                translatedName: beamData.type?.translatedName,
-                sizes: beamData.sizes,
-                totalBeams: beamData.sizes.length,
-                width: beamData.type?.width,
-                height: beamData.type?.height,
-                material: beamData.type?.material,
-                length: beamData.type?.length
-            });
-        });
     }
 
     animate() {
@@ -1801,13 +1735,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             return [];
         }
         
-        console.log('createFrameBeams called with:', { totalWidth, totalLength, frameWidth, frameHeight, legWidth, legDepth });
-        console.log('Using frameBeamWidth/Height:', frameBeamWidth, frameBeamHeight);
-        console.log('Is table in createFrameBeams:', this.isTable);
-        console.log('Frame beam dimensions will be:', frameBeamWidth, frameBeamHeight);
-        console.log('Leg width/depth:', legWidth, legDepth);
-        console.log('Total width/length:', totalWidth, totalLength);
-        
         const beams = [];
         // X axis beams (front/back) - קורות אופקיות קדמיות ואחוריות
         for (const z of [
@@ -1817,19 +1744,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             // עבור שולחן: קיצור לפי גובה קורות החיזוק
             // עבור ארון: קיצור לפי רוחב הרגליים (legWidth)
             const beamWidth = this.isTable ? totalWidth - 2 * frameBeamHeight : totalWidth - 2 * legWidth;
-            console.log('Creating horizontal frame beam:', {
-                isTable: this.isTable,
-                z: z,
-                beamWidth: beamWidth,
-                totalWidth: totalWidth,
-                legWidth: legWidth,
-                frameBeamHeight: frameBeamHeight,
-                frameBeamWidth: frameBeamWidth,
-                beamStart: -beamWidth / 2,
-                beamEnd: beamWidth / 2,
-                legStart: -totalWidth / 2 + legWidth / 2,
-                legEnd: totalWidth / 2 - legWidth / 2
-            });
             beams.push({
                 x: 0,  // ממורכזות במרכז
                 y: 0,
@@ -1846,14 +1760,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         ]) {
             const originalX = x;
             const adjustedX = x;  // עבור שולחן וארון - מיקום זהה
-            console.log('Creating vertical frame beam:', {
-                isTable: this.isTable,
-                originalX: originalX,
-                adjustedX: adjustedX,
-                legWidth: legWidth,
-                adjustment: this.isTable ? (x < 0 ? legWidth / 2 : -legWidth / 2) : 0,
-                beamDepth: this.isTable ? totalLength - legDepth : totalLength - 2 * legDepth
-            });
             beams.push({
                 x: adjustedX,  // עבור שולחן, שתי הקורות ממורכזות למרכז הרגל
                 y: 0,
@@ -1897,13 +1803,11 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         frameHeight: number,
         topHeight: number
     ): { x: number, y: number, z: number, width: number, height: number, depth: number }[] {
-        console.log('createLegBeams called with topHeight:', topHeight, 'isTable:', this.isTable);
         // קבלת מידות קורות הרגליים מהפרמטרים
         const legParam = this.getParam('leg');
         let legWidth = frameWidth;
         let legHeight = topHeight;
         let legDepth = frameWidth;
-        console.log('Initial leg dimensions:', { legWidth, legHeight, legDepth });
         
         if (legParam && Array.isArray(legParam.beams) && legParam.beams.length) {
             const legBeam = legParam.beams[legParam.selectedBeamIndex || 0];
@@ -1912,7 +1816,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 legDepth = legBeam.height / 10; // המרה ממ"מ לס"מ
             }
         }
-        console.log('After leg param processing:', { legWidth, legHeight, legDepth });
         
         // קבלת עובי קורות המדפים כדי לקצר את הרגליים
         const shelfsParam = this.getParam('shelfs');
@@ -1923,11 +1826,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
             }
         }
-        console.log('Shelf beam height for shortening:', shelfBeamHeight);
         
         // קיצור הרגליים בעובי קורות המדפים - הרגליים צריכות להגיע רק עד לתחתית המדף העליון
         legHeight = topHeight - shelfBeamHeight;
-        console.log('Final leg height after shortening:', legHeight);
         
         // 4 פינות - מיקום צמוד לקצה בהתאם לעובי הרגל בפועל
         const xVals = [
@@ -2064,20 +1965,13 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             // עבור שולחן - הגובה הוא פשוט הפרמטר "גובה משטח" (כי כבר הורדנו את גובה קורות הפלטה)
             const heightParam = this.getParam('height');
             totalHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
-            console.log('Table total height calculation:', { 
-                heightParam: heightParam?.default, 
-                totalHeight 
-            });
         } else {
             // עבור ארון - חישוב גובה לפי סכום המדפים (זהה לחישוב גובה הרגליים)
             const beamHeight = this.beamHeight;
             const frameBeamHeight = this.frameHeight; // שימוש באותו משתנה כמו בחישוב הרגליים
             
-            console.log('Cabinet total height calculation:', { beamHeight, frameBeamHeight });
-            
             for (let i = 0; i < this.shelves.length; i++) {
                 totalHeight += this.shelves[i].gap + frameBeamHeight + beamHeight;
-                console.log(`Cabinet shelf ${i}: gap=${this.shelves[i].gap}, frameBeamHeight=${frameBeamHeight}, beamHeight=${beamHeight}, totalHeight=${totalHeight}`);
             }
             
             // הוספת הגובה המלא של המדף העליון (כי הוא לא נכלל בלולאה)
@@ -2085,10 +1979,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             // אז הקצה העליון שלו הוא ב-currentY + frameBeamHeight + beamHeight
             // אבל הלולאה שלנו כבר כוללת את beamHeight, אז צריך להוסיף עוד beamHeight/2
             totalHeight += beamHeight / 2;
-            console.log(`Added top shelf height adjustment: +${beamHeight / 2}, final totalHeight=${totalHeight}`);
         }
-        
-        console.log('Final totalHeight:', totalHeight);
         
         // חישוב כמות קורות המדף
         const beamWidth = this.beamWidth;
@@ -2183,7 +2074,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     
     // יצירת גיאומטריית בורג אופקי (להרגליים)
     private createHorizontalScrewGeometry(): THREE.Group {
-        console.log('Creating horizontal screw geometry');
         const screwGroup = new THREE.Group();
         
         // פרמטרים של הבורג (מידות אמיתיות)
@@ -2209,7 +2099,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // יצירת גיאומטריית בורג
     private createScrewGeometry(): THREE.Group {
-        console.log('Creating screw geometry');
         const screwGroup = new THREE.Group();
 
         
@@ -2225,7 +2114,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         const headMaterial = new THREE.MeshStandardMaterial({ color: 0x444444  }); // צבע בהיר יותר לראש
         const headMesh = new THREE.Mesh(headGeometry, headMaterial);
         headMesh.position.y = this.headHeight / 2; // ראש בחלק העליון של הבורג
-        console.log('Adding screw head:', headMesh.position.y);
         screwGroup.add(headMesh);
         
         // ביטול החריצים - אין צורך בהם
@@ -2235,7 +2123,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // הוספת ברגים לקורת מדף
     private addScrewsToShelfBeam(beam: any, shelfY: number, beamHeight: number, frameBeamWidth: number, isShortenedBeam: string = "top") {
-        console.log('Adding screws to shelf beam:', beam, 'shelfY:', shelfY, 'beamHeight:', beamHeight, 'frameBeamWidth:', frameBeamWidth);
         // חישוב מיקומי הברגים
         // הזחה מהקצוות: מחצית ממידת ה-height של קורת החיזוק
         const edgeOffset = frameBeamWidth / 2;
@@ -2303,7 +2190,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const screwY = shelfY + beamHeight; // הורדה של 20 מ"מ + 100 לראות את הברגים
             // מיקום הבורג: החלק התחתון של הראש על הקורה, מופנה כלפי מטה
             screwGroup.position.set(pos.x, screwY, pos.z);
-            console.log(`Screw ${index + 1} position: x=${pos.x.toFixed(1)}, y=${screwY.toFixed(1)}, z=${pos.z.toFixed(1)}`);
             // הבורג כבר מופנה כלפי מטה - אין צורך בסיבוב
             // screwGroup.rotation.x = Math.PI;
             
