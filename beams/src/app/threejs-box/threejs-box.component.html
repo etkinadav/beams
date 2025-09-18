@@ -136,7 +136,22 @@
                             </mat-select>
                         </mat-form-field>
                     </div>
-                    <div *ngIf="param.type !== 'beamSingle' && param.name !== 'shelfs' && (!isTable || param.name !== 'height')">
+                    
+                    <!-- פרמטר extraBeam מיוחד עבור שולחן -->
+                    <div *ngIf="isTable && param.name === 'extraBeam'">
+                        <label style="font-weight:bold; display:block; margin-bottom: 1.5em;">{{param.translatedName}}</label>
+                        <div class="param-box non-beam">
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{param.translatedName}} - {{getUnitForParameter(param)}}</mat-label>
+                                <input matInput type="number" [min]="param.min" [max]="param.max"
+                                    [step]="getStep(param.type)" [(ngModel)]="param.default" 
+                                    (blur)="updateParameterValue(param, param.default)"
+                                    (keyup.enter)="updateParameterValue(param, param.default)">
+                            </mat-form-field>
+                        </div>
+                    </div>
+                    
+                    <div *ngIf="param.type !== 'beamSingle' && param.name !== 'shelfs' && (!isTable || param.name !== 'height') && param.name !== 'extraBeam'">
                         <label
                             style="font-weight:bold; display:block; margin-bottom: 1.5em;">{{param.translatedName}}</label>
                         <div class="param-box non-beam">

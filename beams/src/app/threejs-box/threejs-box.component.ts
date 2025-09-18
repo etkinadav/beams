@@ -849,6 +849,39 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 this.beamMeshes.push(mesh);
             }
             
+            // קורות חיזוק נוספות (extraBeam) - עבור שולחן בלבד
+            const extraBeamParam = this.getParam('extraBeam');
+            if (extraBeamParam && extraBeamParam.default > 0) {
+                const extraBeamDistance = extraBeamParam.default;
+                console.log('Adding extra frame beams for table with distance:', extraBeamDistance);
+                
+                // יצירת קורות חיזוק נוספות באותו מיקום אבל יותר נמוך
+                const extraFrameBeams = this.createFrameBeams(
+                    this.surfaceWidth,
+                    this.surfaceLength,
+                    frameBeamWidth,
+                    frameBeamHeight,
+                    frameBeamWidth, // legWidth
+                    frameBeamWidth  // legDepth
+                );
+                // המרחק הכולל = הנתון החדש + רוחב קורות החיזוק
+                const totalDistance = extraBeamDistance + frameBeamHeight;
+                console.log('Extra beam calculation:', { extraBeamDistance, frameBeamHeight, totalDistance });
+                
+                for (const beam of extraFrameBeams) {
+                    const geometry = new THREE.BoxGeometry(beam.width, beam.height, beam.depth);
+                    const material = new THREE.MeshStandardMaterial({ map: frameWoodTexture });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    // מיקום יותר נמוך במידת totalDistance (הנתון החדש + רוחב קורות החיזוק)
+                    mesh.position.set(beam.x, tableHeight - beam.height / 2 - totalDistance, beam.z);
+                    this.scene.add(mesh);
+                    this.beamMeshes.push(mesh);
+                    console.log('Created extra frame beam at position:', beam.x, tableHeight - beam.height / 2 - totalDistance, beam.z);
+                }
+            }
+            
             // רגליים (legs) - עבור שולחן
             const legParam = this.getParam('leg');
             let legBeam = null;
