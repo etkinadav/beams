@@ -1563,6 +1563,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     this.minGap
                 );
                 
+                console.log('=== DEBUG: Surface beams calculation ===');
+                console.log('surfaceWidth:', this.surfaceWidth);
+                console.log('surfaceLength:', this.surfaceLength);
+                console.log('beamWidth:', beamWidth);
+                console.log('beamHeight:', beamHeight);
+                console.log('minGap:', this.minGap);
+                console.log('surfaceBeams.length:', surfaceBeams.length);
+                
                 if (this.isTable) {
                     console.log('=== DEBUG: Table surface beams ===');
                     console.log('surfaceBeams count:', surfaceBeams.length);
@@ -1582,6 +1590,11 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     });
                 } else {
                     // עבור ארון - קורות לכל מדף עם קיצור
+                    console.log('=== DEBUG: Cabinet surface beams ===');
+                    console.log('surfaceBeams count:', surfaceBeams.length);
+                    console.log('shelves count:', this.shelves.length);
+                    console.log('total beams expected:', surfaceBeams.length * this.shelves.length);
+                    
                     // חישוב קיצור קורות המדפים
                     const totalShelves = this.shelves.length;
                     const shelvesWithoutTop = totalShelves - 1; // מדפים ללא המדף העליון
