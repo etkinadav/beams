@@ -1592,8 +1592,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     const legBeamSelected = legParam?.beams?.[legParam.selectedBeamIndex || 0];
                     const legBeamHeight = legBeamSelected?.height / 10 || 0;
                     
-                    // קיצור קורות המדפים
-                    const shorteningPerBeam = legBeamHeight * 2; // פעמיים גובה קורת הרגל
+                    // קיצור קורות המדפים - פעם אחת גובה קורת הרגל/החיזוק
+                    const shorteningPerBeam = legBeamHeight * 2;
                     
                     
                     this.shelves.forEach((shelf, index) => {
