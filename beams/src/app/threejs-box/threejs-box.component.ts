@@ -1986,18 +1986,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             totalHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
         } else {
             // עבור ארון - חישוב גובה לפי הנוסחה הנכונה: legHeight = topHeight - shelfBeamHeight
-            const beamHeight = this.beamHeight;
             const frameBeamHeight = this.frameHeight;
             
-            // חישוב shelfBeamHeight (גובה קורת המדף)
-            let shelfBeamHeight = this.beamHeight;
+            // חישוב beamHeight האמיתי מקורת המדף שנבחרה (כמו בפונקציה updateBeams)
+            let beamHeight = this.beamHeight; // ברירת מחדל
             const shelfsParam = this.getParam('shelfs');
             if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
                 const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
                 if (shelfBeam) {
-                    shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
+                    beamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
                 }
             }
+            
+            // חישוב shelfBeamHeight (גובה קורת המדף) - אותו ערך כמו beamHeight
+            const shelfBeamHeight = beamHeight;
             
             // חישוב totalY (סכום כל המדפים) - ללא הוספת beamHeight מיותרת
             let totalY = 0;
@@ -2014,7 +2016,17 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const legHeight = totalY - shelfBeamHeight;
             
             // הגובה הכולל = totalY (סכום כל המדפים)
-            totalHeight = totalY;
+            totalHeight = totalY + (shelfBeamHeight / 2)
+            
+            // Debug: הדפסת הערכים לחישוב הגובה הכולל
+            console.log('=== DEBUG: חישוב גובה כולל של הארון ===');
+            console.log('shelfBeamHeight: 111', shelfBeamHeight);
+            console.log('frameBeamHeight:', frameBeamHeight);
+            console.log('beamHeight:', beamHeight);
+            console.log('totalY (סכום כל המדפים):', totalY);
+            console.log('legHeight (totalY - shelfBeamHeight):', legHeight);
+            console.log('totalHeight (גובה כולל סופי):', totalHeight);
+            console.log('==========================================');
         }
         
         // חישוב כמות קורות המדף
