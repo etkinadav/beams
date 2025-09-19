@@ -2349,12 +2349,40 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         legWidth = legBeam.width / 10; // המרה ממ"מ לס"מ
                     }
                 }
+                const plataParam = this.getParam('plata');
+                let plataBeamHeight = this.beamHeight; // ברירת מחדל
+                if (plataParam && Array.isArray(plataParam.beams) && plataParam.beams.length) {
+                    const plataBeam = plataParam.beams[plataParam.selectedBeamIndex || 0];
+                    if (plataBeam) {
+                        plataBeamHeight = plataBeam.height / 10; // המרה ממ"מ לס"מ
+                    }
+                }
+                // חישוב tableHeight כמו בפונקציה הראשית
+                const heightParam = this.getParam('height');
+                const baseTableHeight = heightParam ? heightParam.default : 80; // גובה ברירת מחדל
+                const tableHeight = baseTableHeight - plataBeamHeight; // הפחתת גובה קורות הפלטה
+                
+                // חישוב frameBeamHeight כמו בפונקציה הראשית
+                const frameParam = this.getParam('leg'); // עבור שולחן, frameParam הוא leg
+                let calculatedFrameBeamHeight = this.frameHeight; // ברירת מחדל
+                if (frameParam && Array.isArray(frameParam.beams) && frameParam.beams.length) {
+                    const frameBeam = frameParam.beams[frameParam.selectedBeamIndex || 0];
+                    if (frameBeam) {
+                        calculatedFrameBeamHeight = frameBeam.width / 10; // המרה ממ"מ לס"מ
+                    }
+                }
+                
                 // גובה הרגליים בפועל (לא גובה השולחן)
                 const actualLegHeight = legPositions[0] ? legPositions[0].height : 0;
-                currentShelfY = actualLegHeight - legWidth; // גובה הרגליים פחות ממידת הרוחב של קורת החיזוק (יותר נמוך)
+                // אותו חישוב כמו הברגים התחתונים, רק בלי totalDistance
+                currentShelfY = tableHeight - calculatedFrameBeamHeight / 2; // גובה מרכז קורות החיזוק העליונות
+                console.log('=====================', actualLegHeight, legWidth, plataBeamHeight);
                 console.log('Table screw calculation:', { actualLegHeight, legWidth, currentShelfY });
                 console.log('Previous calculation would be:', actualLegHeight - (legWidth / 2), 'New calculation:', currentShelfY);
                 console.log('Leg positions for calculation:', legPositions[0]);
+                
+                // הוספת גובה קורות הפלטה
+               
             } else {
                 currentShelfY = this.getShelfHeight(shelfIndex) - (this.beamHeight + (this.frameHeight / 2));
             }
@@ -2369,12 +2397,12 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     // בורג לקורת חיזוק קדמית
                     {
                         x: leg.x, // מרכז רוחב הרגל
-                        y: currentShelfY + this.frameHeight / 2, // מרכז קורת החיזוק
+                        y: currentShelfY, // מרכז קורת החיזוק
                         z: isEven ? (leg.z - (leg.depth / 2 + this.headHeight)) : (leg.z + (leg.depth / 2 + this.headHeight)) // צד חיצוני של הרגל (קדמי)
                     },
                     {
                         x: leg.x + ((leg.width / 2 + this.headHeight) * (legIndex > 1 ? 1 : -1)), // מרכז רוחב הרגל
-                        y: currentShelfY + this.frameHeight / 2, // מרכז קורת החיזוק
+                        y: currentShelfY, // מרכז קורת החיזוק
                         z: (isEven ? (leg.z - (leg.depth / 2 + this.headHeight)) : (leg.z + (leg.depth / 2 + this.headHeight))) +
                         ((isEven ? 1 : -1) * (leg.depth / 2 + this.headHeight)) // צד חיצוני של הרגל (קדמי)
                     }
