@@ -177,33 +177,10 @@ button.mat-icon-hanburger-con {
   }
 }
 
-// אנימציה להמבורגר - החלפת צבעים בגוונים של הלוגו
+// אנימציה להמבורגר - בוטלה
 .mat-icon-hanburger {
-  animation: hamburgerColorShift 4s ease-in-out infinite !important;
+  color: var(--zx-green) !important;
   transition: all 0.3s ease !important;
-}
-
-@keyframes hamburgerColorShift {
-  0% {
-    color: var(--zx-green) !important;
-    transform: scale(1);
-  }
-  25% {
-    color: var(--zx-green-vivid-mid) !important;
-    transform: scale(1.05);
-  }
-  50% {
-    color: var(--zx-green-vivid-light) !important;
-    transform: scale(1.1);
-  }
-  75% {
-    color: var(--zx-green-vivid-mid) !important;
-    transform: scale(1.05);
-  }
-  100% {
-    color: var(--zx-green) !important;
-    transform: scale(1);
-  }
 }
 
 mat-sidenav-content {
