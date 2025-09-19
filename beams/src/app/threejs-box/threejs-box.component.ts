@@ -1249,7 +1249,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
         // Create cube material for corner cubes
         const cubeMaterial = new THREE.MeshStandardMaterial({
-            color: 0x0066cc // Same blue color
+            color:0x0066cc // Same blue color
         });
 
         // Shortening distance from corners (1.2 cm)
@@ -1276,7 +1276,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
         // Add corner cubes
         corners.forEach(corner => {
-            const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5); // 0.5x0.5x0.5 cube
+            const cubeGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.8); // 0.8x0.8x0.8 cube - larger
             const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
             cube.position.copy(corner);
             wireframeGroup.add(cube);
@@ -1325,12 +1325,160 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             wireframeGroup.add(line);
         });
 
+        // Add dimension text labels
+        this.addDimensionTexts(wireframeGroup, length, width, height);
+
         // Position the wireframe at the center of the product
         wireframeGroup.position.set(0, height / 2, 0);
         wireframeGroup.name = 'productWireframe';
         
         // Add to scene
         this.scene.add(wireframeGroup);
+    }
+
+    // Add dimension text labels to wireframe
+    private addDimensionTexts(wireframeGroup: THREE.Group, length: number, width: number, height: number) {
+        // Calculate positions for dimension labels
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
+        const halfLength = length / 2;
+
+        // Define all 8 corner positions
+        const corners = [
+            // Bottom corners
+            new THREE.Vector3(-halfWidth, -halfHeight, halfLength),   // front-left-bottom
+            new THREE.Vector3(halfWidth, -halfHeight, halfLength),    // front-right-bottom
+            new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),  // back-left-bottom
+            new THREE.Vector3(halfWidth, -halfHeight, -halfLength),   // back-right-bottom
+            // Top corners
+            new THREE.Vector3(-halfWidth, halfHeight, halfLength),    // front-left-top
+            new THREE.Vector3(halfWidth, halfHeight, halfLength),     // front-right-top
+            new THREE.Vector3(-halfWidth, halfHeight, -halfLength),   // back-left-top
+            new THREE.Vector3(halfWidth, halfHeight, -halfLength)     // back-right-top
+        ];
+
+        // Helper function to create text sprite
+        const createTextSprite = (number: number, position: THREE.Vector3) => {
+            // Create canvas for text rendering
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d')!;
+            canvas.width = 512;
+            canvas.height = 128;
+
+            // Clear canvas with transparent background
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw number in large font
+            context.font = '48px Arial';
+            context.fillStyle = '#002266'; // Even darker blue
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            
+            const numberText = Math.round(number).toString();
+            
+            // Draw only the number
+            context.fillText(numberText, canvas.width / 2, canvas.height / 2);
+            
+            // Create texture from canvas
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            
+            // Create sprite material with billboard behavior
+            const spriteMaterial = new THREE.SpriteMaterial({ 
+                map: texture,
+                transparent: true,
+                alphaTest: 0.1,
+                color: 0xffffff // White color to preserve original texture colors
+            });
+            
+            // Create sprite with billboard behavior (always faces camera)
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.copy(position);
+            sprite.scale.set(50, 12, 1); // Much larger scale
+            
+            // Make sprite always face the camera
+            sprite.material.rotation = 0;
+            
+            return sprite;
+        };
+
+        // Helper function to get middle point of two corners
+        const getMiddlePoint = (corner1: THREE.Vector3, corner2: THREE.Vector3) => {
+            return new THREE.Vector3().addVectors(corner1, corner2).multiplyScalar(0.5);
+        };
+
+        // Helper function to get outward direction for text positioning
+        const getOutwardDirection = (corner1: THREE.Vector3, corner2: THREE.Vector3) => {
+            const direction = new THREE.Vector3().subVectors(corner2, corner1).normalize();
+            const middle = getMiddlePoint(corner1, corner2);
+            
+            // Determine outward direction based on edge position
+            if (Math.abs(direction.x) > 0.9) { // Vertical edges (width)
+                return new THREE.Vector3(0, 0, middle.z > 0 ? 1 : -1);
+            } else if (Math.abs(direction.z) > 0.9) { // Horizontal edges (length)
+                return new THREE.Vector3(0, middle.y > 0 ? 1 : -1, 0);
+            } else { // Height edges
+                return new THREE.Vector3(middle.x > 0 ? 1 : -1, 0, 0);
+            }
+        };
+
+        // Add dimension labels for all 12 edges
+        const edges = [
+            // Bottom face (4 edges)
+            { start: corners[0], end: corners[1], value: length }, // front
+            { start: corners[2], end: corners[3], value: length }, // back
+            { start: corners[2], end: corners[0], value: width }, // left
+            { start: corners[1], end: corners[3], value: width }, // right
+            
+            // Top face (4 edges)
+            { start: corners[4], end: corners[5], value: length }, // front
+            { start: corners[6], end: corners[7], value: length }, // back
+            { start: corners[6], end: corners[4], value: width }, // left
+            { start: corners[5], end: corners[7], value: width }, // right
+            
+            // Vertical edges (4 edges)
+            { start: corners[0], end: corners[4], value: height }, // front-left
+            { start: corners[1], end: corners[5], value: height }, // front-right
+            { start: corners[2], end: corners[6], value: height }, // back-left
+            { start: corners[3], end: corners[7], value: height }  // back-right
+        ];
+
+        edges.forEach(edge => {
+            const middle = getMiddlePoint(edge.start, edge.end);
+            
+            // Calculate rotation to align text with edge direction
+            const direction = new THREE.Vector3().subVectors(edge.end, edge.start).normalize();
+            
+            // Adjust position - raise by 2cm for length and width edges, keep height edges as is
+            let textPosition = middle.clone();
+            if (Math.abs(direction.z) > 0.9) { // Front/back edges (length)
+                textPosition.y += 2; // Raise by 2cm
+                textPosition = createTextSprite(edge.value, textPosition);
+                textPosition.rotation.z = 0;
+            } else if (Math.abs(direction.x) > 0.9) { // Left/right edges (width)
+                textPosition.y += 2; // Raise by 2cm
+                textPosition = createTextSprite(edge.value, textPosition);
+                textPosition.rotation.z = Math.PI / 2;
+            } else { // Vertical edges (height) - move outward by 3cm
+                // Move outward in X and Y directions by 3cm
+                if (textPosition.x > 0) {
+                    textPosition.x += 3; // Move right
+                } else {
+                    textPosition.x -= 3; // Move left
+                }
+                if (textPosition.z > 0) {
+                    textPosition.z += 3; // Move forward
+                } else {
+                    textPosition.z -= 3; // Move backward
+                }
+                textPosition = createTextSprite(edge.value, textPosition);
+                textPosition.rotation.z = 0;
+            }
+            
+            wireframeGroup.add(textPosition);
+        });
+
+        console.log('Added dimension texts for all 12 edges');
     }
 
     // Update model when any parameter changes (alias for updateBeams)
