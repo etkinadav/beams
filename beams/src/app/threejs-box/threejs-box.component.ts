@@ -1851,6 +1851,28 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             });
         });
         
+        // חישוב totalSizes לכל קורה - ספירת כמות מכל אורך
+        this.BeamsDataForPricing.forEach((beamData, index) => {
+            const sizeCounts = new Map<number, number>();
+            
+            // ספירת כל האורכים
+            beamData.sizes.forEach(size => {
+                const roundedSize = Math.round(size); // עיגול למספר שלם
+                sizeCounts.set(roundedSize, (sizeCounts.get(roundedSize) || 0) + 1);
+            });
+            
+            // המרה למערך של אובייקטים עם אורך וכמות
+            const totalSizes = Array.from(sizeCounts.entries()).map(([length, count]) => ({
+                length: length,
+                count: count
+            })).sort((a, b) => a.length - b.length); // מיון לפי אורך
+            
+            // הוספת השדה החדש
+            beamData.totalSizes = totalSizes;
+            
+            console.log(`Beam ${index + 1} (${beamData.beamName}) totalSizes:`, totalSizes);
+        });
+        
         // הצגת התוצאה הסופית של כל הקורות
         console.log('=== FINAL BEAMS DATA FOR PRICING ===');
         console.log('Total beam types:', this.BeamsDataForPricing.length);
@@ -1863,6 +1885,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 height: beamData.type?.height || 0,
                 material: beamData.type?.material || 'Unknown',
                 sizes: beamData.sizes,
+                totalSizes: beamData.totalSizes, // הוספת totalSizes לפלט
                 totalLength: beamData.sizes.reduce((sum, size) => sum + size, 0),
                 count: beamData.sizes.length
             });
