@@ -1521,13 +1521,22 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 // עבור שולחן - קח את הגובה מהפרמטר או ברירת מחדל
                 actualHeight = heightParam?.default || 80;
             } else {
-                // עבור ארון - חשב את הגובה הכולל של כל המדפים
+                // עבור ארון - חשב את הגובה הכולל לפי הנוסחה הנכונה
                 if (this.shelves && this.shelves.length > 0) {
-                    actualHeight = 0;
-                    this.shelves.forEach(shelf => {
-                        actualHeight += shelf.gap || 50; // רווח בין מדפים
-                    });
-                    actualHeight += (this.shelves.length * 5); // עובי המדפים עצמם
+                    const beamHeight = this.beamHeight;
+                    const frameBeamHeight = this.frameHeight;
+                    
+                    // חישוב currentY עד למדף העליון (כולל ה-gap שלו)
+                    let currentY = 0;
+                    for (let i = 0; i < this.shelves.length; i++) {
+                        currentY += this.shelves[i].gap;
+                        if (i < this.shelves.length - 1) { // לא המדף העליון
+                            currentY += frameBeamHeight + beamHeight;
+                        }
+                    }
+                    
+                    // הגובה הכולל = currentY + frameBeamHeight + beamHeight/2 + beamHeight
+                    actualHeight = currentY + frameBeamHeight + beamHeight / 2 + beamHeight;
                 } else {
                     actualHeight = heightParam?.default || 150; // גובה ברירת מחדל לארון
                 }
@@ -1966,19 +1975,31 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const heightParam = this.getParam('height');
             totalHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
         } else {
-            // עבור ארון - חישוב גובה לפי סכום המדפים (זהה לחישוב גובה הרגליים)
+            // עבור ארון - חישוב גובה לפי הנוסחה הנכונה: legHeight + shelfBeamHeight
             const beamHeight = this.beamHeight;
-            const frameBeamHeight = this.frameHeight; // שימוש באותו משתנה כמו בחישוב הרגליים
+            const frameBeamHeight = this.frameHeight;
             
-            for (let i = 0; i < this.shelves.length; i++) {
-                totalHeight += this.shelves[i].gap + frameBeamHeight + beamHeight;
+            // חישוב shelfBeamHeight (גובה קורת המדף)
+            let shelfBeamHeight = this.beamHeight;
+            const shelfsParam = this.getParam('shelfs');
+            if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+                const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+                if (shelfBeam) {
+                    shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
+                }
             }
             
-            // הוספת הגובה המלא של המדף העליון (כי הוא לא נכלל בלולאה)
-            // המדף העליון ממוקם ב-currentY + frameBeamHeight + beamHeight/2
-            // אז הקצה העליון שלו הוא ב-currentY + frameBeamHeight + beamHeight
-            // אבל הלולאה שלנו כבר כוללת את beamHeight, אז צריך להוסיף עוד beamHeight/2
-            totalHeight += beamHeight / 2;
+            // חישוב currentY עד למדף העליון (כמו בקוד יצירת המודל התלת-ממדי)
+            let currentY = 0;
+            for (let i = 0; i < this.shelves.length; i++) {
+                currentY += this.shelves[i].gap;
+                if (i < this.shelves.length - 1) { // לא המדף העליון
+                    currentY += frameBeamHeight + beamHeight;
+                }
+            }
+            
+            // הגובה הכולל = currentY + frameBeamHeight + beamHeight (קצה עליון של קורת המדף העליון)
+            totalHeight = currentY + frameBeamHeight + beamHeight;
         }
         
         // חישוב כמות קורות המדף
