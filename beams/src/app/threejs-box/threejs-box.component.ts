@@ -1374,7 +1374,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             context.textAlign = 'center';
             context.textBaseline = 'middle';
             
-            const numberText = Math.round(number).toString();
+            const numberText = number % 1 === 0 ? number.toString() : number.toFixed(1); // מספרים עגולים בלי .0, לא עגולים עם נקודה עשרונית
             
             // Draw only the number
             context.fillText(numberText, canvas.width / 2, canvas.height / 2);
