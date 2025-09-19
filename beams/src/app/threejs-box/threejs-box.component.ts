@@ -2077,17 +2077,31 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         }
         
         // קבלת עובי קורות המדפים כדי לקצר את הרגליים
-        const shelfsParam = this.getParam('shelfs');
+        let shelfsParam = null;
+        if (this.isTable) {
+            // עבור שולחן, נשתמש בפרמטר plata במקום shelfs
+            shelfsParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'plata');
+        } else {
+            // עבור ארון, נשתמש בפרמטר shelfs
+            shelfsParam = this.getParam('shelfs');
+        }
+        
         let shelfBeamHeight = this.beamHeight;
         if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
             const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
             if (shelfBeam) {
+                console.log('DEBUG - shelfBeam.height (raw):', shelfBeam.height);
+                console.log('DEBUG - shelfBeam.height / 10:', shelfBeam.height / 10);
                 shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
+                console.log('DEBUG - shelfBeamHeight (final):', shelfBeamHeight);
             }
         }
         
         // קיצור הרגליים בעובי קורות המדפים - הרגליים צריכות להגיע רק עד לתחתית המדף העליון
+        console.log('DEBUG - topHeight:', topHeight);
+        console.log('DEBUG - shelfBeamHeight:', shelfBeamHeight);
         legHeight = topHeight - shelfBeamHeight;
+        console.log('DEBUG - legHeight calculation:', topHeight, '-', shelfBeamHeight, '=', legHeight);
         
         // 4 פינות - מיקום צמוד לקצה בהתאם לעובי הרגל בפועל
         const xVals = [
