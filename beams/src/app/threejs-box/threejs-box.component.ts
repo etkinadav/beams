@@ -1759,6 +1759,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             
             // גובה הרגל = גובה כולל פחות גובה קורות הפלטה/המדפים
             const legHeight = totalHeight - shelfBeamHeight;
+            console.log('DEBUG - legHeight calculation:', totalHeight, '-', shelfBeamHeight, '=', legHeight);
+            console.log('DEBUG - legHeight type:', typeof legHeight, 'value:', legHeight);
             
             if (selectedBeam && selectedType) {
                 const legWidth = selectedType.width / 10 || 5; // המרה ממ"מ לס"מ
@@ -1767,6 +1769,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 // 4 רגליים לשולחן או לארון
                 const numLegs = 4;
                 for (let i = 0; i < numLegs; i++) {
+                    console.log('DEBUG - Adding leg', i + 1, 'with length:', legHeight);
                     allBeams.push({
                         type: selectedType,
                         length: legHeight, // גובה הרגל המחושב (totalHeight - shelfBeamHeight)
@@ -1876,10 +1879,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.BeamsDataForPricing.forEach((beamData, index) => {
             const sizeCounts = new Map<number, number>();
             
-            // ספירת כל האורכים
+            // ספירת כל האורכים (ללא עיגול)
             beamData.sizes.forEach(size => {
-                const roundedSize = Math.round(size); // עיגול למספר שלם
-                sizeCounts.set(roundedSize, (sizeCounts.get(roundedSize) || 0) + 1);
+                sizeCounts.set(size, (sizeCounts.get(size) || 0) + 1);
             });
             
             // המרה למערך של אובייקטים עם אורך וכמות
