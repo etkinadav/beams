@@ -1483,18 +1483,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // Update model when any parameter changes (alias for updateBeams)
     updateModel() {
+        console.log('=== updateModel STARTED ===');
         this.updateBeams();
         this.calculatePricing(); // הוספת חישוב מחיר בכל עדכון
     }
     
     // פונקציה לחישוב חומרים (קורות) לחישוב מחיר
     calculatePricing() {
-        console.log('Starting price calculation...');
+        console.log('=== calculatePricing STARTED ===');
         this.calculateBeamsData();
     }
     
     // חישוב נתוני הקורות לחישוב מחיר
     calculateBeamsData() {
+        console.log('=== calculateBeamsData STARTED ===');
         this.BeamsDataForPricing = [];
         
         // איסוף כל הקורות מהמודל התלת מימדי
@@ -1521,9 +1523,18 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         console.log('extraParam:', extraParam);
         
         // קורות משטח/מדפים (surface/shelf beams)
+        console.log('=== DEBUG: Surface beams section ===');
+        console.log('surfaceWidth:', this.surfaceWidth);
+        console.log('surfaceLength:', this.surfaceLength);
+        console.log('shelfParam exists:', !!shelfParam);
+        
         if (this.surfaceWidth && this.surfaceLength && shelfParam) {
+            console.log('Entering surface beams section');
             const selectedBeam = shelfParam.beams?.[shelfParam.selectedBeamIndex || 0];
             const selectedType = selectedBeam?.types?.[shelfParam.selectedTypeIndex || 0];
+            
+            console.log('selectedBeam:', selectedBeam);
+            console.log('selectedType:', selectedType);
             
             if (selectedBeam && selectedType) {
                 const beamWidth = selectedType.width / 10 || this.beamWidth; // המרה ממ"מ לס"מ
@@ -1539,14 +1550,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 );
                 
                 if (this.isTable) {
+                    console.log('=== DEBUG: Table surface beams ===');
+                    console.log('surfaceBeams count:', surfaceBeams.length);
+                    console.log('selectedBeam.name:', selectedBeam.name);
+                    
                     // עבור שולחן - מדף אחד בלבד
                     surfaceBeams.forEach(beam => {
+                        console.log('Adding table surface beam:', beam);
                         allBeams.push({
                             type: selectedType,
                             length: beam.depth, // אורך הקורה
                             width: beam.width,
                             height: beam.height,
-                            name: 'Table Surface Beam'
+                            name: 'Table Surface Beam',
+                            beamName: selectedBeam.name
                         });
                     });
                 } else {
@@ -1558,7 +1575,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 length: beam.depth,
                                 width: beam.width,
                                 height: beam.height,
-                                name: `Shelf ${index + 1} Beam`
+                                name: `Shelf ${index + 1} Beam`,
+                                beamName: selectedBeam.name
                             });
                         });
                     });
@@ -1594,14 +1612,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             length: this.surfaceWidth,
                             width: frameWidth,
                             height: frameHeight,
-                            name: 'Table Frame Beam Width 1'
+                            name: 'Table Frame Beam Width 1',
+                            beamName: selectedBeam.name
                         });
                         allBeams.push({
                             type: selectedType,
                             length: this.surfaceWidth,
                             width: frameWidth,
                             height: frameHeight,
-                            name: 'Table Frame Beam Width 2'
+                            name: 'Table Frame Beam Width 2',
+                            beamName: selectedBeam.name
                         });
                         
                         // קורות אורך
@@ -1610,14 +1630,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             length: this.surfaceLength,
                             width: frameWidth,
                             height: frameHeight,
-                            name: 'Table Frame Beam Length 1'
+                            name: 'Table Frame Beam Length 1',
+                            beamName: selectedBeam.name
                         });
                         allBeams.push({
                             type: selectedType,
                             length: this.surfaceLength,
                             width: frameWidth,
                             height: frameHeight,
-                            name: 'Table Frame Beam Length 2'
+                            name: 'Table Frame Beam Length 2',
+                            beamName: selectedBeam.name
                         });
                     } else {
                         // עבור ארון - קורות חיזוק לכל מדף
@@ -1629,14 +1651,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 length: this.surfaceWidth,
                                 width: frameWidth,
                                 height: frameHeight,
-                                name: `Frame Beam Width 1 - Shelf ${shelfIndex + 1}`
+                                name: `Frame Beam Width 1 - Shelf ${shelfIndex + 1}`,
+                                beamName: selectedBeam.name
                             });
                             allBeams.push({
                                 type: selectedType,
                                 length: this.surfaceWidth,
                                 width: frameWidth,
                                 height: frameHeight,
-                                name: `Frame Beam Width 2 - Shelf ${shelfIndex + 1}`
+                                name: `Frame Beam Width 2 - Shelf ${shelfIndex + 1}`,
+                                beamName: selectedBeam.name
                             });
                             
                             // קורות אורך
@@ -1645,14 +1669,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 length: this.surfaceLength,
                                 width: frameWidth,
                                 height: frameHeight,
-                                name: `Frame Beam Length 1 - Shelf ${shelfIndex + 1}`
+                                name: `Frame Beam Length 1 - Shelf ${shelfIndex + 1}`,
+                                beamName: selectedBeam.name
                             });
                             allBeams.push({
                                 type: selectedType,
                                 length: this.surfaceLength,
                                 width: frameWidth,
                                 height: frameHeight,
-                                name: `Frame Beam Length 2 - Shelf ${shelfIndex + 1}`
+                                name: `Frame Beam Length 2 - Shelf ${shelfIndex + 1}`,
+                                beamName: selectedBeam.name
                             });
                         });
                     }
@@ -1725,12 +1751,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 // 4 רגליים לשולחן או לארון
                 const numLegs = 4;
                 for (let i = 0; i < numLegs; i++) {
+                    console.log(`Adding leg beam ${i + 1} with beamName:`, selectedBeam.name);
                     allBeams.push({
                         type: selectedType,
                         length: actualHeight,
                         width: legWidth,
                         height: legHeight,
-                        name: this.isTable ? `Table Leg ${i + 1}` : `Cabinet Leg ${i + 1}`
+                        name: this.isTable ? `Table Leg ${i + 1}` : `Cabinet Leg ${i + 1}`,
+                        beamName: selectedBeam.name
                     });
                 }
                 console.log(`Added ${numLegs} leg beams to allBeams with length ${actualHeight}`);
@@ -1759,14 +1787,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     length: this.surfaceWidth,
                     width: extraWidth,
                     height: extraHeight,
-                    name: 'Extra Frame Beam Width 1'
+                    name: 'Extra Frame Beam Width 1',
+                    beamName: selectedBeam.name
                 });
                 allBeams.push({
                     type: selectedType,
                     length: this.surfaceWidth,
                     width: extraWidth,
                     height: extraHeight,
-                    name: 'Extra Frame Beam Width 2'
+                    name: 'Extra Frame Beam Width 2',
+                    beamName: selectedBeam.name
                 });
                 
                 // קורות אורך
@@ -1775,28 +1805,36 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     length: this.surfaceLength,
                     width: extraWidth,
                     height: extraHeight,
-                    name: 'Extra Frame Beam Length 1'
+                    name: 'Extra Frame Beam Length 1',
+                    beamName: selectedBeam.name
                 });
                 allBeams.push({
                     type: selectedType,
                     length: this.surfaceLength,
                     width: extraWidth,
                     height: extraHeight,
-                    name: 'Extra Frame Beam Length 2'
+                    name: 'Extra Frame Beam Length 2',
+                    beamName: selectedBeam.name
                 });
             }
         }
         
-        // קיבוץ קורות לפי סוג (type) - רק לפי ID של הקורה
+        // קיבוץ קורות לפי סוג עץ ושם קורה - איחוד קורות זהות
         const beamTypesMap = new Map();
         
         allBeams.forEach(beam => {
-            // שימוש ב-ID של הקורה כמפתח יחיד
-            const typeKey = beam.type?._id || beam.type?.id || 'unknown';
+            // שימוש בשם העץ + beamName כמפתח מורכב לאיחוד קורות זהות
+            const typeName = beam.type?.name || 'unknown';
+            const beamName = beam.beamName || 'undefined';
+            const typeKey = `${typeName}_${beamName}`;
+            
+            console.log(`Processing beam for beamTypesMap: typeKey=${typeKey}, beamName=${beam.beamName}, name=${beam.name}`);
             
             if (!beamTypesMap.has(typeKey)) {
+                console.log(`Creating new entry in beamTypesMap for ${typeKey} with beamName=${beam.beamName}`);
                 beamTypesMap.set(typeKey, {
                     type: beam.type,
+                    beamName: beam.beamName, // שמירת beamName
                     sizes: []
                 });
             }
@@ -1808,39 +1846,28 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         beamTypesMap.forEach((beamData, typeKey) => {
             this.BeamsDataForPricing.push({
                 type: beamData.type,
+                beamName: beamData.beamName, // הוספת beamName
                 sizes: beamData.sizes
             });
         });
         
-        // איחוד קורות זהות - השוואה שיטתית של כל קורה לכל קורה אחרת
-        
-        for (let i = 0; i < this.BeamsDataForPricing.length; i++) {
-            for (let j = i + 1; j < this.BeamsDataForPricing.length; j++) {
-                const beam1 = this.BeamsDataForPricing[i];
-                const beam2 = this.BeamsDataForPricing[j];
-                
-                // בדיקה אם שתי הקורות זהות - לפי ID ייחודי של ה-type
-                const beam1TypeId = beam1.type?._id || beam1.type?.id || '';
-                const beam2TypeId = beam2.type?._id || beam2.type?.id || '';
-                
-                // גם בדיקה לפי מידות הקורה (width ו-height)
-                const beam1Width = beam1.type?.width || 0;
-                const beam2Width = beam2.type?.width || 0;
-                const beam1Height = beam1.type?.height || 0;
-                const beam2Height = beam2.type?.height || 0;
-                
-                if (beam1TypeId === beam2TypeId && beam1Width === beam2Width && beam1Height === beam2Height) {
-                    // איחוד ה-sizes
-                    beam1.sizes = [...beam1.sizes, ...beam2.sizes];
-                    
-                    // מחיקת הקורה השנייה
-                    this.BeamsDataForPricing.splice(j, 1);
-                    
-                    // חזרה לאינדקס הקודם כי הסרנו קורה
-                    j--;
-                }
-            }
-        }
+        // הצגת התוצאה הסופית של כל הקורות
+        console.log('=== FINAL BEAMS DATA FOR PRICING ===');
+        console.log('Total beam types:', this.BeamsDataForPricing.length);
+        this.BeamsDataForPricing.forEach((beamData, index) => {
+            console.log(`Beam Type ${index + 1}:`, {
+                typeId: beamData.type?._id || beamData.type?.id,
+                typeName: beamData.type?.name || 'Unknown',
+                beamName: beamData.beamName || 'Unknown',
+                width: beamData.type?.width || 0,
+                height: beamData.type?.height || 0,
+                material: beamData.type?.material || 'Unknown',
+                sizes: beamData.sizes,
+                totalLength: beamData.sizes.reduce((sum, size) => sum + size, 0),
+                count: beamData.sizes.length
+            });
+        });
+        console.log('=== END BEAMS DATA ===', this.BeamsDataForPricing);
     }
 
     animate() {
