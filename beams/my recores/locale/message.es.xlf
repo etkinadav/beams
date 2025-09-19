@@ -26,6 +26,22 @@
           <context context-type="linenumber">4,6</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="wireframe_toggle" datatype="html">
+        <source>המג מידות</source>
+        <target>Mostrar medidas</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/threejs-box/threejs-box.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="show_dimensions" datatype="html">
+        <source>הצג מידות</source>
+        <target>Mostrar medidas</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/threejs-box/threejs-box.component.html</context>
+          <context context-type="linenumber">1</context>
+        </context-group>
+      </trans-unit>
     </body>
   </file>
 </xliff>

@@ -977,5 +977,7 @@
 	"fix-product.perspex-stand-landscape-big": "Large perspex frame (landscape)",
 	"fix-product.small-album": "Small photo album",
 	"fix-product.white-frame-small": "Small white frame",
-	"fix-product.white-frame-big": "Large white frame"
+	"fix-product.white-frame-big": "Large white frame",
+	"wireframe_toggle": "Toggle Wireframe",
+	"show_dimensions": "Show Dimensions"
 }

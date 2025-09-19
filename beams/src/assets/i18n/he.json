@@ -998,5 +998,7 @@
     "product-type.name-short.canvas-50-50": "50×50",
     "product-type.name-short.canvas-100-50": "100×50",
     "product-type.name-short.cup-straight": "ספל רחב",
-    "product-type.name-short.cup-cone": "ספל קוני"
+    "product-type.name-short.cup-cone": "ספל קוני",
+    "wireframe_toggle": "המג מידות",
+    "show_dimensions": "הצג מידות"
 }

@@ -29,12 +29,29 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.drawerOpen = !this.drawerOpen;
         setTimeout(() => this.onResize(), 310); // Wait for transition to finish
     }
+
+    toggleWireframe() {
+        this.showWireframe = !this.showWireframe;
+        if (this.showWireframe) {
+            this.addWireframeCube();
+        } else {
+            this.removeWireframeCube();
+        }
+    }
+
+    private removeWireframeCube() {
+        const existingWireframe = this.scene.getObjectByName('productWireframe');
+        if (existingWireframe) {
+            this.scene.remove(existingWireframe);
+        }
+    }
     
     // פונקציה לפתיחת/סגירת תפריט המחיר
     togglePriceMenu() {
         this.isPriceManuOpen = !this.isPriceManuOpen;
     }
     drawerOpen: boolean = true;
+    showWireframe: boolean = false; // מצב ברירת מחדל: wireframe מוסתר
     product: any = null;
     params: any[] = [];
     selectedProductName: string = ''; // שם המוצר שנבחר מה-URL
@@ -1205,8 +1222,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // Ensure scene rotation is maintained after updates
         this.scene.rotation.y = Math.PI / 6; // 30 degrees rotation
         
-        // Add wireframe cube showing product dimensions
-        this.addWireframeCube();
+        // Add wireframe cube showing product dimensions (only if enabled)
+        if (this.showWireframe) {
+            this.addWireframeCube();
+        }
     }
 
     // Add wireframe cube showing product dimensions
