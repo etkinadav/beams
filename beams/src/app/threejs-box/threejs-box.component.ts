@@ -2016,17 +2016,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const legHeight = totalY - shelfBeamHeight;
             
             // הגובה הכולל = totalY (סכום כל המדפים)
-            totalHeight = totalY + (shelfBeamHeight / 2)
-            
-            // Debug: הדפסת הערכים לחישוב הגובה הכולל
-            console.log('=== DEBUG: חישוב גובה כולל של הארון ===');
-            console.log('shelfBeamHeight: 111', shelfBeamHeight);
-            console.log('frameBeamHeight:', frameBeamHeight);
-            console.log('beamHeight:', beamHeight);
-            console.log('totalY (סכום כל המדפים):', totalY);
-            console.log('legHeight (totalY - shelfBeamHeight):', legHeight);
-            console.log('totalHeight (גובה כולל סופי):', totalHeight);
-            console.log('==========================================');
+            totalHeight = totalY + (shelfBeamHeight / 2)    
         }
         
         // חישוב כמות קורות המדף
