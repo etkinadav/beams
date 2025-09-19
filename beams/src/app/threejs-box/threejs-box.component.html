@@ -218,7 +218,7 @@
     <!-- אזור חישוב המחיר -->
     <div class="price-calculation-area">
         <button class="fullscreen-btn" mat-icon-button color="primary" 
-                [matTooltip]="'price-calculation.tooltip' | translate" 
+                [matTooltip]="!isPriceManuOpen ? ('price-calculation.tooltip' | translate) : ''" 
                 matTooltipPosition="left"
                 (click)="togglePriceMenu()"
                 aria-label="מסך מלא">
@@ -236,8 +236,9 @@
         
         <!-- קופסא נוספת שמופיעה כשהתפריט פתוח -->
         <div class="price-menu-box" *ngIf="isPriceManuOpen">
-            <span class="thinking-text">{{ 'price-calculation.first-title' | translate }}...</span>
-            <br>
+            <!-- כותרת דינמית -->
+            <span class="thinking-text" *ngIf="!BeamsDataForPricing || BeamsDataForPricing.length === 0">{{ 'price-calculation.first-title' | translate }}...</span>
+            <span class="static-text" *ngIf="BeamsDataForPricing && BeamsDataForPricing.length > 0">חומרי גלם:</span>
             
             <!-- סיכום חומרי גלם -->
             <div class="materials-summary" *ngIf="BeamsDataForPricing && BeamsDataForPricing.length > 0">
@@ -247,7 +248,9 @@
                     
                     <!-- רשימת המידות -->
                     <div *ngFor="let sizeData of beamData.totalSizes" class="size-item">
-                        {{ sizeData.count }} {{ 'price-calculation.units' | translate }} {{ sizeData.length }} ס"מ
+                        <span class="size-value">{{ sizeData.length }} ס"מ</span>
+                        <span class="size-separator">────</span>
+                        <span class="size-count">{{ sizeData.count }} {{ 'price-calculation.units' | translate }}</span>
                     </div>
                 </div>
             </div>
