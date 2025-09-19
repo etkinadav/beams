@@ -1526,17 +1526,27 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     const beamHeight = this.beamHeight;
                     const frameBeamHeight = this.frameHeight;
                     
-                    // חישוב currentY עד למדף העליון (כולל ה-gap שלו)
-                    let currentY = 0;
-                    for (let i = 0; i < this.shelves.length; i++) {
-                        currentY += this.shelves[i].gap;
-                        if (i < this.shelves.length - 1) { // לא המדף העליון
-                            currentY += frameBeamHeight + beamHeight;
+                    // חישוב shelfBeamHeight (גובה קורת המדף)
+                    let shelfBeamHeight = this.beamHeight;
+                    const shelfsParam = this.getParam('shelfs');
+                    if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+                        const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+                        if (shelfBeam) {
+                            shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
                         }
                     }
                     
-                    // הגובה הכולל = currentY + frameBeamHeight + beamHeight/2 + beamHeight
-                    actualHeight = currentY + frameBeamHeight + beamHeight / 2 + beamHeight;
+                    // חישוב totalY (סכום כל המדפים) - בדיוק כמו בפונקציה updateBeams
+                    let totalY = 0;
+                    for (const shelf of this.shelves) {
+                        totalY += shelf.gap + frameBeamHeight + beamHeight;
+                    }
+                    
+                    // חישוב legHeight - בדיוק כמו בפונקציה createLegBeams
+                    const legHeight = totalY - shelfBeamHeight;
+                    
+                    // הגובה הכולל = גובה הרגל (זה מה שאנחנו רוצים!)
+                    actualHeight = legHeight;
                 } else {
                     actualHeight = heightParam?.default || 150; // גובה ברירת מחדל לארון
                 }
@@ -1940,16 +1950,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const heightParam = this.getParam('height');
             return heightParam ? heightParam.default : 80;
         } else {
-            // עבור ארון, הגובה הוא סכום כל המדפים עד המדף הנוכחי
-        let currentY = 0;
-        for (let i = 0; i < shelfIndex; i++) {
-            currentY += this.shelves[i].gap; // הוספת הרווח של המדף
-            currentY += this.frameHeight + this.beamHeight; // הוספת גובה קורת החיזוק + קורת המדף
-        }
-        // הוספת הרווח של המדף הנוכחי
-        currentY += this.shelves[shelfIndex].gap;
-        // החזרת הגובה של קורת החיזוק (כמו בקוד המקורי)
-        return currentY + this.frameHeight + (((shelfIndex > 0 ? shelfIndex : 0) / (this.shelves.length)) * this.beamHeight);
+            // עבור ארון, הגובה הוא סכום כל המדפים עד המדף הנוכחי (כמו בקוד יצירת המודל התלת-ממדי)
+            let currentY = 0;
+            for (let i = 0; i <= shelfIndex; i++) {
+                currentY += this.shelves[i].gap;
+                if (i < shelfIndex) { // לא המדף הנוכחי
+                    currentY += this.frameHeight + this.beamHeight;
+                }
+            }
+            // החזרת הגובה עד לקורת החיזוק של המדף הנוכחי
+            return currentY + this.frameHeight;
         }
     }
 
@@ -1975,7 +1985,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const heightParam = this.getParam('height');
             totalHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
         } else {
-            // עבור ארון - חישוב גובה לפי הנוסחה הנכונה: legHeight + shelfBeamHeight
+            // עבור ארון - חישוב גובה לפי הנוסחה הנכונה: legHeight = topHeight - shelfBeamHeight
             const beamHeight = this.beamHeight;
             const frameBeamHeight = this.frameHeight;
             
@@ -1989,17 +1999,22 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 }
             }
             
-            // חישוב currentY עד למדף העליון (כמו בקוד יצירת המודל התלת-ממדי)
-            let currentY = 0;
+            // חישוב totalY (סכום כל המדפים) - ללא הוספת beamHeight מיותרת
+            let totalY = 0;
             for (let i = 0; i < this.shelves.length; i++) {
-                currentY += this.shelves[i].gap;
+                totalY += this.shelves[i].gap;
                 if (i < this.shelves.length - 1) { // לא המדף העליון
-                    currentY += frameBeamHeight + beamHeight;
+                    totalY += frameBeamHeight + beamHeight;
+                } else { // המדף העליון
+                    totalY += frameBeamHeight + beamHeight / 2; // רק חצי עליון של הקורה
                 }
             }
             
-            // הגובה הכולל = currentY + frameBeamHeight + beamHeight (קצה עליון של קורת המדף העליון)
-            totalHeight = currentY + frameBeamHeight + beamHeight;
+            // חישוב legHeight - בדיוק כמו בפונקציה createLegBeams
+            const legHeight = totalY - shelfBeamHeight;
+            
+            // הגובה הכולל = totalY (סכום כל המדפים)
+            totalHeight = totalY;
         }
         
         // חישוב כמות קורות המדף
