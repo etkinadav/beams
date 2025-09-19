@@ -529,6 +529,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         window.addEventListener('resize', this.onResizeBound);
         this.rendererContainer.nativeElement.addEventListener('wheel', (event: WheelEvent) => {
             event.preventDefault();
+            // סגירת חלונית חישוב המחיר בזום
+            this.isPriceManuOpen = false;
+            
             const delta = event.deltaY;
             const direction = new THREE.Vector3().subVectors(this.camera.position, this.target).normalize();
             const distance = this.camera.position.distanceTo(this.target);
@@ -543,6 +546,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         let lastX = 0;
         let lastY = 0;
         this.rendererContainer.nativeElement.addEventListener('mousedown', (event: MouseEvent) => {
+            // סגירת חלונית חישוב המחיר בלחיצת עכבר
+            this.isPriceManuOpen = false;
+            
             isDragging = true;
             isPan = (event.button === 1 || event.button === 2);
             lastX = event.clientX;
@@ -588,6 +594,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         let isTouchZooming = false;
         let isTouchPanning = false;
         this.rendererContainer.nativeElement.addEventListener('touchstart', (event: TouchEvent) => {
+            // סגירת חלונית חישוב המחיר במגע
+            this.isPriceManuOpen = false;
+            
             if (event.touches.length === 1) {
                 isTouchRotating = true;
                 lastTouchX = event.touches[0].clientX;
