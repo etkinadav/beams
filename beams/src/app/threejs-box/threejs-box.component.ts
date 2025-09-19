@@ -29,7 +29,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.drawerOpen = !this.drawerOpen;
         setTimeout(() => this.onResize(), 310); // Wait for transition to finish
     }
-
+    
     toggleWireframe() {
         this.showWireframe = !this.showWireframe;
         if (this.showWireframe) {
@@ -60,6 +60,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // נתונים לחישוב מחיר
     BeamsDataForPricing: any[] = []; // מערך של נתוני קורות לחישוב מחיר
+    ForgingDataForPricing: any[] = []; // מערך של נתוני ברגים לחישוב מחיר
 
     constructor(private http: HttpClient, private snackBar: MatSnackBar, private route: ActivatedRoute) { } 
 
@@ -1233,7 +1234,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // Add wireframe cube showing product dimensions (only if enabled)
         if (this.showWireframe) {
-            this.addWireframeCube();
+        this.addWireframeCube();
         }
     }
 
@@ -1963,6 +1964,166 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             });
         });
         console.log('*** === END BEAMS DATA ===', this.BeamsDataForPricing);
+        
+        // חישוב ברגים
+        this.calculateForgingData();
+    }
+
+    // פונקציה לחישוב ברגי המדפים/פלטה
+    private calculateShelfForgingData(): any[] {
+        console.log('=== CALCULATING SHELF FORGING DATA ===');
+        
+        const shelfForgingData: any[] = [];
+        
+        // חישוב ברגי מדפים/פלטה
+        if (this.isTable) {
+            // עבור שולחן - ברגי פלטה
+            const plataParam = this.params.find(p => p.name === 'plata');
+            if (plataParam && plataParam.selectedBeamIndex !== undefined) {
+                const selectedBeam = plataParam.beams[plataParam.selectedBeamIndex];
+                const selectedType = selectedBeam?.types?.[plataParam.selectedTypeIndex || 0];
+                
+                if (selectedBeam && selectedType) {
+                    // חישוב כמות ברגים לפי כמות הקורות בפועל
+                    // כל קורה צריכה 4 ברגים
+                    const beamWidth = selectedBeam.width / 10;
+                    const beamHeight = selectedBeam.height / 10;
+                    const minGap = 1; // רווח מינימלי
+                    const surfaceBeams = this.createSurfaceBeams(this.surfaceWidth, this.surfaceLength, beamWidth, beamHeight, minGap);
+                    const totalBeams = surfaceBeams.length; // כמות הקורות בפועל
+                    const totalScrews = totalBeams * 4; // 4 ברגים לכל קורה
+                    
+                    shelfForgingData.push({
+                        type: 'Shelf Screws',
+                        beamName: selectedBeam.name,
+                        beamTranslatedName: selectedBeam.translatedName,
+                        material: selectedType.translatedName,
+                        count: totalScrews,
+                        length: 4, // אורך בורג סטנדרטי
+                        description: 'ברגי פלטה'
+                    });
+                    
+                    console.log(`Table shelf screws: ${totalScrews} screws for ${totalBeams} beams`);
+                }
+            }
+        } else {
+            // עבור ארון - ברגי מדפים
+            const shelfParam = this.params.find(p => p.name === 'shelfs');
+            if (shelfParam && shelfParam.selectedBeamIndex !== undefined) {
+                const selectedBeam = shelfParam.beams[shelfParam.selectedBeamIndex];
+                const selectedType = selectedBeam?.types?.[shelfParam.selectedTypeIndex || 0];
+                
+                if (selectedBeam && selectedType) {
+                    // חישוב כמות ברגים לפי כמות הקורות בפועל
+                    // כל קורה צריכה 4 ברגים
+                    const beamWidth = selectedBeam.width / 10;
+                    const beamHeight = selectedBeam.height / 10;
+                    const minGap = 1; // רווח מינימלי
+                    const surfaceBeams = this.createSurfaceBeams(this.surfaceWidth, this.surfaceLength, beamWidth, beamHeight, minGap);
+                    const totalShelves = this.shelves.length;
+                    const totalBeams = surfaceBeams.length * totalShelves; // כמות הקורות בפועל
+                    const totalScrews = totalBeams * 4; // 4 ברגים לכל קורה
+                    
+                    shelfForgingData.push({
+                        type: 'Shelf Screws',
+                        beamName: selectedBeam.name,
+                        beamTranslatedName: selectedBeam.translatedName,
+                        material: selectedType.translatedName,
+                        count: totalScrews,
+                        length: 4, // אורך בורג סטנדרטי
+                        description: 'ברגי מדפים'
+                    });
+                    
+                    console.log(`Cabinet shelf screws: ${totalScrews} screws for ${totalShelves} shelves`);
+                }
+            }
+        }
+        
+        return shelfForgingData;
+    }
+
+    // פונקציה לחישוב ברגי הרגליים
+    private calculateLegForgingData(): any[] {
+        console.log('=== CALCULATING LEG FORGING DATA ===');
+        
+        const legForgingData: any[] = [];
+        
+        // חישוב ברגי רגליים
+        const legParam = this.params.find(p => p.name === 'leg');
+        if (legParam && legParam.selectedBeamIndex !== undefined) {
+            const selectedBeam = legParam.beams[legParam.selectedBeamIndex];
+            const selectedType = selectedBeam?.types?.[legParam.selectedTypeIndex || 0];
+            
+            if (selectedBeam && selectedType) {
+                const beamWidth = selectedBeam.width / 10;
+                const beamHeight = selectedBeam.height / 10;
+                
+                // חישוב אורך בורג לפי גודל הקורה
+                let screwLength = 0;
+                if (beamWidth >= beamHeight) {
+                    screwLength = Math.ceil(beamWidth * 0.8); // 80% מרוחב הקורה
+                } else {
+                    screwLength = Math.ceil(beamHeight * 0.8); // 80% מגובה הקורה
+                }
+                
+                // חישוב כמות ברגים לפי סוג המוצר
+                let totalScrews = 0;
+                if (this.isTable) {
+                    // שולחן: תמיד 4 רגליים עם 4 ברגים כל אחת
+                    totalScrews = 4 * 4; // 16 ברגים
+                } else {
+                    // ארון: כמות המדפים כפול 8 ברגים לכל קומה
+                    const totalShelves = this.shelves.length;
+                    totalScrews = totalShelves * 8; // 8 ברגים לכל מדף
+                }
+                
+                legForgingData.push({
+                    type: 'Leg Screws',
+                    beamName: selectedBeam.name,
+                    beamTranslatedName: selectedBeam.translatedName,
+                    material: selectedType.translatedName,
+                    count: totalScrews,
+                    length: screwLength,
+                    description: 'ברגי רגליים'
+                });
+                
+                console.log(`Leg screws: ${totalScrews} screws, length: ${screwLength}cm`);
+            }
+        }
+        
+        return legForgingData;
+    }
+
+    // פונקציה ראשית לחישוב כל הברגים
+    private calculateForgingData(): void {
+        console.log('=== CALCULATING FORGING DATA ===');
+        
+        // איפוס המערך
+        this.ForgingDataForPricing = [];
+        
+        // חישוב ברגי מדפים/פלטה
+        const shelfForgingData = this.calculateShelfForgingData();
+        this.ForgingDataForPricing.push(...shelfForgingData);
+        
+        // חישוב ברגי רגליים
+        const legForgingData = this.calculateLegForgingData();
+        this.ForgingDataForPricing.push(...legForgingData);
+        
+        // הצגת התוצאה הסופית
+        console.log('=== FINAL FORGING DATA FOR PRICING ===');
+        console.log('Total forging types:', this.ForgingDataForPricing.length);
+        this.ForgingDataForPricing.forEach((forgingData, index) => {
+            console.log(`Forging Type ${index + 1}:`, {
+                type: forgingData.type,
+                beamName: forgingData.beamName,
+                beamTranslatedName: forgingData.beamTranslatedName,
+                material: forgingData.material,
+                count: forgingData.count,
+                length: forgingData.length,
+                description: forgingData.description
+            });
+        });
+        console.log('*** === END FORGING DATA ===', this.ForgingDataForPricing);
     }
 
     animate() {
@@ -2244,7 +2405,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             return heightParam ? heightParam.default : 80;
         } else {
             // עבור ארון, הגובה הוא סכום כל המדפים עד המדף הנוכחי (כמו בקוד יצירת המודל התלת-ממדי)
-            let currentY = 0;
+        let currentY = 0;
             for (let i = 0; i <= shelfIndex; i++) {
                 currentY += this.shelves[i].gap;
                 if (i < shelfIndex) { // לא המדף הנוכחי
