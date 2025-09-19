@@ -1228,7 +1228,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         }
     }
 
-    // Add wireframe cube showing product dimensions
+    // Add wireframe cube showing product dimensions with shortened lines and corner spheres
     private addWireframeCube() {
         // Remove existing wireframe cube if it exists
         const existingWireframe = this.scene.getObjectByName('productWireframe');
@@ -1240,98 +1240,88 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         const dimensions = this.getProductDimensionsRaw();
         const { length, width, height } = dimensions;
 
-        // Create custom wireframe without diagonal lines
+        // Create custom wireframe group
         const wireframeGroup = new THREE.Group();
         const wireframeMaterial = new THREE.LineBasicMaterial({
             color: 0x0066cc, // Blue color
             linewidth: 2
         });
 
-        // Create 12 edges of the cube (without diagonals)
+        // Create cube material for corner cubes
+        const cubeMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0066cc // Same blue color
+        });
+
+        // Shortening distance from corners (1.2 cm)
+        const shortenDistance = 1.2;
+
+        // Calculate half dimensions
         const halfWidth = width / 2;
         const halfHeight = height / 2;
         const halfLength = length / 2;
 
+        // Define all 8 corner positions
+        const corners = [
+            // Bottom corners
+            new THREE.Vector3(-halfWidth, -halfHeight, halfLength),   // front-left-bottom
+            new THREE.Vector3(halfWidth, -halfHeight, halfLength),    // front-right-bottom
+            new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),  // back-left-bottom
+            new THREE.Vector3(halfWidth, -halfHeight, -halfLength),   // back-right-bottom
+            // Top corners
+            new THREE.Vector3(-halfWidth, halfHeight, halfLength),    // front-left-top
+            new THREE.Vector3(halfWidth, halfHeight, halfLength),     // front-right-top
+            new THREE.Vector3(-halfWidth, halfHeight, -halfLength),   // back-left-top
+            new THREE.Vector3(halfWidth, halfHeight, -halfLength)     // back-right-top
+        ];
+
+        // Add corner cubes
+        corners.forEach(corner => {
+            const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5); // 0.5x0.5x0.5 cube
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.copy(corner);
+            wireframeGroup.add(cube);
+        });
+
+        // Helper function to shorten line from both ends
+        const createShortenedLine = (start: THREE.Vector3, end: THREE.Vector3) => {
+            const direction = new THREE.Vector3().subVectors(end, start).normalize();
+            const shortenedStart = start.clone().add(direction.clone().multiplyScalar(shortenDistance));
+            const shortenedEnd = end.clone().sub(direction.clone().multiplyScalar(shortenDistance));
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints([shortenedStart, shortenedEnd]);
+            const line = new THREE.Line(geometry, wireframeMaterial);
+            return line;
+        };
+
         // Bottom face edges (4 edges)
         const bottomEdges = [
-            // Front edge
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, -halfHeight, halfLength),
-                new THREE.Vector3(halfWidth, -halfHeight, halfLength)
-            ),
-            // Back edge
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),
-                new THREE.Vector3(halfWidth, -halfHeight, -halfLength)
-            ),
-            // Left edge
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),
-                new THREE.Vector3(-halfWidth, -halfHeight, halfLength)
-            ),
-            // Right edge
-            new THREE.Line3(
-                new THREE.Vector3(halfWidth, -halfHeight, -halfLength),
-                new THREE.Vector3(halfWidth, -halfHeight, halfLength)
-            )
+            [corners[0], corners[1]], // front edge
+            [corners[2], corners[3]], // back edge
+            [corners[2], corners[0]], // left edge
+            [corners[1], corners[3]]  // right edge
         ];
 
         // Top face edges (4 edges)
         const topEdges = [
-            // Front edge
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, halfHeight, halfLength),
-                new THREE.Vector3(halfWidth, halfHeight, halfLength)
-            ),
-            // Back edge
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, halfHeight, -halfLength),
-                new THREE.Vector3(halfWidth, halfHeight, -halfLength)
-            ),
-            // Left edge
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, halfHeight, -halfLength),
-                new THREE.Vector3(-halfWidth, halfHeight, halfLength)
-            ),
-            // Right edge
-            new THREE.Line3(
-                new THREE.Vector3(halfWidth, halfHeight, -halfLength),
-                new THREE.Vector3(halfWidth, halfHeight, halfLength)
-            )
+            [corners[4], corners[5]], // front edge
+            [corners[6], corners[7]], // back edge
+            [corners[6], corners[4]], // left edge
+            [corners[5], corners[7]]  // right edge
         ];
 
         // Vertical edges (4 edges)
         const verticalEdges = [
-            // Front-left
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, -halfHeight, halfLength),
-                new THREE.Vector3(-halfWidth, halfHeight, halfLength)
-            ),
-            // Front-right
-            new THREE.Line3(
-                new THREE.Vector3(halfWidth, -halfHeight, halfLength),
-                new THREE.Vector3(halfWidth, halfHeight, halfLength)
-            ),
-            // Back-left
-            new THREE.Line3(
-                new THREE.Vector3(-halfWidth, -halfHeight, -halfLength),
-                new THREE.Vector3(-halfWidth, halfHeight, -halfLength)
-            ),
-            // Back-right
-            new THREE.Line3(
-                new THREE.Vector3(halfWidth, -halfHeight, -halfLength),
-                new THREE.Vector3(halfWidth, halfHeight, -halfLength)
-            )
+            [corners[0], corners[4]], // front-left
+            [corners[1], corners[5]], // front-right
+            [corners[2], corners[6]], // back-left
+            [corners[3], corners[7]]  // back-right
         ];
 
-        // Create line segments for all edges
+        // Create shortened line segments
         const allEdges = [...bottomEdges, ...topEdges, ...verticalEdges];
-        allEdges.forEach(edge => {
-            const geometry = new THREE.BufferGeometry().setFromPoints([
-                edge.start,
-                edge.end
-            ]);
-            const line = new THREE.Line(geometry, wireframeMaterial);
+        
+        allEdges.forEach(([start, end]) => {
+            const line = createShortenedLine(start, end);
             wireframeGroup.add(line);
         });
 
