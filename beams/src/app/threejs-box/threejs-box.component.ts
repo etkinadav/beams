@@ -1594,7 +1594,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: beam.width,
                             height: beam.height,
                             name: 'Table Surface Beam',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                     });
                 } else {
@@ -1635,7 +1636,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 width: beam.width,
                                 height: beam.height,
                                 name: `Shelf ${index + 1} Beam`,
-                                beamName: selectedBeam.name
+                                beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                             });
                         });
                     });
@@ -1693,7 +1695,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 1',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         allBeams.push({
                             type: selectedType,
@@ -1701,7 +1704,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 2',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         
                         // קורות אורך מקוצרות (מקבילות לקורות המדפים)
@@ -1715,7 +1719,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 1',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         allBeams.push({
                             type: selectedType,
@@ -1723,7 +1728,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 2',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         
                         // שכפול קורות החיזוק לשולחן - עוד 4 קורות זהות
@@ -1733,7 +1739,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 3',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         allBeams.push({
                             type: selectedType,
@@ -1741,7 +1748,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 4',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         allBeams.push({
                             type: selectedType,
@@ -1749,7 +1757,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 3',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         allBeams.push({
                             type: selectedType,
@@ -1757,7 +1766,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 4',
-                            beamName: selectedBeam.name
+                            beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                         });
                         
                     } else {
@@ -1772,7 +1782,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Width 1 - Shelf ${shelfIndex + 1}`,
-                                beamName: selectedBeam.name
+                                beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                             });
                             allBeams.push({
                                 type: selectedType,
@@ -1780,7 +1791,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Width 2 - Shelf ${shelfIndex + 1}`,
-                                beamName: selectedBeam.name
+                                beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                             });
                             
                             // קורות אורך מקוצרות (מקבילות לקורות המדפים)
@@ -1790,7 +1802,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Length 1 - Shelf ${shelfIndex + 1}`,
-                                beamName: selectedBeam.name
+                                beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                             });
                             allBeams.push({
                                 type: selectedType,
@@ -1798,7 +1811,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Length 2 - Shelf ${shelfIndex + 1}`,
-                                beamName: selectedBeam.name
+                                beamName: selectedBeam.name,
+                            beamTranslatedName: selectedBeam.translatedName
                             });
                         });
                         
@@ -1892,6 +1906,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 beamTypesMap.set(typeKey, {
                     type: beam.type,
                     beamName: beam.beamName, // שמירת beamName
+                    beamTranslatedName: beam.beamTranslatedName, // שמירת השם המתורגם של הקורה
                     sizes: []
                 });
             }
@@ -1904,6 +1919,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             this.BeamsDataForPricing.push({
                 type: beamData.type,
                 beamName: beamData.beamName, // הוספת beamName
+                beamTranslatedName: beamData.beamTranslatedName, // הוספת השם המתורגם של הקורה
                 sizes: beamData.sizes
             });
         });

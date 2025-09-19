@@ -244,7 +244,7 @@
             <div class="materials-summary" *ngIf="BeamsDataForPricing && BeamsDataForPricing.length > 0">
                 <div *ngFor="let beamData of BeamsDataForPricing" class="beam-type-section">
                     <!-- כותרת סוג הקורה -->
-                    <div class="beam-name">{{ beamData.beamName }} - {{ beamData.type.translatedName }}</div>
+                    <div class="beam-name">{{ beamData.beamTranslatedName || beamData.beamName }} ({{ beamData.type.translatedName }})</div>
                     
                     <!-- רשימת המידות -->
                     <div *ngFor="let sizeData of beamData.totalSizes" class="size-item">
