@@ -1969,6 +1969,11 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.calculateForgingData();
     }
 
+    // פונקציה לעגול אורך בורג לחצי הקרוב למעלה
+    private roundScrewLength(length: number): number {
+        return Math.ceil(length * 2) / 2; // עיגול לחצי הקרוב למעלה
+    }
+
     // פונקציה לחישוב ברגי המדפים/פלטה
     private calculateShelfForgingData(): any[] {
         console.log('=== CALCULATING SHELF FORGING DATA ===');
@@ -1999,7 +2004,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         beamTranslatedName: selectedBeam.translatedName,
                         material: selectedType.translatedName,
                         count: totalScrews,
-                        length: beamHeight + 2, // גובה הקורה + 2
+                        length: this.roundScrewLength(beamHeight + 2), // גובה הקורה + 2, מעוגל לחצי הקרוב
                         description: 'ברגי פלטה'
                     });
                     
@@ -2030,7 +2035,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         beamTranslatedName: selectedBeam.translatedName,
                         material: selectedType.translatedName,
                         count: totalScrews,
-                        length: beamHeight + 2, // גובה הקורה + 2
+                        length: this.roundScrewLength(beamHeight + 2), // גובה הקורה + 2, מעוגל לחצי הקרוב
                         description: 'ברגי מדפים'
                     });
                     
@@ -2080,7 +2085,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     beamTranslatedName: selectedBeam.translatedName,
                     material: selectedType.translatedName,
                     count: totalScrews,
-                    length: screwLength,
+                    length: this.roundScrewLength(screwLength), // אורך בורג מעוגל לחצי הקרוב
                     description: 'ברגי רגליים'
                 });
                 
