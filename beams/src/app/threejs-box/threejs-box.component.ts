@@ -2240,10 +2240,19 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const heightParam = this.getParam('height');
             totalHeight = heightParam ? heightParam.default : 80; // ברירת מחדל 80 ס"מ
         } else {
-            // עבור ארון - חישוב גובה לפי הנוסחה הנכונה: legHeight = topHeight - shelfBeamHeight
-            const frameBeamHeight = this.frameHeight;
+            // עבור ארון - חישוב זהה לחישוב הרגליים בפונקציה updateBeams
+            // חישוב frameBeamHeight - זהה לחישוב בפונקציה updateBeams
+            let frameBeamHeight = this.frameHeight;
+            const frameParam = this.params.find(p => p.type === 'beamSingle' && p.name !== 'shelfs');
+            if (frameParam && Array.isArray(frameParam.beams) && frameParam.beams.length) {
+                const frameBeam = frameParam.beams[frameParam.selectedBeamIndex || 0];
+                if (frameBeam) {
+                    // החלפה: width של הפרמטר הופך ל-height של הקורה - זהה לחישוב בפונקציה updateBeams
+                    frameBeamHeight = frameBeam.width / 10;  // המרה ממ"מ לס"מ
+                }
+            }
             
-            // חישוב beamHeight האמיתי מקורת המדף שנבחרה (כמו בפונקציה updateBeams)
+            // חישוב beamHeight האמיתי מקורת המדף שנבחרה
             let beamHeight = this.beamHeight; // ברירת מחדל
             const shelfsParam = this.getParam('shelfs');
             if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
@@ -2253,25 +2262,23 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 }
             }
             
-            // חישוב shelfBeamHeight (גובה קורת המדף) - אותו ערך כמו beamHeight
-            const shelfBeamHeight = beamHeight;
-            
-            // חישוב totalY (סכום כל המדפים) - ללא הוספת beamHeight מיותרת
+            // חישוב totalY - זהה לחישוב בפונקציה updateBeams
             let totalY = 0;
-            for (let i = 0; i < this.shelves.length; i++) {
-                totalY += this.shelves[i].gap;
-                if (i < this.shelves.length - 1) { // לא המדף העליון
-                    totalY += frameBeamHeight + beamHeight;
-                } else { // המדף העליון
-                    totalY += frameBeamHeight + beamHeight / 2; // רק חצי עליון של הקורה
+            for (const shelf of this.shelves) {
+                totalY += shelf.gap + frameBeamHeight + beamHeight;
+            }
+            
+            // חישוב shelfBeamHeight - זהה לחישוב בפונקציה createLegBeams
+            let shelfBeamHeight = this.beamHeight;
+            if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
+                const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
+                if (shelfBeam) {
+                    shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
                 }
             }
             
-            // חישוב legHeight - בדיוק כמו בפונקציה createLegBeams
-            const legHeight = totalY - shelfBeamHeight;
-            
-            // הגובה הכולל = totalY (סכום כל המדפים)
-            totalHeight = totalY + (shelfBeamHeight / 2);    
+            // הגובה הכולל = גובה הרגל המחושב (totalY - shelfBeamHeight) - זהה לחישוב בפונקציה createLegBeams
+            totalHeight = totalY;
         }
         
         // חישוב כמות קורות המדף
