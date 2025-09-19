@@ -574,3 +574,31 @@ mat-form-field {
         transform: scale(1);
     }
 }
+
+// סיכום חומרי גלם
+.materials-summary {
+    margin-top: 10px;
+    font-size: 10px;
+    color: #333;
+    line-height: 1.3;
+}
+
+.beam-type-section {
+    margin-bottom: 8px;
+    
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.beam-name {
+    font-weight: 600;
+    color: #0066cc;
+    margin-bottom: 3px;
+}
+
+.size-item {
+    margin-left: 8px;
+    margin-bottom: 2px;
+    color: #666;
+}

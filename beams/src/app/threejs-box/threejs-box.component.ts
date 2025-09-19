@@ -1704,6 +1704,40 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             beamName: selectedBeam.name
                         });
                         
+                        // שכפול קורות החיזוק לשולחן - עוד 4 קורות זהות
+                        allBeams.push({
+                            type: selectedType,
+                            length: this.surfaceWidth - shorteningAmountEx,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Width 3',
+                            beamName: selectedBeam.name
+                        });
+                        allBeams.push({
+                            type: selectedType,
+                            length: this.surfaceWidth - shorteningAmountEx,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Width 4',
+                            beamName: selectedBeam.name
+                        });
+                        allBeams.push({
+                            type: selectedType,
+                            length: lengthBeamLength,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Length 3',
+                            beamName: selectedBeam.name
+                        });
+                        allBeams.push({
+                            type: selectedType,
+                            length: lengthBeamLength,
+                            width: frameWidth,
+                            height: frameHeight,
+                            name: 'Table Frame Beam Length 4',
+                            beamName: selectedBeam.name
+                        });
+                        
                     } else {
                         console.log('DEBUG - shorteningAmount:', shorteningAmount);
                         // עבור ארון - קורות חיזוק מקוצרות לכל מדף
@@ -1808,53 +1842,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             console.log('Leg beams not processed - no legParam found');
         }
         
-        // קורות נוספות (extra beams) - רק לשולחן
-        if (this.isTable && extraParam && extraParam.default > 0) {
-            const selectedBeam = extraParam.beams?.[extraParam.selectedBeamIndex || 0];
-            const selectedType = selectedBeam?.types?.[extraParam.selectedTypeIndex || 0];
-            
-            if (selectedBeam && selectedType) {
-                const extraWidth = selectedType.height / 10 || 5; // המרה ממ"מ לס"מ
-                const extraHeight = selectedType.width / 10 || 5;
-                
-                // 4 קורות נוספות (כמו קורות החיזוק הרגילות)
-                // קורות רוחב
-                allBeams.push({
-                    type: selectedType,
-                    length: this.surfaceWidth,
-                    width: extraWidth,
-                    height: extraHeight,
-                    name: 'Extra Frame Beam Width 1',
-                    beamName: selectedBeam.name
-                });
-                allBeams.push({
-                    type: selectedType,
-                    length: this.surfaceWidth,
-                    width: extraWidth,
-                    height: extraHeight,
-                    name: 'Extra Frame Beam Width 2',
-                    beamName: selectedBeam.name
-                });
-                
-                // קורות אורך
-                allBeams.push({
-                    type: selectedType,
-                    length: this.surfaceLength,
-                    width: extraWidth,
-                    height: extraHeight,
-                    name: 'Extra Frame Beam Length 1',
-                    beamName: selectedBeam.name
-                });
-                allBeams.push({
-                    type: selectedType,
-                    length: this.surfaceLength,
-                    width: extraWidth,
-                    height: extraHeight,
-                    name: 'Extra Frame Beam Length 2',
-                    beamName: selectedBeam.name
-                });
-            }
-        }
         
         // קיבוץ קורות לפי סוג עץ ושם קורה - איחוד קורות זהות
         console.log('=== STARTING beamTypesMap PROCESSING ===');

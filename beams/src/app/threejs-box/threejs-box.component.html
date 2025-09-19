@@ -238,6 +238,19 @@
         <div class="price-menu-box" *ngIf="isPriceManuOpen">
             <span class="thinking-text">{{ 'price-calculation.first-title' | translate }}...</span>
             <br>
+            
+            <!-- סיכום חומרי גלם -->
+            <div class="materials-summary" *ngIf="BeamsDataForPricing && BeamsDataForPricing.length > 0">
+                <div *ngFor="let beamData of BeamsDataForPricing" class="beam-type-section">
+                    <!-- כותרת סוג הקורה -->
+                    <div class="beam-name">{{ beamData.beamName }} - {{ beamData.type.translatedName }}</div>
+                    
+                    <!-- רשימת המידות -->
+                    <div *ngFor="let sizeData of beamData.totalSizes" class="size-item">
+                        {{ sizeData.count }} {{ 'price-calculation.units' | translate }} {{ sizeData.length }} ס"מ
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
