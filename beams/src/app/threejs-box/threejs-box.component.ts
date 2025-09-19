@@ -1638,17 +1638,22 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     console.log('DEBUG - frameWidth (height):', frameWidth);
                     console.log('DEBUG - frameHeight (width):', frameHeight);
                     
-                    // חישוב קיצור קורות החיזוק - פעמיים גובה קורות המדפים
-                    // גובה קורות המדפים הוא 2.5 ס"מ (כפי שרואים בשורה 894)
-                    const shorteningAmount = 2.5 * 2; // פעמיים גובה קורות המדפים (2.5 ס"מ)
-                    console.log('DEBUG - shorteningAmount:',frameWidth, shorteningAmount);
+                    // חישוב קיצור קורות החיזוק - פעמיים גובה קורות הרגל
+                    // מציאת קורת הרגל לחישוב הקיצור
+                    const legParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'leg');
+                    const legBeamSelected = legParam?.beams?.[legParam.selectedBeamIndex || 0];
+                    const legBeamHeight = legBeamSelected?.height / 10 || 0;
+                    const legBeamWidth = legBeamSelected?.width / 10 || 0;
+                    
+                    const shorteningAmount = legBeamHeight * 2; // פעמיים גובה קורת הרגל
+                    const shorteningAmountEx = legBeamWidth * 2; // פעמיים גובה קורת הרגל
                     
                     if (this.isTable) {
                         // עבור שולחן - 4 קורות חיזוק מקוצרות
                         // קורות רוחב מקוצרות
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceWidth - shorteningAmount,
+                            length: this.surfaceWidth - shorteningAmountEx,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 1',
@@ -1656,7 +1661,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         });
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceWidth - shorteningAmount,
+                            length: this.surfaceWidth - shorteningAmountEx,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 2',
@@ -1664,9 +1669,13 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         });
                         
                         // קורות אורך מקוצרות (מקבילות לקורות המדפים)
+                        // אורך כולל פחות פעמיים גובה קורות הרגליים
+                        const lengthBeamLength = this.surfaceLength - shorteningAmount;
+                        console.log('DEBUG - lengthBeamLength:', this.surfaceLength, '-', shorteningAmount, '=', lengthBeamLength);
+                        
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceLength - shorteningAmount,
+                            length: lengthBeamLength,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 1',
@@ -1674,7 +1683,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         });
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceLength - shorteningAmount,
+                            length: lengthBeamLength,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 2',
@@ -1682,13 +1691,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         });
                         
                     } else {
+                        console.log('DEBUG - shorteningAmount:', shorteningAmount);
                         // עבור ארון - קורות חיזוק מקוצרות לכל מדף
                         this.shelves.forEach((shelf, shelfIndex) => {
                             // 4 קורות חיזוק מקוצרות לכל מדף (2 לרוחב, 2 לאורך)
                             // קורות רוחב מקוצרות
                             allBeams.push({
                                 type: selectedType,
-                                length: this.surfaceWidth - shorteningAmount,
+                                length: this.surfaceWidth - shorteningAmountEx,
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Width 1 - Shelf ${shelfIndex + 1}`,
@@ -1696,7 +1706,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             });
                             allBeams.push({
                                 type: selectedType,
-                                length: this.surfaceWidth - shorteningAmount,
+                                length: this.surfaceWidth - shorteningAmountEx,
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Width 2 - Shelf ${shelfIndex + 1}`,
