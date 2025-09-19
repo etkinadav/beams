@@ -259,18 +259,11 @@
             <!-- סיכום ברגים -->
             <div class="materials-summary" *ngIf="ForgingDataForPricing && ForgingDataForPricing.length > 0">
                 <div class="static-text">ברגים:</div>
-                <div *ngFor="let forgingData of ForgingDataForPricing" class="beam-type-section">
-                    <!-- כותרת סוג הבורג -->
-                    <div class="beam-name">{{ forgingData.beamTranslatedName || forgingData.beamName }} ({{ forgingData.material }})</div>
-                    
-                    <!-- פרטי הבורג -->
-                    <div class="size-item">
+                <div class="beam-type-section">
+                    <div *ngFor="let forgingData of ForgingDataForPricing" class="size-item">
                         <span class="size-value">{{ forgingData.length }} ס"מ</span>
                         <span class="size-separator">────</span>
                         <span class="size-count">{{ forgingData.count }} {{ 'price-calculation.units' | translate }}</span>
                     </div>
-                    
-                    <!-- תיאור הבורג -->
-                    <div class="forging-description">{{ forgingData.description }}</div>
                 </div>
             </div>

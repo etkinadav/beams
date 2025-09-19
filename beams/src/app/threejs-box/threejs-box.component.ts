@@ -1999,7 +1999,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         beamTranslatedName: selectedBeam.translatedName,
                         material: selectedType.translatedName,
                         count: totalScrews,
-                        length: 4, // אורך בורג סטנדרטי
+                        length: beamHeight + 2, // גובה הקורה + 2
                         description: 'ברגי פלטה'
                     });
                     
@@ -2030,7 +2030,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         beamTranslatedName: selectedBeam.translatedName,
                         material: selectedType.translatedName,
                         count: totalScrews,
-                        length: 4, // אורך בורג סטנדרטי
+                        length: beamHeight + 2, // גובה הקורה + 2
                         description: 'ברגי מדפים'
                     });
                     
@@ -2060,11 +2060,8 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 
                 // חישוב אורך בורג לפי גודל הקורה
                 let screwLength = 0;
-                if (beamWidth >= beamHeight) {
-                    screwLength = Math.ceil(beamWidth * 0.8); // 80% מרוחב הקורה
-                } else {
-                    screwLength = Math.ceil(beamHeight * 0.8); // 80% מגובה הקורה
-                }
+                const maxDimension = Math.max(beamWidth, beamHeight);
+                screwLength = maxDimension + 3.5; // המידה הגדולה יותר + 3
                 
                 // חישוב כמות ברגים לפי סוג המוצר
                 let totalScrews = 0;
