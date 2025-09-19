@@ -1425,16 +1425,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // Add dimension labels for all 12 edges
         const edges = [
             // Bottom face (4 edges)
-            { start: corners[0], end: corners[1], value: length }, // front
-            { start: corners[2], end: corners[3], value: length }, // back
-            { start: corners[2], end: corners[0], value: width }, // left
-            { start: corners[1], end: corners[3], value: width }, // right
+            { start: corners[0], end: corners[1], value: width }, // front (X direction = width)
+            { start: corners[2], end: corners[3], value: width }, // back (X direction = width)
+            { start: corners[2], end: corners[0], value: length }, // left (Z direction = length)
+            { start: corners[1], end: corners[3], value: length }, // right (Z direction = length)
             
             // Top face (4 edges)
-            { start: corners[4], end: corners[5], value: length }, // front
-            { start: corners[6], end: corners[7], value: length }, // back
-            { start: corners[6], end: corners[4], value: width }, // left
-            { start: corners[5], end: corners[7], value: width }, // right
+            { start: corners[4], end: corners[5], value: width }, // front (X direction = width)
+            { start: corners[6], end: corners[7], value: width }, // back (X direction = width)
+            { start: corners[6], end: corners[4], value: length }, // left (Z direction = length)
+            { start: corners[5], end: corners[7], value: length }, // right (Z direction = length)
             
             // Vertical edges (4 edges)
             { start: corners[0], end: corners[4], value: height }, // front-left
@@ -1698,74 +1698,45 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 heightParam = this.params.find(p => p.type === 'height' || p.name?.toLowerCase().includes('height') || p.name?.toLowerCase().includes('גובה'));
             }
             
-            // חישוב הגובה בפועל
-            let actualHeight = 80; // ברירת מחדל
+            // חישוב גובה הרגליים - פשוט וברור
+            const dimensions = this.getProductDimensionsRaw();
+            const totalHeight = dimensions.height; // הגובה הכולל של המוצר
+            
+            // חישוב גובה קורות הפלטה/המדפים
+            let shelfBeamHeight = 0;
             if (this.isTable) {
-                // עבור שולחן - קח את הגובה מהפרמטר או ברירת מחדל
-                actualHeight = heightParam?.default || 80;
+                // עבור שולחן - גובה קורות הפלטה
+                const shelfParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'plata');
+                const shelfBeamSelected = shelfParam?.beams?.[shelfParam.selectedBeamIndex || 0];
+                const shelfBeamType = shelfBeamSelected?.types?.[shelfParam.selectedTypeIndex || 0];
+                shelfBeamHeight = shelfBeamType?.height / 10 || 0;
             } else {
-                // עבור ארון - חשב את הגובה הכולל לפי הנוסחה הנכונה
-                if (this.shelves && this.shelves.length > 0) {
-                    const beamHeight = this.beamHeight;
-                    const frameBeamHeight = this.frameHeight;
-                    
-                    // חישוב shelfBeamHeight (גובה קורת המדף)
-                    let shelfBeamHeight = this.beamHeight;
-                    const shelfsParam = this.getParam('shelfs');
-                    if (shelfsParam && Array.isArray(shelfsParam.beams) && shelfsParam.beams.length) {
-                        const shelfBeam = shelfsParam.beams[shelfsParam.selectedBeamIndex || 0];
-                        if (shelfBeam) {
-                            shelfBeamHeight = shelfBeam.height / 10; // המרה ממ"מ לס"מ
-                        }
-                    }
-                    
-                    // חישוב totalY (סכום כל המדפים) - בדיוק כמו בפונקציה updateBeams
-                    let totalY = 0;
-                    for (const shelf of this.shelves) {
-                        totalY += shelf.gap + frameBeamHeight + beamHeight;
-                    }
-                    
-                    // חישוב legHeight - בדיוק כמו בפונקציה createLegBeams
-                    const legHeight = totalY - shelfBeamHeight;
-                    
-                    // הגובה הכולל = גובה הרגל (זה מה שאנחנו רוצים!)
-                    actualHeight = legHeight;
-                } else {
-                    actualHeight = heightParam?.default || 150; // גובה ברירת מחדל לארון
-                }
+                // עבור ארון - גובה קורות המדפים
+                const shelfParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
+                const shelfBeamSelected = shelfParam?.beams?.[shelfParam.selectedBeamIndex || 0];
+                const shelfBeamType = shelfBeamSelected?.types?.[shelfParam.selectedTypeIndex || 0];
+                shelfBeamHeight = shelfBeamType?.height / 10 || 0;
             }
             
-            console.log('selectedBeam:', selectedBeam);
-            console.log('selectedType:', selectedType);
-            console.log('heightParam:', heightParam);
-            console.log('actualHeight calculated:', actualHeight);
-            console.log('isTable:', this.isTable);
-            console.log('shelves:', this.shelves);
+            // גובה הרגל = גובה כולל פחות גובה קורות הפלטה/המדפים
+            const legHeight = totalHeight - shelfBeamHeight;
             
             if (selectedBeam && selectedType) {
                 const legWidth = selectedType.width / 10 || 5; // המרה ממ"מ לס"מ
-                const legHeight = selectedType.height / 10 || 5;
-                
-                console.log('legWidth:', legWidth, 'legHeight:', legHeight, 'actualHeight:', actualHeight);
+                const legHeightDimension = selectedType.height / 10 || 5;
                 
                 // 4 רגליים לשולחן או לארון
                 const numLegs = 4;
                 for (let i = 0; i < numLegs; i++) {
-                    console.log(`Adding leg beam ${i + 1} with beamName:`, selectedBeam.name);
                     allBeams.push({
                         type: selectedType,
-                        length: actualHeight,
+                        length: legHeight, // גובה הרגל המחושב (totalHeight - shelfBeamHeight)
                         width: legWidth,
-                        height: legHeight,
+                        height: legHeightDimension, // גובה הקורה עצמה
                         name: this.isTable ? `Table Leg ${i + 1}` : `Cabinet Leg ${i + 1}`,
                         beamName: selectedBeam.name
                     });
                 }
-                console.log(`Added ${numLegs} leg beams to allBeams with length ${actualHeight}`);
-            } else {
-                console.log('Leg beams not added - missing beam or type data');
-                console.log('selectedBeam exists:', !!selectedBeam);
-                console.log('selectedType exists:', !!selectedType);
             }
         } else {
             console.log('Leg beams not processed - no legParam found');
@@ -1820,6 +1791,17 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         }
         
         // קיבוץ קורות לפי סוג עץ ושם קורה - איחוד קורות זהות
+        console.log('=== STARTING beamTypesMap PROCESSING ===');
+        console.log('Total beams in allBeams:', allBeams.length);
+        allBeams.forEach((beam, index) => {
+            console.log(`Beam ${index + 1}:`, {
+                name: beam.name,
+                beamName: beam.beamName,
+                length: beam.length,
+                type: beam.type?.name
+            });
+        });
+        
         const beamTypesMap = new Map();
         
         allBeams.forEach(beam => {
