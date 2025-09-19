@@ -1484,6 +1484,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     // Update model when any parameter changes (alias for updateBeams)
     updateModel() {
         console.log('=== updateModel STARTED ===');
+        
+        // Validate all parameters before updating
+        this.params.forEach(param => {
+            if (param.type !== 'beamSingle' && param.type !== 'beamArray') {
+                // For numeric parameters, validate the value
+                if (typeof param.default === 'number') {
+                    const validatedValue = this.validateParameterValue(param, param.default);
+                    if (validatedValue !== param.default) {
+                        param.default = validatedValue;
+                    }
+                }
+            }
+        });
+        
         this.updateBeams();
         this.calculatePricing(); // הוספת חישוב מחיר בכל עדכון
     }
