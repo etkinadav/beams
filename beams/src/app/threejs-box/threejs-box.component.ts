@@ -1581,7 +1581,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     // קיצור קורות המדפים
                     const shorteningPerBeam = legBeamHeight * 2; // פעמיים גובה קורת הרגל
                     
-                    console.log('Cabinet - shorteningPerBeam for shelf beams:', shorteningPerBeam);
                     
                     this.shelves.forEach((shelf, index) => {
                         const isTopShelf = index === totalShelves - 1; // המדף העליון
@@ -1592,7 +1591,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             // נניח שהקורות הראשונות הן אלה שצריכות להיות מקוצרות
                             if (!isTopShelf && beamIndex < 2) {
                                 beamLength = beamLength - shorteningPerBeam;
-                                console.log(`Shortening Shelf ${index + 1} beam ${beamIndex + 1} from ${beam.depth} to ${beamLength}`);
                             }
                             
                             allBeams.push({
@@ -1629,12 +1627,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     const frameWidth = selectedType.height / 10 || this.frameWidth; // המרה ממ"מ לס"מ
                     const frameHeight = selectedType.width / 10 || this.frameHeight;
                     
+                    // חישוב קיצור קורות החיזוק - פעמיים גובה קורת המדף (רק לקורות רוחב)
+                    const shorteningAmount = frameHeight * 2; // פעמיים גובה קורת המדף
+                    
                     if (this.isTable) {
-                        // עבור שולחן - 4 קורות חיזוק בלבד
-                        // קורות רוחב
+                        // עבור שולחן - 4 קורות חיזוק מקוצרות
+                        // קורות רוחב מקוצרות
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceWidth,
+                            length: this.surfaceWidth - shorteningAmount,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 1',
@@ -1642,14 +1643,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         });
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceWidth,
+                            length: this.surfaceWidth - shorteningAmount,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Width 2',
                             beamName: selectedBeam.name
                         });
                         
-                        // קורות אורך
+                        // קורות אורך (ללא קיצור)
                         allBeams.push({
                             type: selectedType,
                             length: this.surfaceLength,
@@ -1666,14 +1667,15 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             name: 'Table Frame Beam Length 2',
                             beamName: selectedBeam.name
                         });
+                        
                     } else {
-                        // עבור ארון - קורות חיזוק לכל מדף
+                        // עבור ארון - קורות חיזוק מקוצרות לכל מדף
                         this.shelves.forEach((shelf, shelfIndex) => {
-                            // 4 קורות חיזוק לכל מדף (2 לרוחב, 2 לאורך)
-                            // קורות רוחב
+                            // 4 קורות חיזוק מקוצרות לכל מדף (2 לרוחב, 2 לאורך)
+                            // קורות רוחב מקוצרות
                             allBeams.push({
                                 type: selectedType,
-                                length: this.surfaceWidth,
+                                length: this.surfaceWidth - shorteningAmount,
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Width 1 - Shelf ${shelfIndex + 1}`,
@@ -1681,14 +1683,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             });
                             allBeams.push({
                                 type: selectedType,
-                                length: this.surfaceWidth,
+                                length: this.surfaceWidth - shorteningAmount,
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Width 2 - Shelf ${shelfIndex + 1}`,
                                 beamName: selectedBeam.name
                             });
                             
-                            // קורות אורך
+                            // קורות אורך (ללא קיצור)
                             allBeams.push({
                                 type: selectedType,
                                 length: this.surfaceLength,
@@ -1706,6 +1708,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 beamName: selectedBeam.name
                             });
                         });
+                        
                     }
                 }
             }
@@ -1729,78 +1732,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             
             // חישוב גובה קורות הפלטה/המדפים
             let shelfBeamHeight = 0;
-            console.log('*** Starting shelfBeamHeight calculation, isTable:', this.isTable);
             if (this.isTable) {
                 // עבור שולחן - גובה קורות הפלטה
                 const shelfParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'plata');
-                console.log('Table - shelfParam:', shelfParam);
                 const shelfBeamSelected = shelfParam?.beams?.[shelfParam.selectedBeamIndex || 0];
-                console.log('Table - shelfBeamSelected:', shelfBeamSelected);
-                const shelfBeamType = shelfBeamSelected?.types?.[shelfParam.selectedTypeIndex || 0];
-                console.log('Table - shelfBeamType:', shelfBeamType);
-                console.log('Table - shelfBeamType height:', shelfBeamType?.height);
-                console.log('Table - shelfBeamSelected height:', shelfBeamSelected?.height);
                 shelfBeamHeight = shelfBeamSelected?.height / 10 || 0;
-                console.log('Table - shelfBeamHeight calculated:', shelfBeamHeight);
             } else {
-                // עבור ארון - חישוב גובה כולל של כל המדפים (כולל רווחים)
+                // עבור ארון - רק גובה קורת המדף עצמה
                 const shelfParam = this.product?.params?.find((p: any) => p.type === 'beamArray' && p.name === 'shelfs');
-                console.log('Cabinet - shelfParam:', shelfParam);
                 const shelfBeamSelected = shelfParam?.beams?.[shelfParam.selectedBeamIndex || 0];
-                console.log('Cabinet - shelfBeamSelected:', shelfBeamSelected);
-                const shelfBeamType = shelfBeamSelected?.types?.[shelfParam.selectedTypeIndex || 0];
-                console.log('Cabinet - shelfBeamType:', shelfBeamType);
-                
-                // חישוב גובה כולל של כל המדפים
-                const singleShelfHeight = shelfBeamSelected?.height / 10 || 0;
-                const gapParam = this.product?.params?.find((p: any) => p.name === 'gap');
-                const gapHeight = gapParam?.value || 1;
-                
-                // חישוב גובה כולל: (מספר מדפים * גובה מדף) + (מספר רווחים * גובה רווח)
-                const totalShelfHeight = this.shelves.reduce((total, shelf) => {
-                    return total + singleShelfHeight + gapHeight;
-                }, 0);
-                
-                shelfBeamHeight = totalShelfHeight;
-                console.log('Cabinet - singleShelfHeight:', singleShelfHeight);
-                console.log('Cabinet - gapHeight:', gapHeight);
-                console.log('Cabinet - shelves count:', this.shelves.length);
-                console.log('Cabinet - totalShelfHeight calculated:', totalShelfHeight);
-                
-                // חישוב קיצור קורות המדפים
-                const totalShelves = this.shelves.length;
-                const shelvesWithoutTop = totalShelves - 1; // מדפים ללא המדף העליון
-                const shortenedBeamsCount = shelvesWithoutTop * 2; // 2 קורות מקוצרות לכל מדף שאיננו עליון
-                
-                // מציאת קורת הרגל/החיזוק לחישוב הקיצור
-                const legParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'leg');
-                const legBeamSelected = legParam?.beams?.[legParam.selectedBeamIndex || 0];
-                const legBeamType = legBeamSelected?.types?.[legParam.selectedTypeIndex || 0];
-                const legBeamHeight = legBeamSelected?.height / 10 || 0;
-                
-                console.log('Cabinet - totalShelves:', totalShelves);
-                console.log('Cabinet - shelvesWithoutTop:', shelvesWithoutTop);
-                console.log('Cabinet - shortenedBeamsCount:', shortenedBeamsCount);
-                console.log('Cabinet - legBeamHeight for shortening:', legBeamHeight);
-                
-                // קיצור קורות המדפים
-                const shorteningPerBeam = legBeamHeight * 2; // פעמיים גובה קורת הרגל
-                const totalShortening = shortenedBeamsCount * shorteningPerBeam;
-                
-                console.log('Cabinet - shorteningPerBeam:', shorteningPerBeam);
-                console.log('Cabinet - totalShortening:', totalShortening);
-                
-                // הוספת הקיצור לחישוב הגובה הכולל
-                shelfBeamHeight = totalShelfHeight + totalShortening;
-                console.log('Cabinet - final shelfBeamHeight with shortening:', shelfBeamHeight);
+                shelfBeamHeight = shelfBeamSelected?.height / 10 || 0;
             }
             
             // גובה הרגל = גובה כולל פחות גובה קורות הפלטה/המדפים
-            console.log('*** shelfBeamHeight:', shelfBeamHeight);
-            console.log('*** totalHeight:', totalHeight);
             const legHeight = totalHeight - shelfBeamHeight;
-            console.log('*** legHeight:', legHeight);
-            console.log('*** legHeight calculation:', totalHeight, '-', shelfBeamHeight, '=', legHeight);
             
             if (selectedBeam && selectedType) {
                 const legWidth = selectedType.width / 10 || 5; // המרה ממ"מ לס"מ
@@ -2286,7 +2231,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const legHeight = totalY - shelfBeamHeight;
             
             // הגובה הכולל = totalY (סכום כל המדפים)
-            totalHeight = totalY + (shelfBeamHeight / 2)    
+            totalHeight = totalY + (shelfBeamHeight / 2);    
         }
         
         // חישוב כמות קורות המדף
