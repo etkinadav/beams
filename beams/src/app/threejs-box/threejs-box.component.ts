@@ -1624,11 +1624,24 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 const selectedType = selectedBeam?.types?.[frameParamForCalculation.selectedTypeIndex || 0];
                 
                 if (selectedBeam && selectedType) {
+                    console.log('DEBUG - selectedType:', selectedType);
+                    console.log('DEBUG - selectedType.height:', selectedType.height);
+                    console.log('DEBUG - selectedType.width:', selectedType.width);
+                    console.log('DEBUG - this.frameWidth:', this.frameWidth);
+                    console.log('DEBUG - this.frameHeight:', this.frameHeight);
+                    
                     const frameWidth = selectedType.height / 10 || this.frameWidth; // המרה ממ"מ לס"מ
                     const frameHeight = selectedType.width / 10 || this.frameHeight;
                     
-                    // חישוב קיצור קורות החיזוק - פעמיים גובה קורת המדף (רק לקורות רוחב)
-                    const shorteningAmount = frameHeight * 2; // פעמיים גובה קורת המדף
+                    console.log('DEBUG - frameWidth calculation:', selectedType.height, '/ 10 =', frameWidth);
+                    console.log('DEBUG - frameHeight calculation:', selectedType.width, '/ 10 =', frameHeight);
+                    console.log('DEBUG - frameWidth (height):', frameWidth);
+                    console.log('DEBUG - frameHeight (width):', frameHeight);
+                    
+                    // חישוב קיצור קורות החיזוק - פעמיים גובה קורות המדפים
+                    // גובה קורות המדפים הוא 2.5 ס"מ (כפי שרואים בשורה 894)
+                    const shorteningAmount = 2.5 * 2; // פעמיים גובה קורות המדפים (2.5 ס"מ)
+                    console.log('DEBUG - shorteningAmount:',frameWidth, shorteningAmount);
                     
                     if (this.isTable) {
                         // עבור שולחן - 4 קורות חיזוק מקוצרות
@@ -1650,10 +1663,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             beamName: selectedBeam.name
                         });
                         
-                        // קורות אורך (ללא קיצור)
+                        // קורות אורך מקוצרות (מקבילות לקורות המדפים)
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceLength,
+                            length: this.surfaceLength - shorteningAmount,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 1',
@@ -1661,7 +1674,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                         });
                         allBeams.push({
                             type: selectedType,
-                            length: this.surfaceLength,
+                            length: this.surfaceLength - shorteningAmount,
                             width: frameWidth,
                             height: frameHeight,
                             name: 'Table Frame Beam Length 2',
@@ -1690,10 +1703,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                                 beamName: selectedBeam.name
                             });
                             
-                            // קורות אורך (ללא קיצור)
+                            // קורות אורך מקוצרות (מקבילות לקורות המדפים)
                             allBeams.push({
                                 type: selectedType,
-                                length: this.surfaceLength,
+                                length: this.surfaceLength - shorteningAmount,
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Length 1 - Shelf ${shelfIndex + 1}`,
@@ -1701,7 +1714,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                             });
                             allBeams.push({
                                 type: selectedType,
-                                length: this.surfaceLength,
+                                length: this.surfaceLength - shorteningAmount,
                                 width: frameWidth,
                                 height: frameHeight,
                                 name: `Frame Beam Length 2 - Shelf ${shelfIndex + 1}`,
