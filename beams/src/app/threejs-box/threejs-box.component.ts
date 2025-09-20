@@ -867,10 +867,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             frameType = frameBeam.types && frameBeam.types.length ? frameBeam.types[frameParam.selectedTypeIndex || 0] : null;
         }
         const frameWoodTexture = this.getWoodTexture(frameType ? frameType.name : '');
-        console.log('Frame param for texture:', frameParam);
-        console.log('Frame type:', frameType);
-        console.log('Frame wood texture:', frameType ? frameType.name : 'default');
-        console.log('Frame wood texture path:', frameType ? 'assets/textures/' + frameType.name + '.jpg' : 'assets/textures/pine.jpg');
         
         // Always convert beam width/height from mm to cm
         let beamWidth = shelfBeam ? shelfBeam.width / 10 : this.beamWidth;
@@ -880,9 +876,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.beamWidth = beamWidth;
         this.beamHeight = beamHeight;
         
-        console.log(`&&& UPDATEBEAMS DEBUG - shelfBeam:`, shelfBeam);
-        console.log(`&&& UPDATEBEAMS DEBUG - beamWidth: ${beamWidth}, beamHeight: ${beamHeight} &&&`);
-        console.log(`&&& UPDATEBEAMS DEBUG - this.beamWidth: ${this.beamWidth}, this.beamHeight: ${this.beamHeight} &&&`);
 
         // For each shelf, render its beams at its calculated height
         let currentY = 0;
@@ -913,18 +906,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         this.frameWidth = frameBeamWidth;
         this.frameHeight = frameBeamHeight;
         
-        console.log(`&&& UPDATEBEAMS DEBUG - frameParamForShortening:`, frameParamForShortening);
-        console.log(`&&& UPDATEBEAMS DEBUG - frameBeamWidth: ${frameBeamWidth}, frameBeamHeight: ${frameBeamHeight} &&&`);
-        console.log(`&&& UPDATEBEAMS DEBUG - this.frameWidth: ${this.frameWidth}, this.frameHeight: ${this.frameHeight} &&&`);
-        console.log('Frame beam width/height:', frameBeamWidth, frameBeamHeight);
-        console.log('Shelf beam width/height:', beamWidth, beamHeight);
-        console.log('Is table:', this.isTable);
-        console.log('Frame param name:', frameParam ? frameParam.name : 'null');
-        console.log('Frame beam selectedBeamIndex:', frameParam ? frameParam.selectedBeamIndex : 'null');
-        console.log('Frame beam selectedTypeIndex:', frameParam ? frameParam.selectedTypeIndex : 'null');
-        console.log('Frame beam beams array:', frameParam ? frameParam.beams : 'null');
-        console.log('Frame beam beams length:', frameParam ? frameParam.beams.length : 'null');
-        console.log('Frame beam first beam:', frameParam && frameParam.beams.length > 0 ? frameParam.beams[0] : 'null');
         
         // עבור שולחן, נציג מדף אחד בלבד בגובה שנקבע בפרמטר height
         if (this.isTable) {
@@ -1525,7 +1506,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
 
     // Update model when any parameter changes (alias for updateBeams)
     updateModel() {
-        console.log('=== updateModel STARTED ===');
         
         // Validate all parameters before updating
         this.params.forEach(param => {
@@ -1546,22 +1526,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     
     // פונקציה לחישוב חומרים (קורות) לחישוב מחיר
     calculatePricing() {
-        console.log('=== calculatePricing STARTED ===');
         this.calculateBeamsData();
     }
     
     // חישוב נתוני הקורות לחישוב מחיר
     calculateBeamsData() {
-        console.log('=== calculateBeamsData STARTED ===');
         this.BeamsDataForPricing = [];
         
         // איסוף כל הקורות מהמודל התלת מימדי
         const allBeams: any[] = [];
         
-        console.log('=== DEBUG: Starting calculateBeamsData ===');
-        console.log('isTable:', this.isTable);
-        console.log('surfaceWidth:', this.surfaceWidth);
-        console.log('surfaceLength:', this.surfaceLength);
         
         // קבלת נתוני הקורות מהפרמטרים
         const shelfParam = this.isTable 
@@ -1572,25 +1546,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         const legParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'leg');
         const extraParam = this.product?.params?.find((p: any) => p.type === 'beamSingle' && p.name === 'extraBeam');
         
-        console.log('=== DEBUG: Found parameters ===');
-        console.log('shelfParam (plata):', shelfParam);
-        console.log('frameParam:', frameParam);
-        console.log('legParam:', legParam);
-        console.log('extraParam:', extraParam);
-        
-        // קורות משטח/מדפים (surface/shelf beams)
-        console.log('=== DEBUG: Surface beams section ===');
-        console.log('surfaceWidth:', this.surfaceWidth);
-        console.log('surfaceLength:', this.surfaceLength);
-        console.log('shelfParam exists:', !!shelfParam);
         
         if (this.surfaceWidth && this.surfaceLength && shelfParam) {
-            console.log('Entering surface beams section');
             const selectedBeam = shelfParam.beams?.[shelfParam.selectedBeamIndex || 0];
             const selectedType = selectedBeam?.types?.[shelfParam.selectedTypeIndex || 0];
-            
-            console.log('selectedBeam:', selectedBeam);
-            console.log('selectedType:', selectedType);
             
             if (selectedBeam && selectedType) {
                 const beamWidth = selectedType.width / 10 || this.beamWidth; // המרה ממ"מ לס"מ
@@ -1605,22 +1564,9 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     this.minGap
                 );
                 
-                console.log('=== DEBUG: Surface beams calculation ===');
-                console.log('surfaceWidth:', this.surfaceWidth);
-                console.log('surfaceLength:', this.surfaceLength);
-                console.log('beamWidth:', beamWidth);
-                console.log('beamHeight:', beamHeight);
-                console.log('minGap:', this.minGap);
-                console.log('surfaceBeams.length:', surfaceBeams.length);
-                
                 if (this.isTable) {
-                    console.log('=== DEBUG: Table surface beams ===');
-                    console.log('surfaceBeams count:', surfaceBeams.length);
-                    console.log('selectedBeam.name:', selectedBeam.name);
-                    
                     // עבור שולחן - מדף אחד בלבד
                     surfaceBeams.forEach(beam => {
-                        console.log('Adding table surface beam:', beam);
                         allBeams.push({
                             type: selectedType,
                             length: beam.depth, // אורך הקורה
@@ -1633,10 +1579,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     });
                 } else {
                     // עבור ארון - קורות לכל מדף עם קיצור
-                    console.log('=== DEBUG: Cabinet surface beams ===');
-                    console.log('surfaceBeams count:', surfaceBeams.length);
-                    console.log('shelves count:', this.shelves.length);
-                    console.log('total beams expected:', surfaceBeams.length * this.shelves.length);
                     
                     // חישוב קיצור קורות המדפים
                     const totalShelves = this.shelves.length;
@@ -1856,7 +1798,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         
         // קורות רגליים (leg beams) - לשולחן ולארון
         if (legParam) {
-            console.log('=== DEBUG: Processing leg beams ===');
             const selectedBeam = legParam.beams?.[legParam.selectedBeamIndex || 0];
             const selectedType = selectedBeam?.types?.[legParam.selectedTypeIndex || 0];
             
@@ -2424,9 +2365,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 const beamHeight = this.beamHeight;
                 const frameHeight = this.frameHeight;
                 
-            // בדיקת הערכים הנכונים
-            console.log(`&&& BEAM DIMENSIONS CHECK - Shelf ${shelfIndex}: beamHeight=${this.beamHeight}, frameWidth=${this.frameWidth}, frameHeight=${this.frameHeight} &&&`);
-            console.log(`&&& BEAM DIMENSIONS CHECK - Shelf ${shelfIndex}: Expected beamHeight=2.5, Expected frameWidth=7.5 &&&`);
             
             // חישוב ידני של הגובה כמו ב-3D model
             let manualCurrentY = 0;
@@ -2440,30 +2378,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             const shelfHeightFromFunction = this.getShelfHeight(shelfIndex);
             const expectedManualY = manualCurrentY + this.frameHeight / 2;
             
-            // בדיקה ספציפית למדף התחתון
-            if (shelfIndex === 0) {
-                console.log(`&&& BOTTOM SHELF CHECK - Shelf 0: Manual=${expectedManualY}, Function=${shelfHeightFromFunction}, Diff=${expectedManualY - shelfHeightFromFunction}, FinalY=${shelfHeightFromFunction} &&&`);
-                console.log(`&&& BOTTOM SHELF CHECK - Shelf 0 gap: ${this.shelves[0].gap}, FrameHeight: ${this.frameHeight}, BeamHeight: ${this.beamHeight} &&&`);
-                console.log(`&&& BOTTOM SHELF CHECK - Expected bottom shelf Y should be: gap + frameHeight/2 = ${this.shelves[0].gap} + ${this.frameHeight}/2 = ${this.shelves[0].gap + this.frameHeight/2} &&&`);
-                console.log(`&&& BOTTOM SHELF CHECK - beamArray shelf 0 definition:`, this.shelves[0]);
-            } else {
-                // בדיקה למדפים האחרים
-                console.log(`&&& OTHER SHELF CHECK - Shelf ${shelfIndex}: Manual=${expectedManualY}, Function=${shelfHeightFromFunction}, Diff=${expectedManualY - shelfHeightFromFunction}, FinalY=${shelfHeightFromFunction} &&&`);
-                console.log(`&&& OTHER SHELF CHECK - Shelf ${shelfIndex} gap: ${this.shelves[shelfIndex].gap}, FrameHeight: ${this.frameHeight}, BeamHeight: ${this.beamHeight} &&&`);
-                
-                // חישוב ידני של הגובה הצפוי
-                let expectedY = 0;
-                for (let i = 0; i <= shelfIndex; i++) {
-                    expectedY += this.shelves[i].gap;
-                    if (i < shelfIndex) {
-                        expectedY += this.frameHeight + this.beamHeight;
-                    }
-                }
-                expectedY += this.frameHeight / 2;
-                console.log(`&&& OTHER SHELF CHECK - Expected shelf ${shelfIndex} Y should be: ${expectedY} &&&`);
-            }
             
-            console.log(`&&& CABINET SCREW DEBUG - Shelf ${shelfIndex}: Manual=${expectedManualY}, Function=${shelfHeightFromFunction}, Diff=${expectedManualY - shelfHeightFromFunction}, FinalY=${shelfHeightFromFunction} &&&`);
                 
                 // עכשיו נציב את הברגים במרכז קורת החיזוק
                 // getShelfHeight מחזיר כעת את המרכז של קורת החיזוק
@@ -2473,7 +2388,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     
             legPositions.forEach((leg, legIndex) => {
                 const isEven = legIndex % 2 === 0;
-                console.log('Processing leg:', legIndex, 'Position:', leg);
                 // 2 ברגים לכל רגל (אחד לכל קורת חיזוק - קדמית ואחורית)
                 const screwPositions = [
                     // בורג לקורת חיזוק קדמית
@@ -2529,10 +2443,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             
             // עבור המדף הנוכחי, הברגים צריכים להיות במרכז קורת החיזוק
             // קורת החיזוק נמצאת בגובה: currentY + frameHeight/2
-            const result = currentY + this.frameHeight / 2;
-            
-            // החזרת הגובה עד לקורת החיזוק של המדף הנוכחי
-            return result;
+            return currentY + this.frameHeight / 2;
         }
     }
 
