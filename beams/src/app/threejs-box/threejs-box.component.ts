@@ -63,6 +63,7 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     BeamsDataForPricing: any[] = []; // מערך של נתוני קורות לחישוב מחיר
     ForgingDataForPricing: any[] = []; // מערך של נתוני ברגים לחישוב מחיר
     calculatedPrice: number = 0; // מחיר מחושב
+    cuttingPlan: any[] = []; // תוכנית חיתוך מפורטת
 
     constructor(private http: HttpClient, private snackBar: MatSnackBar, private route: ActivatedRoute, private pricingService: PricingService) { } 
 
@@ -2129,9 +2130,11 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         });
         console.log('*** === END FORGING DATA ===', this.ForgingDataForPricing);
         
-        // חישוב מחיר כולל
+        // חישוב מחיר כולל ותוכנית חיתוך
         this.calculatedPrice = this.pricingService.calculatePrice(this.BeamsDataForPricing, this.ForgingDataForPricing);
+        this.cuttingPlan = this.pricingService.getCuttingPlan(this.BeamsDataForPricing, this.ForgingDataForPricing);
         console.log('=== FINAL CALCULATED PRICE ===', this.calculatedPrice);
+        console.log('=== CUTTING PLAN ===', this.cuttingPlan);
     }
 
     animate() {

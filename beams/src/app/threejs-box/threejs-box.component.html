@@ -97,10 +97,11 @@
                                             <line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#d32f2f" stroke-width="1.5" />
                                         </svg>
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
                     
                     <!-- טיפול בשולחן - פרמטר plata -->
                     <div *ngIf="isTable && param.name === 'plata'">
@@ -267,6 +268,24 @@
                         <span class="size-value">{{ forgingData.length }} ס"מ</span>
                         <span class="size-separator">────</span>
                         <span class="size-count">{{ forgingData.count }} {{ 'price-calculation.units' | translate }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- תוכנית חיתוך קורות -->
+            <div class="materials-summary" *ngIf="cuttingPlan && cuttingPlan.length > 0">
+                <div class="static-text">תוכנית חיתוך קורות:</div>
+                <div class="beam-type-section">
+                    <div *ngFor="let beam of cuttingPlan" class="cutting-plan-item">
+                        <div class="beam-info">
+                            <span class="beam-number">#{{ beam.beamNumber }}</span>
+                            <span class="beam-length">{{ beam.beamLength }} ס"מ</span>
+                            <span class="beam-price">{{ beam.beamPrice }} ₪</span>
+                        </div>
+                        <div class="cuts-info">
+                            <span class="cuts-label">חתיכות:</span>
+                            <span class="cuts-list">{{ beam.cuts.join(', ') }} ס"מ</span>
+                        </div>
                     </div>
                 </div>
             </div>
