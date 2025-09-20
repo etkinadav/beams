@@ -227,9 +227,12 @@
         <div class="price-info">
             <div class="price-display">
                 <span class="price-label">מחיר:</span>
-                <div class="price-loader">
+                <div class="price-loader" *ngIf="calculatedPrice === 0">
                     <mat-spinner diameter="20"></mat-spinner>
                     <div style="width: 5px;"></div>
+                </div>
+                <div class="price-value-inline" *ngIf="calculatedPrice > 0">
+                    {{ calculatedPrice }} ₪
                 </div>
             </div>
         </div>

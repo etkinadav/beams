@@ -3,6 +3,7 @@ import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnInit } fr
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
+import { PricingService } from '../../../../src/app/services/pricing.service';
 import * as THREE from 'three';
 
 interface Shelf {
@@ -56,13 +57,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
     params: any[] = [];
     selectedProductName: string = ''; // שם המוצר שנבחר מה-URL
     isTable: boolean = false; // האם זה שולחן או ארון
-    isPriceManuOpen: boolean = false; // האם תפריט המחיר פתוח
+    isPriceManuOpen: boolean = true; // האם תפריט המחיר פתוח
 
     // נתונים לחישוב מחיר
     BeamsDataForPricing: any[] = []; // מערך של נתוני קורות לחישוב מחיר
     ForgingDataForPricing: any[] = []; // מערך של נתוני ברגים לחישוב מחיר
+    calculatedPrice: number = 0; // מחיר מחושב
 
-    constructor(private http: HttpClient, private snackBar: MatSnackBar, private route: ActivatedRoute) { } 
+    constructor(private http: HttpClient, private snackBar: MatSnackBar, private route: ActivatedRoute, private pricingService: PricingService) { } 
 
     ngOnInit() {
         this.checkUserAuthentication();
@@ -2126,6 +2128,10 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
             });
         });
         console.log('*** === END FORGING DATA ===', this.ForgingDataForPricing);
+        
+        // חישוב מחיר כולל
+        this.calculatedPrice = this.pricingService.calculatePrice(this.BeamsDataForPricing, this.ForgingDataForPricing);
+        console.log('=== FINAL CALCULATED PRICE ===', this.calculatedPrice);
     }
 
     animate() {
