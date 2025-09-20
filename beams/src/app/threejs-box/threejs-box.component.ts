@@ -875,6 +875,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         // Always convert beam width/height from mm to cm
         let beamWidth = shelfBeam ? shelfBeam.width / 10 : this.beamWidth;
         let beamHeight = shelfBeam ? shelfBeam.height / 10 : this.beamHeight;
+        
+        // עדכון הערכים הגלובליים של הקומפוננטה
+        this.beamWidth = beamWidth;
+        this.beamHeight = beamHeight;
+        
+        console.log(`&&& UPDATEBEAMS DEBUG - shelfBeam:`, shelfBeam);
+        console.log(`&&& UPDATEBEAMS DEBUG - beamWidth: ${beamWidth}, beamHeight: ${beamHeight} &&&`);
+        console.log(`&&& UPDATEBEAMS DEBUG - this.beamWidth: ${this.beamWidth}, this.beamHeight: ${this.beamHeight} &&&`);
 
         // For each shelf, render its beams at its calculated height
         let currentY = 0;
@@ -900,6 +908,14 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 frameBeamHeight = frameBeam.width / 10;  // width של הפרמטר הופך ל-height של הקורה
             }
         }
+        
+        // עדכון הערכים הגלובליים של הקומפוננטה
+        this.frameWidth = frameBeamWidth;
+        this.frameHeight = frameBeamHeight;
+        
+        console.log(`&&& UPDATEBEAMS DEBUG - frameParamForShortening:`, frameParamForShortening);
+        console.log(`&&& UPDATEBEAMS DEBUG - frameBeamWidth: ${frameBeamWidth}, frameBeamHeight: ${frameBeamHeight} &&&`);
+        console.log(`&&& UPDATEBEAMS DEBUG - this.frameWidth: ${this.frameWidth}, this.frameHeight: ${this.frameHeight} &&&`);
         console.log('Frame beam width/height:', frameBeamWidth, frameBeamHeight);
         console.log('Shelf beam width/height:', beamWidth, beamHeight);
         console.log('Is table:', this.isTable);
@@ -1105,6 +1121,13 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         for (let shelfIndex = 0; shelfIndex < this.shelves.length; shelfIndex++) {
             const shelf = this.shelves[shelfIndex];
             currentY += shelf.gap;
+            
+            // בדיקה ספציפית למדף התחתון במודל התלת-ממדי
+            if (shelfIndex === 0) {
+                console.log(`&&& 3D MODEL BOTTOM SHELF - Shelf 0: currentY after gap=${currentY}, gap=${shelf.gap} &&&`);
+            } else {
+                console.log(`&&& 3D MODEL OTHER SHELF - Shelf ${shelfIndex}: currentY after gap=${currentY}, gap=${shelf.gap} &&&`);
+            }
             // Surface beams (קורת משטח)
             const surfaceBeams = this.createSurfaceBeams(
                 this.surfaceWidth,
@@ -1169,7 +1192,16 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
-                mesh.position.set(beam.x, currentY + beam.height / 2, beam.z);
+                const frameY = currentY + beam.height / 2;
+                
+                // בדיקה ספציפית למדף התחתון במודל התלת-ממדי
+                if (shelfIndex === 0) {
+                    console.log(`&&& 3D MODEL BOTTOM SHELF - Frame beam Y: ${frameY} (currentY: ${currentY} + beam.height/2: ${beam.height / 2}) &&&`);
+                } else {
+                    console.log(`&&& 3D MODEL OTHER SHELF - Shelf ${shelfIndex} Frame beam Y: ${frameY} (currentY: ${currentY} + beam.height/2: ${beam.height / 2}) &&&`);
+                }
+                
+                mesh.position.set(beam.x, frameY, beam.z);
                 this.scene.add(mesh);
                 this.beamMeshes.push(mesh);
             }
@@ -2384,10 +2416,60 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 // הוספת גובה קורות הפלטה
                
             } else {
-                currentShelfY = this.getShelfHeight(shelfIndex) - (this.beamHeight + (this.frameHeight / 2));
+                // עבור ארון, השתמש באותו חישוב כמו הברגים של המדפים
+                // הברגים של המדפים מוצבים ב: currentY + frameBeamHeight
+                // אז הברגים של הרגליים צריכים להיות באותו גובה
+                
+                const shelfHeight = this.getShelfHeight(shelfIndex);
+                const beamHeight = this.beamHeight;
+                const frameHeight = this.frameHeight;
+                
+            // בדיקת הערכים הנכונים
+            console.log(`&&& BEAM DIMENSIONS CHECK - Shelf ${shelfIndex}: beamHeight=${this.beamHeight}, frameWidth=${this.frameWidth}, frameHeight=${this.frameHeight} &&&`);
+            console.log(`&&& BEAM DIMENSIONS CHECK - Shelf ${shelfIndex}: Expected beamHeight=2.5, Expected frameWidth=7.5 &&&`);
+            
+            // חישוב ידני של הגובה כמו ב-3D model
+            let manualCurrentY = 0;
+            for (let i = 0; i <= shelfIndex; i++) {
+                manualCurrentY += this.shelves[i].gap;
+                if (i < shelfIndex) {
+                    manualCurrentY += this.frameHeight + this.beamHeight;
+                }
             }
-            console.log('Shelf index:', shelfIndex, 'Current shelf Y:', currentShelfY);
-            console.log('Leg positions count:', legPositions.length);
+            
+            const shelfHeightFromFunction = this.getShelfHeight(shelfIndex);
+            const expectedManualY = manualCurrentY + this.frameHeight / 2;
+            
+            // בדיקה ספציפית למדף התחתון
+            if (shelfIndex === 0) {
+                console.log(`&&& BOTTOM SHELF CHECK - Shelf 0: Manual=${expectedManualY}, Function=${shelfHeightFromFunction}, Diff=${expectedManualY - shelfHeightFromFunction}, FinalY=${shelfHeightFromFunction} &&&`);
+                console.log(`&&& BOTTOM SHELF CHECK - Shelf 0 gap: ${this.shelves[0].gap}, FrameHeight: ${this.frameHeight}, BeamHeight: ${this.beamHeight} &&&`);
+                console.log(`&&& BOTTOM SHELF CHECK - Expected bottom shelf Y should be: gap + frameHeight/2 = ${this.shelves[0].gap} + ${this.frameHeight}/2 = ${this.shelves[0].gap + this.frameHeight/2} &&&`);
+                console.log(`&&& BOTTOM SHELF CHECK - beamArray shelf 0 definition:`, this.shelves[0]);
+            } else {
+                // בדיקה למדפים האחרים
+                console.log(`&&& OTHER SHELF CHECK - Shelf ${shelfIndex}: Manual=${expectedManualY}, Function=${shelfHeightFromFunction}, Diff=${expectedManualY - shelfHeightFromFunction}, FinalY=${shelfHeightFromFunction} &&&`);
+                console.log(`&&& OTHER SHELF CHECK - Shelf ${shelfIndex} gap: ${this.shelves[shelfIndex].gap}, FrameHeight: ${this.frameHeight}, BeamHeight: ${this.beamHeight} &&&`);
+                
+                // חישוב ידני של הגובה הצפוי
+                let expectedY = 0;
+                for (let i = 0; i <= shelfIndex; i++) {
+                    expectedY += this.shelves[i].gap;
+                    if (i < shelfIndex) {
+                        expectedY += this.frameHeight + this.beamHeight;
+                    }
+                }
+                expectedY += this.frameHeight / 2;
+                console.log(`&&& OTHER SHELF CHECK - Expected shelf ${shelfIndex} Y should be: ${expectedY} &&&`);
+            }
+            
+            console.log(`&&& CABINET SCREW DEBUG - Shelf ${shelfIndex}: Manual=${expectedManualY}, Function=${shelfHeightFromFunction}, Diff=${expectedManualY - shelfHeightFromFunction}, FinalY=${shelfHeightFromFunction} &&&`);
+                
+                // עכשיו נציב את הברגים במרכז קורת החיזוק
+                // getShelfHeight מחזיר כעת את המרכז של קורת החיזוק
+                // אז אנחנו יכולים להשתמש בו ישירות
+                currentShelfY = shelfHeightFromFunction;
+            }
                     
             legPositions.forEach((leg, legIndex) => {
                 const isEven = legIndex % 2 === 0;
@@ -2436,14 +2518,21 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
         } else {
             // עבור ארון, הגובה הוא סכום כל המדפים עד המדף הנוכחי (כמו בקוד יצירת המודל התלת-ממדי)
         let currentY = 0;
+            
             for (let i = 0; i <= shelfIndex; i++) {
                 currentY += this.shelves[i].gap;
-                if (i < shelfIndex) { // לא המדף הנוכחי
+
+                if (i < shelfIndex) { // לא המדף הנוכחי - מוסיפים את הגובה של המדף הקודם
                     currentY += this.frameHeight + this.beamHeight;
                 }
             }
+            
+            // עבור המדף הנוכחי, הברגים צריכים להיות במרכז קורת החיזוק
+            // קורת החיזוק נמצאת בגובה: currentY + frameHeight/2
+            const result = currentY + this.frameHeight / 2;
+            
             // החזרת הגובה עד לקורת החיזוק של המדף הנוכחי
-            return currentY + this.frameHeight;
+            return result;
         }
     }
 
