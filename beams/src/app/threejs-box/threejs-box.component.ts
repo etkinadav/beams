@@ -1936,6 +1936,20 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 count: beamData.sizes.length
             });
         });
+        // הצגת התוצאה הסופית של הקורות
+        console.log('=== FINAL BEAMS DATA FOR PRICING ===');
+        console.log('Total beam types:', this.BeamsDataForPricing.length);
+        this.BeamsDataForPricing.forEach((beamData, index) => {
+            console.log(`Beam Type ${index + 1}:`, {
+                type: beamData.type,
+                beamName: beamData.beamName,
+                beamTranslatedName: beamData.beamTranslatedName,
+                material: beamData.material,
+                totalSizes: beamData.totalSizes,
+                totalLength: beamData.totalLength,
+                count: beamData.count
+            });
+        });
         console.log('*** === END BEAMS DATA ===', this.BeamsDataForPricing);
         
         // חישוב ברגים
@@ -2036,11 +2050,6 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                 const beamWidth = selectedBeam.width / 10;
                 const beamHeight = selectedBeam.height / 10;
                 
-                // חישוב אורך בורג לפי גודל הקורה
-                let screwLength = 0;
-                const maxDimension = Math.max(beamWidth, beamHeight);
-                screwLength = maxDimension + 3.5; // המידה הגדולה יותר + 3
-                
                 // חישוב כמות ברגים לפי סוג המוצר
                 let totalScrews = 0;
                 if (this.isTable) {
@@ -2052,17 +2061,35 @@ export class ThreejsBoxComponent implements AfterViewInit, OnDestroy, OnInit {
                     totalScrews = totalShelves * 8; // 8 ברגים לכל מדף
                 }
                 
+                // חלוקה לשתי קבוצות שוות - חצי לכל קבוצה
+                const halfScrews = Math.floor(totalScrews / 2);
+                const remainingScrews = totalScrews - halfScrews; // לטפל במקרה של מספר אי-זוגי
+                
+                // קבוצה ראשונה: ברגים לפי רוחב קורת הרגל
+                const widthScrewLength = this.roundScrewLength(beamWidth + 3.5);
                 legForgingData.push({
-                    type: 'Leg Screws',
+                    type: 'Leg Screws (Width)',
                     beamName: selectedBeam.name,
                     beamTranslatedName: selectedBeam.translatedName,
                     material: selectedType.translatedName,
-                    count: totalScrews,
-                    length: this.roundScrewLength(screwLength), // אורך בורג מעוגל לחצי הקרוב
-                    description: 'ברגי רגליים'
+                    count: halfScrews,
+                    length: widthScrewLength,
+                    description: 'ברגי רגליים (לפי רוחב)'
                 });
                 
-                console.log(`Leg screws: ${totalScrews} screws, length: ${screwLength}cm`);
+                // קבוצה שנייה: ברגים לפי גובה קורת הרגל
+                const heightScrewLength = this.roundScrewLength(beamHeight + 3.5);
+                legForgingData.push({
+                    type: 'Leg Screws (Height)',
+                    beamName: selectedBeam.name,
+                    beamTranslatedName: selectedBeam.translatedName,
+                    material: selectedType.translatedName,
+                    count: remainingScrews,
+                    length: heightScrewLength,
+                    description: 'ברגי רגליים (לפי גובה)'
+                });
+                
+                console.log(`Leg screws: ${halfScrews} width-based (${widthScrewLength}cm) + ${remainingScrews} height-based (${heightScrewLength}cm)`);
             }
         }
         
