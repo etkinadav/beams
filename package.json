@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start:front": "ng serve --host 0.0.0.0 --port 4200 --disable-host-check --proxy-config proxy.conf.json",
+    "start:front": "ng serve --host 0.0.0.0 --port 4900 --disable-host-check --proxy-config beams/proxy.conf.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "start:server": "nodemon ./backend/server.js",
+    "start:server": "nodemon ./beams/backend/server.js",
     "extract-translations": "ngx-translate-extract --input ./src --output ./src/assets/i18n/*.json --clean --sort --format namespaced-json --marker _"
   },
   "private": true,

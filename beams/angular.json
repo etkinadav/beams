@@ -83,6 +83,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "port": 4900
+          },
           "configurations": {
             "he": {
               "browserTarget": "mean-corse-01:build:development,he"

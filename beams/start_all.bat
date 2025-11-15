@@ -11,15 +11,15 @@ REM Wait 5 seconds
 timeout 5
 
 REM Start Angular (in new window)  
-start "Angular Server" cmd /k "cd /d C:\Users\User\Desktop\programming\beams\beams && ng serve --port 4800"
+start "Angular Server" cmd /k "cd /d C:\Users\User\Desktop\programming\beams\beams && ng serve --port 4900"
 
 REM Wait 10 seconds
 timeout 10
 
 REM Open browser
-start http://localhost:4800
+start http://localhost:4900
 
 echo All servers started!
 echo Backend: https://localhost:3000
-echo Angular: http://localhost:4800
+echo Angular: http://localhost:4900
 pause
