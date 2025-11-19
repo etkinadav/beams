@@ -614,16 +614,24 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                     
                     const requiresPreliminaryScrewsForLegs = this.checkIfBeamRequiresPreliminaryScrews('leg', selectedBeam, selectedType);
                     
+                    // תמיד ניצור entries לקורות רגל (גם בלי קדחים מקדימים, להצגת ברגים)
                     if (isExternalReinforcementDisabled) {
-                        if (requiresPreliminaryScrewsForLegs) {
-                            allSizes.set(legHeight, (allSizes.get(legHeight) || 0) + (4 * this.quantity));
-                        }
+                        // כאשר חיזוק פנימי - ניצור שלבים נפרדים לכיוון אחד ושני
+                        // ניצור 2 entries: אחד לכיוון x-spanning ואחד לכיוון z-spanning
+                        // כל entry יהיה עבור 2 רגליים (2 רגליים לכל כיוון)
+                        // נשתמש במפתח מיוחד כדי להפריד בין הכיוונים
+                        // כיוון x-spanning: 2 רגליים (marker עם offset קטן)
+                        const xSpanMarker = legHeight + 10000; // marker ייחודי ל-x-spanning
+                        allSizes.set(xSpanMarker, (allSizes.get(xSpanMarker) || 0) + (2 * this.quantity));
+                        
+                        // כיוון z-spanning: 2 רגליים (marker עם offset גדול)
+                        const zSpanMarker = -(legHeight + 100000); // marker ייחודי ל-z-spanning
+                        allSizes.set(zSpanMarker, (allSizes.get(zSpanMarker) || 0) + (2 * this.quantity));
                     }
                     
                     if (isExternalReinforcementEnabled) {
-                        if (requiresPreliminaryScrewsForLegs) {
-                            allSizes.set(legHeight, (allSizes.get(legHeight) || 0) + (4 * this.quantity));
-                        }
+                        // כאשר חיזוק חיצוני - ניצור entry לרגליים (4 רגליים לכיוון אחד)
+                        allSizes.set(legHeight, (allSizes.get(legHeight) || 0) + (4 * this.quantity));
                         
                         const totalShelves = this.shelves.length;
                         if (totalShelves > 0) {
@@ -684,9 +692,26 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             }
             
             // המרה למערך ממוין
+            // נטפל במיוחד ב-z-spanning markers (שליליים)
             const totalSizes = Array.from(allSizes.entries())
-                .map(([length, count]) => ({ length, count }))
-                .sort((a, b) => a.length - b.length);
+                .map(([length, count]) => {
+                    // אם זה z-spanning marker (שלילי גדול), נשמור את הכיוון
+                    if (length < -100000) {
+                        const actualLength = Math.abs(length + 100000);
+                        return { length: actualLength, count, direction: 'z-spanning' };
+                    }
+                    return { length, count, direction: null as string | null };
+                })
+                .sort((a, b) => {
+                    // מיון לפי כיוון ואז לפי אורך
+                    if (a.direction !== b.direction) {
+                        if (a.direction === 'z-spanning') return 1;
+                        if (b.direction === 'z-spanning') return -1;
+                        if (a.direction === 'x-spanning') return -1;
+                        if (b.direction === 'x-spanning') return 1;
+                    }
+                    return a.length - b.length;
+                });
             
             // חישוב drillDiameter (כמו ב-getPreliminaryDrillsInstructionText)
             let drillDiameter = 0;
@@ -749,14 +774,17 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             for (const lengthInfo of totalSizes) {
                 const beamLength = Math.round(lengthInfo.length * 10) / 10;
                 const count = lengthInfo.count;
+                const direction = lengthInfo.direction;
                 
-                // יצירת מפתח מורכב: paramName-beamLength (יועדכן מאוחר יותר אם זה קורת חיזוק)
-                let compositeKey = `${paramName}-${beamLength}`;
+                // יצירת מפתח מורכב: paramName-beamLength או paramName-direction-beamLength
+                let compositeKey = direction 
+                    ? `${paramName}-${direction}-${beamLength}`
+                    : `${paramName}-${beamLength}`;
                 
             // שם הקורה להצגה
             let beamTypeName = '';
             let beamDisplayName = '';
-            let reinforcementDirection: string | null = null;
+            let reinforcementDirection: string | null = direction || null;
             let isExternalReinforcementEnabled = false;
                 
                 if (paramName === 'shelfs') {
@@ -845,15 +873,26 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                         beamDisplayName = 'קורות חיזוק לרוחב';
                         reinforcementDirection = 'x-spanning';
                     } else if (isLegBeamLength) {
-                        beamTypeName = 'קורת רגל';
-                        beamDisplayName = 'קורת רגל';
+                        // אם יש כיוון שהוגדר (x-spanning או z-spanning), נציין אותו בשם
+                        if (direction === 'x-spanning') {
+                            beamTypeName = 'קורות רגל לכיוון הרוחב';
+                            beamDisplayName = 'קורות רגל לכיוון הרוחב';
+                            reinforcementDirection = 'x-spanning';
+                        } else if (direction === 'z-spanning') {
+                            beamTypeName = 'קורות רגל לכיוון העומק';
+                            beamDisplayName = 'קורות רגל לכיוון העומק';
+                            reinforcementDirection = 'z-spanning';
+                        } else {
+                            beamTypeName = 'קורת רגל';
+                            beamDisplayName = 'קורת רגל';
+                        }
                     } else {
                         beamTypeName = 'קורת רגל';
                         beamDisplayName = 'קורת רגל';
                     }
                     
-                    // עדכון compositeKey אם זה קורת חיזוק
-                if (reinforcementDirection) {
+                    // עדכון compositeKey אם יש כיוון (כבר עודכן למעלה אם direction היה מוגדר)
+                    if (reinforcementDirection && !direction) {
                         compositeKey = `${paramName}-${reinforcementDirection}-${beamLength}`;
                     }
                 }
