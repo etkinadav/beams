@@ -692,13 +692,18 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             }
             
             // המרה למערך ממוין
-            // נטפל במיוחד ב-z-spanning markers (שליליים)
+            // נטפל במיוחד ב-markers לכיוונים (x-spanning ו-z-spanning)
             const totalSizes = Array.from(allSizes.entries())
                 .map(([length, count]) => {
                     // אם זה z-spanning marker (שלילי גדול), נשמור את הכיוון
                     if (length < -100000) {
                         const actualLength = Math.abs(length + 100000);
                         return { length: actualLength, count, direction: 'z-spanning' };
+                    }
+                    // אם זה x-spanning marker (גדול מ-10000), נשמור את הכיוון
+                    if (length > 10000) {
+                        const actualLength = length - 10000;
+                        return { length: actualLength, count, direction: 'x-spanning' };
                     }
                     return { length, count, direction: null as string | null };
                 })
@@ -1098,6 +1103,27 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 detectChangesDuration: afterDetectChangesTime - beforeDetectChangesTime,
                 timestamp: afterDetectChangesTime
             }, null, 2));
+            
+            // קריאה ישירה ל-updateBeams במקום timeout כדי למנוע עיכובים
+            // מבטלים את ה-timeout הקיים כדי למנוע כפילות
+            if (this._updateBeamsTimer) {
+                clearTimeout(this._updateBeamsTimer);
+                this._updateBeamsTimer = null;
+                console.log('CHACH_3D_DELAY TOGGLE_CANCELLED_TIMEOUT', JSON.stringify({
+                    compositeKey,
+                    timestamp: performance.now()
+                }, null, 2));
+            }
+            
+            const beforeDirectUpdate = performance.now();
+            this.updateBeams(false, { skipPricing: true });
+            const afterDirectUpdate = performance.now();
+            console.log('CHACH_3D_DELAY TOGGLE_DIRECT_UPDATE_DONE', JSON.stringify({
+                compositeKey,
+                directUpdateDuration: afterDirectUpdate - beforeDirectUpdate,
+                timestamp: afterDirectUpdate
+            }, null, 2));
+            
             return;
         }
 
@@ -1146,6 +1172,26 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             compositeKey,
             detectChangesDuration: afterDetectChangesTime - beforeDetectChangesTime,
             timestamp: afterDetectChangesTime
+        }, null, 2));
+        
+        // קריאה ישירה ל-updateBeams במקום timeout כדי למנוע עיכובים
+        // מבטלים את ה-timeout הקיים כדי למנוע כפילות
+        if (this._updateBeamsTimer) {
+            clearTimeout(this._updateBeamsTimer);
+            this._updateBeamsTimer = null;
+            console.log('CHACH_3D_DELAY TOGGLE_CANCELLED_TIMEOUT', JSON.stringify({
+                compositeKey,
+                timestamp: performance.now()
+            }, null, 2));
+        }
+        
+        const beforeDirectUpdate = performance.now();
+        this.updateBeams(false, { skipPricing: true });
+        const afterDirectUpdate = performance.now();
+        console.log('CHACH_3D_DELAY TOGGLE_DIRECT_UPDATE_DONE', JSON.stringify({
+            compositeKey,
+            directUpdateDuration: afterDirectUpdate - beforeDirectUpdate,
+            timestamp: afterDirectUpdate
         }, null, 2));
         
         return;
