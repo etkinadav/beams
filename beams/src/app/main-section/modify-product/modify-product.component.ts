@@ -430,9 +430,11 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
     
     // פתיחה/סגירה של סעיף הוראה ספציפי
     toggleInstructionStage(stageIndex: number) {
+        const startTime = performance.now();
         // stageIndex הוא האינדקס של ההוראה (0-based)
         // currentInstructionStage הוא האינדקס + 1 (1-based)
         const stageNumber = stageIndex + 1;
+        const previousStage = this.currentInstructionStage;
         
         if (this.currentInstructionStage === stageNumber) {
             // אם כבר פתוח - סגירה
@@ -442,15 +444,24 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             this.currentInstructionStage = stageNumber;
         }
         
-        console.log('TOGGLE_INSTRUCTION_STAGE', JSON.stringify({
+        console.log('CHACH_3D_DELAY TOGGLE_INSTRUCTION_STAGE', JSON.stringify({
             stageIndex: stageIndex,
             stageNumber: stageNumber,
+            previousStage: previousStage,
             currentInstructionStage: this.currentInstructionStage,
-            instructionName: this.product?.instructions?.[stageIndex]?.name
+            instructionName: this.product?.instructions?.[stageIndex]?.name,
+            timestamp: performance.now()
         }, null, 2));
         
         // עדכון המודל התלת מימדי כדי להציג/להסתיר קורות בהתאם למצב
         setTimeout(() => {
+            const beforeUpdateTime = performance.now();
+            console.log('CHACH_3D_DELAY TOGGLE_INSTRUCTION_STAGE_CALLING_UPDATE', JSON.stringify({
+                stageIndex: stageIndex,
+                currentInstructionStage: this.currentInstructionStage,
+                timeSinceToggle: beforeUpdateTime - startTime,
+                timestamp: beforeUpdateTime
+            }, null, 2));
             this.updateBeams(false, { skipPricing: true });
         }, 100);
     }
@@ -956,21 +967,6 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         return false;
     }
     
-    private getFirstPendingPreliminaryDrill(): any | null {
-        const drills = this.preliminaryDrillsInfo;
-        if (!Array.isArray(drills)) {
-            return null;
-        }
-        return (
-            drills.find(
-                (info) =>
-                    info &&
-                    info.requiresPreliminaryScrews &&
-                    !this.isBeamMarkedAsCompleted(info.compositeKey)
-            ) || null
-        );
-    }
-    
     // בדיקה אם כל הקורות לא דורשות קדחים מקדימים (כל הקורות הן V)
     areAllBeamsNoPreliminaryDrilling(): boolean {
         if (this.preliminaryDrillsInfo.length === 0) {
@@ -992,17 +988,24 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
     
     // סמן/בטל סימון קורה (רק אם הקורה דורשת קדחים)
     toggleBeamCompleted(drillInfo: any) {
+        console.log('CHACH_3D_DELAY TOGGLE_START', JSON.stringify({ 
+            drillInfo: drillInfo ? { compositeKey: drillInfo.compositeKey, requiresPreliminaryScrews: drillInfo.requiresPreliminaryScrews } : null 
+        }, null, 2));
+        
         // רק אם הקורה דורשת קדחים - אפשר לסמן
         if (!drillInfo || !drillInfo.requiresPreliminaryScrews) {
+            console.log('CHACH_3D_DELAY TOGGLE_EARLY_EXIT', JSON.stringify({ reason: 'no drillInfo or requiresPreliminaryScrews is false' }, null, 2));
             return;
         }
         
         const compositeKey = drillInfo.compositeKey;
         if (!compositeKey) {
+            console.log('CHACH_3D_DELAY TOGGLE_EARLY_EXIT', JSON.stringify({ reason: 'no compositeKey' }, null, 2));
             return;
         }
         
         const wasChecked = this.completedPreliminaryDrills.has(compositeKey);
+        console.log('CHACH_3D_DELAY TOGGLE_STATE', JSON.stringify({ compositeKey, wasChecked }, null, 2));
 
         const currentIndex = this.preliminaryDrillsInfo.findIndex(info =>
             info.requiresPreliminaryScrews && info.compositeKey === compositeKey
@@ -1033,11 +1036,29 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             }
             this.expandedDrillItems = newExpandedSet;
 
-            setTimeout(() => {
-                this.updateBeams(false, { skipPricing: true });
-            }, 100);
+            const beforeScheduleTime = performance.now();
+            console.log('CHACH_3D_DELAY TOGGLE_CALLING_SCHEDULE', JSON.stringify({ 
+                compositeKey, 
+                wasChecked, 
+                action: 'marking',
+                timestamp: beforeScheduleTime
+            }, null, 2));
+            this.scheduleUpdateBeams(true, 50);
+            const afterScheduleTime = performance.now();
+            console.log('CHACH_3D_DELAY TOGGLE_AFTER_SCHEDULE', JSON.stringify({
+                compositeKey,
+                scheduleDuration: afterScheduleTime - beforeScheduleTime,
+                timestamp: afterScheduleTime
+            }, null, 2));
 
+            const beforeDetectChangesTime = performance.now();
             this.cdr.detectChanges();
+            const afterDetectChangesTime = performance.now();
+            console.log('CHACH_3D_DELAY TOGGLE_AFTER_DETECT_CHANGES', JSON.stringify({
+                compositeKey,
+                detectChangesDuration: afterDetectChangesTime - beforeDetectChangesTime,
+                timestamp: afterDetectChangesTime
+            }, null, 2));
             return;
         }
 
@@ -1064,11 +1085,29 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         newExpandedSet.add(compositeKey);
         this.expandedDrillItems = newExpandedSet;
 
-        setTimeout(() => {
-            this.updateBeams(false, { skipPricing: true });
-        }, 100);
+        const beforeScheduleTime = performance.now();
+        console.log('CHACH_3D_DELAY TOGGLE_CALLING_SCHEDULE', JSON.stringify({ 
+            compositeKey, 
+            wasChecked, 
+            action: 'unmarking',
+            timestamp: beforeScheduleTime
+        }, null, 2));
+        this.scheduleUpdateBeams(true, 50);
+        const afterScheduleTime = performance.now();
+        console.log('CHACH_3D_DELAY TOGGLE_AFTER_SCHEDULE', JSON.stringify({
+            compositeKey,
+            scheduleDuration: afterScheduleTime - beforeScheduleTime,
+            timestamp: afterScheduleTime
+        }, null, 2));
 
+        const beforeDetectChangesTime = performance.now();
         this.cdr.detectChanges();
+        const afterDetectChangesTime = performance.now();
+        console.log('CHACH_3D_DELAY TOGGLE_AFTER_DETECT_CHANGES', JSON.stringify({
+            compositeKey,
+            detectChangesDuration: afterDetectChangesTime - beforeDetectChangesTime,
+            timestamp: afterDetectChangesTime
+        }, null, 2));
         
         return;
         
@@ -1077,6 +1116,43 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             // מעבר אוטומטי מיידי לשלב הבא (ללא delay)
             this.goToNextInstructionStage();
         }
+    }
+    
+    // תזמון מרוכך של updateBeams למניעת קריאות כפולות ומהירות
+    private _updateBeamsTimer: any = null;
+    private scheduleUpdateBeams(skipPricing: boolean = true, delayMs: number = 50) {
+        const scheduleTime = performance.now();
+        console.log('CHACH_3D_DELAY SCHEDULE_ENTER', JSON.stringify({ 
+            skipPricing, 
+            delayMs, 
+            hasExistingTimer: !!this._updateBeamsTimer,
+            timestamp: scheduleTime
+        }, null, 2));
+        if (this._updateBeamsTimer) {
+            console.log('CHACH_3D_DELAY SCHEDULE_COALESCE', JSON.stringify({ 
+                skipPricing, 
+                delayMs,
+                timestamp: performance.now()
+            }, null, 2));
+            clearTimeout(this._updateBeamsTimer);
+        }
+        console.log('CHACH_3D_DELAY SCHEDULE_SET_TIMEOUT', JSON.stringify({ 
+            skipPricing, 
+            delayMs,
+            scheduledFor: scheduleTime + delayMs,
+            timestamp: performance.now()
+        }, null, 2));
+        this._updateBeamsTimer = setTimeout(() => {
+            const fireTime = performance.now();
+            console.log('CHACH_3D_DELAY SCHEDULE_TIMEOUT_FIRED', JSON.stringify({ 
+                skipPricing,
+                actualDelay: fireTime - scheduleTime,
+                expectedDelay: delayMs,
+                timestamp: fireTime
+            }, null, 2));
+            this._updateBeamsTimer = null;
+            this.updateBeams(false, { skipPricing });
+        }, delayMs);
     }
     
     // פונקציה לקביעת מצב האנימציה של טקסט ההוראות
@@ -1132,10 +1208,8 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         // עדכון המשתנה הישיר כדי לעורר change detection
         this.completedPreliminaryDrills = newSet;
         
-        // עדכון המודל התלת-ממדי כדי להציג את הקורות והברגים המתאימים
-        setTimeout(() => {
-            this.updateBeams(false, { skipPricing: true });
-        }, 100);
+        // עדכון המודל התלת-ממדי כדי להציג את הקורות והברגים המתאימים (עם דיבאונס)
+        this.scheduleUpdateBeams(true, 50);
         
         // אם כל הקורות שדורשות קדחים סומנו - מעבר אוטומטי מיידי לשלב הבא
         if (this.areAllRequiredBeamsCompleted() && !this.areAllBeamsNoPreliminaryDrilling()) {
@@ -1220,8 +1294,23 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         return null;
     }
     
+    // קבלת הקורה הראשונה שצריכה להיות מוצגת (pending) - אם יש אחת שמוצגת כרגע
+    getFirstPendingPreliminaryDrill(): any | null {
+        if (!this.preliminaryDrillsInfo || this.preliminaryDrillsInfo.length === 0) {
+            return null;
+        }
+        
+        // מחזיר את הקורה הראשונה שלא מסומנת (pending)
+        const firstPending = this.preliminaryDrillsInfo.find(info => 
+            info.requiresPreliminaryScrews && !this.completedPreliminaryDrills.has(info.compositeKey)
+        );
+        
+        return firstPending || null;
+    }
+    
     // בדיקה אם אנחנו במצב preliminary-drills עם משימות לא בוצעו
-    isPreliminaryDrillsMode(): boolean {
+    // עם אפשרות לדחות את הלוג כדי למנוע לוגים חוזרים
+    isPreliminaryDrillsMode(skipLog: boolean = false): boolean {
         if (!this.isInstructionMode || !this.product?.instructions) {
             return false;
         }
@@ -1236,15 +1325,17 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             info.requiresPreliminaryScrews && !this.completedPreliminaryDrills.has(info.compositeKey)
         );
         
-        const result = hasUncompletedTasks;
-        console.log('PRELIMINARY_DRILLS_MODE_CHECK', JSON.stringify({
-            isInstructionMode: this.isInstructionMode,
-            currentStageName: currentStage?.name,
-            isPreliminaryDrillsStage: currentStage?.name === 'preliminary-drills',
-            preliminaryDrillsInfoLength: this.preliminaryDrillsInfo.length,
-            hasUncompletedTasks: hasUncompletedTasks,
-            result: result
-        }, null, 2));
+        if (!skipLog) {
+            const result = hasUncompletedTasks;
+            console.log('PRELIMINARY_DRILLS_MODE_CHECK', JSON.stringify({
+                isInstructionMode: this.isInstructionMode,
+                currentStageName: currentStage?.name,
+                isPreliminaryDrillsStage: currentStage?.name === 'preliminary-drills',
+                preliminaryDrillsInfoLength: this.preliminaryDrillsInfo.length,
+                hasUncompletedTasks: hasUncompletedTasks,
+                result: result
+            }, null, 2));
+        }
         
         return hasUncompletedTasks;
     }
@@ -4534,7 +4625,25 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             this.resetCameraView();
         }, 1000);
     }
+    private _updateBeamsInFlight: boolean = false;
+    private _pendingUpdateBeams: UpdateBeamsOptions | null = null;
+    private _prelimLogPrintedThisCycle: boolean = false;
+    private _updateBeamsStartTs: number = 0;
+    // Cache for last visibility state to optimize updates
+    private _lastVisibilityState: { shouldShowLegBeams: boolean; shouldShowShelfBeams: boolean; shouldShowReinforcementBeams: boolean; activeCompositeKey: string | null } | null = null;
+    // Track mesh categories for efficient visibility toggling
+    private _meshCategories: Map<string, THREE.Object3D[]> = new Map();
     async updateBeams(isInitialLoad: boolean = false, options: UpdateBeamsOptions = {}) {
+        // מניעת ריצות חופפות - אם יש ריצה, נשמור בקשה אחת לעדכון נוסף ונצא
+        if (this._updateBeamsInFlight) {
+            this._pendingUpdateBeams = options || { skipPricing: true };
+            console.log('CHACH_3D_DELAY UPDATE_ALREADY_IN_FLIGHT', JSON.stringify({ isInitialLoad, options, pending: this._pendingUpdateBeams }, null, 2));
+            return;
+        }
+        this._updateBeamsInFlight = true;
+        this._prelimLogPrintedThisCycle = false;
+        this._updateBeamsStartTs = (typeof performance !== 'undefined' && (performance as any).now) ? (performance as any).now() : Date.now();
+        console.log('CHACH_3D_DELAY UPDATE_START', JSON.stringify({ isInitialLoad, options }, null, 2));
         const skipPricing = options?.skipPricing === true;
         this.shouldSkipPricing = skipPricing;
         if (skipPricing) {
@@ -4542,7 +4651,7 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         } else {
             this.priceSnapshotBeforeSkip = null;
         }
-        
+        try {
         // 🎯 איפוס משתני לוגים חד פעמיים
         this.futonLegBeamLogged = false;
         this.reinforcementDecisionLogSignatures.clear();
@@ -4576,28 +4685,148 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         
         // חישוב מחיר יבוצע ברקע אחרי הרינדור
         
+        // 🎯 חישוב פעם אחת של מצב preliminary-drills ו-activeCompositeKey כדי למנוע קריאות חוזרות
+        const isPreliminaryDrills = this.isPreliminaryDrillsMode(true); // skipLog = true
+        const firstPendingDrillInfo = isPreliminaryDrills ? this.getFirstPendingPreliminaryDrill() : null;
+        const rawFirstUncheckedCompositeKey = isPreliminaryDrills ? this.getFirstUncheckedBeamParamName() : null;
+        const activeCompositeKeyGlobal = firstPendingDrillInfo?.compositeKey || rawFirstUncheckedCompositeKey || null;
+        console.log('CHACH_3D_DELAY PRELIM_STATE', JSON.stringify({ isPreliminaryDrills, activeCompositeKey: activeCompositeKeyGlobal }, null, 2));
+        
         // ניקוי קורות
+        const clearStartTime = performance.now();
+        console.log('CHACH_3D_DELAY CLEAR_START', JSON.stringify({ 
+            beamMeshes: this.beamMeshes?.length || 0, 
+            screwGroups: this.screwGroups?.length || 0,
+            timestamp: clearStartTime
+        }, null, 2));
+        // Clear mesh categories
+        this._meshCategories.clear();
+        
+        // Optimize disposal: batch disposal operations
+        const meshesToDispose: THREE.Mesh[] = [];
+        const groupsToDispose: THREE.Group[] = [];
+        const removeStartTime = performance.now();
+        
         this.beamMeshes.forEach((mesh) => {
             this.scene.remove(mesh);
-            // אם זה Group (ברגים), צריך לטפל בכל הילדים
             if (mesh instanceof THREE.Group) {
-                mesh.children.forEach((child) => {
-                    if (child instanceof THREE.Mesh) {
-                        child.geometry.dispose();
-                        (child.material as THREE.Material).dispose();
-                    }
-                });
+                groupsToDispose.push(mesh);
             } else {
-                // אם זה Mesh רגיל (קורות)
-            mesh.geometry.dispose();
-            (mesh.material as THREE.Material).dispose();
+                meshesToDispose.push(mesh as THREE.Mesh);
             }
         });
+        const removeEndTime = performance.now();
+        console.log('CHACH_3D_DELAY CLEAR_REMOVE_FROM_SCENE', JSON.stringify({
+            meshCount: this.beamMeshes.length,
+            meshesToDispose: meshesToDispose.length,
+            groupsToDispose: groupsToDispose.length,
+            removeDuration: removeEndTime - removeStartTime,
+            timestamp: removeEndTime
+        }, null, 2));
+        
+        // Batch dispose geometries and materials asynchronously to avoid blocking
+        if (meshesToDispose.length > 0 || groupsToDispose.length > 0) {
+            // Dispose synchronously for small numbers, asynchronously for large
+            const totalMeshes = meshesToDispose.length + groupsToDispose.reduce((sum, g) => sum + g.children.length, 0);
+            const disposeStartTime = performance.now();
+            console.log('CHACH_3D_DELAY CLEAR_DISPOSE_START', JSON.stringify({
+                totalMeshes,
+                meshesToDispose: meshesToDispose.length,
+                groupsToDispose: groupsToDispose.length,
+                willDisposeAsync: totalMeshes > 50,
+                timestamp: disposeStartTime
+            }, null, 2));
+            
+            if (totalMeshes > 50) {
+                // Large number - dispose asynchronously in batches using requestAnimationFrame to avoid blocking
+                const asyncDisposeStart = performance.now();
+                const BATCH_SIZE = 20; // Dispose 20 meshes per frame to avoid blocking
+                let meshIndex = 0;
+                let groupIndex = 0;
+                
+                const disposeBatch = () => {
+                    const batchStart = performance.now();
+                    let processed = 0;
+                    
+                    // Process meshes in batch
+                    while (meshIndex < meshesToDispose.length && processed < BATCH_SIZE) {
+                        const mesh = meshesToDispose[meshIndex];
+                        mesh.geometry.dispose();
+                        (mesh.material as THREE.Material).dispose();
+                        meshIndex++;
+                        processed++;
+                    }
+                    
+                    // Process groups in batch
+                    while (groupIndex < groupsToDispose.length && processed < BATCH_SIZE) {
+                        const group = groupsToDispose[groupIndex];
+                        group.children.forEach((child) => {
+                            if (child instanceof THREE.Mesh) {
+                                child.geometry.dispose();
+                                (child.material as THREE.Material).dispose();
+                            }
+                        });
+                        groupIndex++;
+                        processed++;
+                    }
+                    
+                    const batchEnd = performance.now();
+                    const batchDuration = batchEnd - batchStart;
+                    
+                    // If there's more to process and batch was fast enough, continue
+                    if ((meshIndex < meshesToDispose.length || groupIndex < groupsToDispose.length) && batchDuration < 16) {
+                        // Use requestAnimationFrame for next batch to avoid blocking
+                        requestAnimationFrame(disposeBatch);
+                    } else if (meshIndex < meshesToDispose.length || groupIndex < groupsToDispose.length) {
+                        // Batch took too long, yield to browser with setTimeout
+                        setTimeout(disposeBatch, 0);
+                    } else {
+                        // All done
+                        const asyncDisposeEnd = performance.now();
+                        console.log('CHACH_3D_DELAY CLEAR_DISPOSE_ASYNC_DONE', JSON.stringify({
+                            totalMeshes,
+                            disposeDuration: asyncDisposeEnd - asyncDisposeStart,
+                            timestamp: asyncDisposeEnd
+                        }, null, 2));
+                    }
+                };
+                
+                // Start disposal on next frame
+                requestAnimationFrame(disposeBatch);
+            } else {
+                // Small number - dispose synchronously
+                meshesToDispose.forEach(mesh => {
+                    mesh.geometry.dispose();
+                    (mesh.material as THREE.Material).dispose();
+                });
+                groupsToDispose.forEach(group => {
+                    group.children.forEach((child) => {
+                        if (child instanceof THREE.Mesh) {
+                            child.geometry.dispose();
+                            (child.material as THREE.Material).dispose();
+                        }
+                    });
+                });
+                const syncDisposeEnd = performance.now();
+                console.log('CHACH_3D_DELAY CLEAR_DISPOSE_SYNC_DONE', JSON.stringify({
+                    totalMeshes,
+                    disposeDuration: syncDisposeEnd - disposeStartTime,
+                    timestamp: syncDisposeEnd
+                }, null, 2));
+            }
+        }
         this.beamMeshes = [];
         
         // ניקוי ברגים
+        const screwsDisposeStartTime = performance.now();
+        const screwsToDispose: THREE.Group[] = [];
         this.screwGroups.forEach((screwGroup) => {
             this.scene.remove(screwGroup);
+            screwsToDispose.push(screwGroup);
+        });
+        
+        // Dispose screws (usually fewer, so synchronous is fine)
+        screwsToDispose.forEach((screwGroup) => {
             screwGroup.children.forEach((child) => {
                 if (child instanceof THREE.Mesh) {
                     child.geometry.dispose();
@@ -4606,6 +4835,13 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             });
         });
         this.screwGroups = [];
+        const clearEndTime = performance.now();
+        console.log('CHACH_3D_DELAY CLEAR_DONE', JSON.stringify({
+            totalClearDuration: clearEndTime - clearStartTime,
+            screwsCount: screwsToDispose.length,
+            screwsDisposeDuration: clearEndTime - screwsDisposeStartTime,
+            timestamp: clearEndTime
+        }, null, 2));
         
         // Defensive checks
         if (!this.isTable && !this.isPlanter && !this.isBox && !this.isBelams && !this.isFuton && (!this.shelves || !this.shelves.length)) {
@@ -4893,7 +5129,8 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                     tableHeight,
                     beam.height,
                     frameBeamWidth,
-                    'top'
+                    'top',
+                    false // לא במצב preliminary-drills עבור שולחן
                 );
             }
             // Get leg beam dimensions for frame beams positioning
@@ -5569,36 +5806,35 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             });
             
             
-            // בדיקה אם אנחנו במצב preliminary-drills
-            const isPreliminaryDrills = this.isPreliminaryDrillsMode();
-            const rawFirstUncheckedCompositeKey = isPreliminaryDrills ? this.getFirstUncheckedBeamParamName() : null;
-            const firstPendingDrillInfo = isPreliminaryDrills ? this.getFirstPendingPreliminaryDrill() : null;
-            const activeCompositeKey =
-                firstPendingDrillInfo?.compositeKey || rawFirstUncheckedCompositeKey || null;
-            
+            // בדיקה אם אנחנו במצב preliminary-drills - משתמשים בערכים שחושבו בתחילת הפונקציה
+            // הערכים כבר הוגדרו בתחילת הפונקציה updateBeams
             const currentStage = this.product?.instructions?.[this.currentInstructionStage - 1];
-            console.log('UPDATE_BEAMS_PRELIMINARY_CHECK', JSON.stringify({
+            if (!this._prelimLogPrintedThisCycle) {
+            console.log('CHACH_3D_DELAY UPDATE_BEAMS_PRELIMINARY_CHECK', JSON.stringify({
                 isPreliminaryDrills: isPreliminaryDrills,
-                firstUncheckedCompositeKey: activeCompositeKey,
+                firstUncheckedCompositeKey: activeCompositeKeyGlobal,
                 isInstructionMode: this.isInstructionMode,
                 currentStageName: currentStage?.name,
-                currentInstructionStageIndex: this.currentInstructionStage
+                currentInstructionStageIndex: this.currentInstructionStage,
+                timestamp: performance.now()
             }, null, 2));
+                this._prelimLogPrintedThisCycle = true;
+            }
             
             // קביעת מה להציג במצב preliminary-drills
             let shouldShowLegBeams = true;
             let shouldShowShelfBeams = true;
             let shouldShowReinforcementBeams = true;
             
-            if (isPreliminaryDrills && activeCompositeKey) {
+            if (isPreliminaryDrills && activeCompositeKeyGlobal) {
                 // פירוק ה-compositeKey ל-paramName ו-beamLength
-                const fallbackParamName = activeCompositeKey.split('-')[0];
+                const fallbackParamName = activeCompositeKeyGlobal.split('-')[0];
                 const firstUncheckedParamName = fallbackParamName || null;
-                const lengthMatch = activeCompositeKey.match(/(-?\d+(\.\d+)?)$/);
+                const lengthMatch = activeCompositeKeyGlobal.match(/(-?\d+(\.\d+)?)$/);
                 const firstUncheckedBeamLength = lengthMatch ? parseFloat(lengthMatch[1]) : NaN; // אורך הקורה
-                const firstUncheckedReinforcementDirection = activeCompositeKey.includes('x-spanning')
+                const firstUncheckedReinforcementDirection = activeCompositeKeyGlobal.includes('x-spanning')
                     ? 'x-spanning'
-                    : activeCompositeKey.includes('z-spanning')
+                    : activeCompositeKeyGlobal.includes('z-spanning')
                         ? 'z-spanning'
                         : null;
                 
@@ -5652,9 +5888,9 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                     }
 
                     const firstUncheckedReinforcementDirection =
-                        activeCompositeKey?.includes('x-spanning')
+                        activeCompositeKeyGlobal?.includes('x-spanning')
                             ? 'x-spanning'
-                            : activeCompositeKey?.includes('z-spanning')
+                            : activeCompositeKeyGlobal?.includes('z-spanning')
                                 ? 'z-spanning'
                                 : null;
 
@@ -5701,11 +5937,22 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 }
             }
             
-            console.log('UPDATE_BEAMS_VISIBILITY', JSON.stringify({
+            console.log('CHACH_3D_DELAY UPDATE_BEAMS_VISIBILITY', JSON.stringify({
                 shouldShowLegBeams: shouldShowLegBeams,
                 shouldShowShelfBeams: shouldShowShelfBeams,
-                shouldShowReinforcementBeams: shouldShowReinforcementBeams
+                shouldShowReinforcementBeams: shouldShowReinforcementBeams,
+                isPreliminaryDrills: isPreliminaryDrills,
+                activeCompositeKey: activeCompositeKeyGlobal,
+                timestamp: performance.now()
             }, null, 2));
+            
+            // Cache visibility state for future optimization
+            this._lastVisibilityState = {
+                shouldShowLegBeams,
+                shouldShowShelfBeams,
+                shouldShowReinforcementBeams,
+                activeCompositeKey: activeCompositeKeyGlobal
+            };
             
             const legs = this.createLegBeams(
                 this.surfaceWidth,
@@ -5756,9 +6003,10 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                     : outsideRawValue === true;
             
             // רק אם אנחנו במצב preliminary-drills עם leg, או במצב רגיל - להוסיף ברגים
+            // משתמשים ב-activeCompositeKeyGlobal שהוגדר בתחילת הפונקציה
             if (
                 !isPreliminaryDrills ||
-                (activeCompositeKey && activeCompositeKey.startsWith('leg'))
+                (activeCompositeKeyGlobal && activeCompositeKeyGlobal.startsWith('leg'))
             ) {
                 this.addScrewsToLegs(totalShelves, legs, frameBeamHeightCorrect, 0, isOutsideEnabled);
             }
@@ -5767,16 +6015,12 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         // עבור ארון - הקוד המקורי
         if (!this.isTable && !this.isPlanter && !this.isBox) {
             // בדיקה אם אנחנו במצב preliminary-drills (לפני ה-loop של המדפים)
-            const isPreliminaryDrillsCabinet = this.isPreliminaryDrillsMode();
-            const firstPendingDrillInfoCabinet = isPreliminaryDrillsCabinet ? this.getFirstPendingPreliminaryDrill() : null;
-            const rawFirstUncheckedKeyCabinet = isPreliminaryDrillsCabinet ? this.getFirstUncheckedBeamParamName() : null;
-            const activeCompositeKeyCabinet =
-                firstPendingDrillInfoCabinet?.compositeKey || rawFirstUncheckedKeyCabinet || null;
+            // משתמשים בערכים שחושבו בתחילת הפונקציה
+            const isPreliminaryDrillsCabinet = isPreliminaryDrills;
+            const activeCompositeKeyCabinet = activeCompositeKeyGlobal;
             const firstUncheckedParamCabinet = activeCompositeKeyCabinet
                 ? activeCompositeKeyCabinet.split('-')[0]
-                : rawFirstUncheckedKeyCabinet
-                    ? rawFirstUncheckedKeyCabinet.split('-')[0]
-                    : null;
+                : null;
             
             // קביעת מה להציג במצב preliminary-drills
             let shouldShowShelfBeamsCabinet = true;
@@ -5877,13 +6121,26 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             });
             
             // עבור ארון - הקוד המקורי
+            const shelvesLoopStartTime = performance.now();
+            console.log('CHACH_3D_DELAY CABINET_SHELVES_LOOP_START', JSON.stringify({
+                totalShelves: this.shelves.length,
+                timestamp: shelvesLoopStartTime
+            }, null, 2));
             for (
                 let shelfIndex = 0;
                 shelfIndex < this.shelves.length;
                 shelfIndex++
             ) {
+            const shelfStartTime = performance.now();
             this.startTimer(`CABINET - Shelf ${shelfIndex + 1}`);
             const shelf = this.shelves[shelfIndex];
+            console.log('CHACH_3D_DELAY CABINET_SHELF_ITERATION_START', JSON.stringify({
+                shelfIndex: shelfIndex + 1,
+                totalShelves: this.shelves.length,
+                shelfGap: shelf.gap,
+                currentY: currentY,
+                timestamp: shelfStartTime
+            }, null, 2));
             
             this.logCabinet(`CHACK_CABINET - Before shelf ${shelfIndex + 1}:`, {
                 currentY: currentY,
@@ -6072,8 +6329,8 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
 
             // הגדרת משתני הצגה עבור ארון (בתוך לולאת המדפים)
             // משתמשים במשתנים שהוגדרו לפני הלולאה - נגישים כי הם באותו scope
-            // אבל כדי להימנע משגיאות, נגדיר אותם מחדש כאן
-            const isPreliminaryDrillsCabinet = this.isPreliminaryDrillsMode();
+            // משתמשים בערכים שחושבו בתחילת הפונקציה
+            const isPreliminaryDrillsCabinet = isPreliminaryDrills;
             const firstUncheckedCompositeKey = activeCompositeKeyCabinet;
             
             let shouldShowLegBeamsCabinet = true;
@@ -6168,17 +6425,31 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 }
             }
             
-            console.log('UPDATE_BEAMS_SHELF_LOOP', JSON.stringify({
+            // לוג זה נשאר אך אינו כבד
+            console.log('CHACH_3D_DELAY UPDATE_BEAMS_SHELF_LOOP', JSON.stringify({
                 shelfIndex: shelfIndex + 1,
                 shouldShowShelfBeamsCabinet: shouldShowShelfBeamsCabinet,
                 shouldShowReinforcementBeamsCabinet: shouldShowReinforcementBeamsCabinet,
                 isPreliminaryDrillsCabinet: isPreliminaryDrillsCabinet,
-                firstUncheckedParamCabinet: firstUncheckedParamCabinet
+                firstUncheckedParamCabinet: firstUncheckedParamCabinet,
+                timestamp: performance.now()
             }, null, 2));
 
             // הצגת קורות מדף רק אם צריך
             if (shouldShowShelfBeamsCabinet) {
+            // 🎯 חישוב פעם אחת לפני הלולאה כדי למנוע קריאות חוזרות
+            const isPreliminaryDrillsForScrews = this.isPreliminaryDrillsMode(true); // skipLog = true
+            const firstUncheckedKeyForScrews = isPreliminaryDrillsForScrews ? this.getFirstUncheckedBeamParamName() : null;
+            const firstUncheckedParamForScrews = firstUncheckedKeyForScrews ? firstUncheckedKeyForScrews.split('-')[0] : null;
+            const isPreliminaryDrillsShelfForScrews = isPreliminaryDrillsForScrews && firstUncheckedParamForScrews === 'shelfs';
+            
             this.startTimer(`CABINET - Render ${surfaceBeams.length} Beams for Shelf ${shelfIndex + 1}`);
+            const surfaceBeamsStartTime = performance.now();
+            console.log('CHACH_3D_DELAY SURFACE_BEAMS_LOOP_START', JSON.stringify({
+                shelfIndex: shelfIndex + 1,
+                surfaceBeamsCount: surfaceBeams.length,
+                timestamp: surfaceBeamsStartTime
+            }, null, 2));
             for (let i = 0; i < surfaceBeams.length; i++) {
                 let beam = { ...surfaceBeams[i] };
                 // Only shorten first and last beam in the length (depth) direction for non-top shelves
@@ -6229,7 +6500,63 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                         continue; // מדלג על יצירת הקורה הזאת
                     }
                     
+                    // 🎯 קודם נקבע אם ליישם קיצור, ואז נבדוק אם להציג את הקורה לפי האורך הסופי
+                    // האם ליישם קיצור בקצוות? במצב הוראות: רק אם הצעד הנוכחי הוא "מקוצרות"
+                    let shouldApplyShortening = true;
+                    let shortenedLengthTarget = 0;
+                    let fullLengthTarget = this.surfaceLength;
+                    
+                    // 🎯 לוג ראשוני - מצב התחלתי
+                    if (isPreliminaryDrillsCabinet && firstUncheckedCompositeKey) {
+                        const partsLocal = firstUncheckedCompositeKey.split('-');
+                        const paramLocal = partsLocal[0];
+                        const targetLengthLocal = parseFloat(partsLocal.slice(1).join('-'));
+                        
+                        if (paramLocal === 'shelfs') {
+                            console.log('CHACH_3D_DELAY SHELF_BEAM_DECISION_START', JSON.stringify({
+                                shelfIndex: shelfIndex + 1,
+                                beamIndex: i,
+                                isTopShelf,
+                                activeCompositeKey: firstUncheckedCompositeKey,
+                                targetLengthFromKey: targetLengthLocal,
+                                originalBeamDepth: beam.depth,
+                                surfaceLength: this.surfaceLength
+                            }, null, 2));
+                            
+                            // חשב את אורכי היעד כמו קודם
+                            const legParamForShorteningCalc = this.getParam('leg');
+                            const legBeamSelectedCalc = legParamForShorteningCalc?.beams?.[legParamForShorteningCalc.selectedBeamIndex || 0];
+                            const legBeamHeightCalc = legBeamSelectedCalc?.height / 10 || 0;
+                            const outsideParamCabCalc = this.getParam('is-reinforcement-beams-outside');
+                            const isOutsideCabCalc = !!(outsideParamCabCalc && outsideParamCabCalc.default === true);
+                            const defaultShortenCalc = (legBeamHeightCalc * 2);
+                            const extraShortenCalc = isOutsideCabCalc ? (2 * (this.frameWidth || 0)) : 0;
+                            shortenedLengthTarget = Math.max(0.1, this.surfaceLength - (defaultShortenCalc + extraShortenCalc));
+                            fullLengthTarget = this.surfaceLength;
+                            const isFullLengthTarget = Math.abs(targetLengthLocal - fullLengthTarget) < 0.1;
+                            const isShortenedTarget = Math.abs(targetLengthLocal - shortenedLengthTarget) < 0.1;
+                            // ליישם קיצור רק אם היעד הוא "מקוצרות"
+                            shouldApplyShortening = isShortenedTarget;
+                            
+                            console.log('CHACH_3D_DELAY SHORTEN_CALCULATION', JSON.stringify({
+                                shelfIndex: shelfIndex + 1,
+                                beamIndex: i,
+                                targetLengthFromKey: targetLengthLocal,
+                                legBeamHeightCm: legBeamHeightCalc,
+                                defaultShortenCm: defaultShortenCalc,
+                                extraShortenCm: extraShortenCalc,
+                                shortenedLengthTarget,
+                                fullLengthTarget,
+                                isFullLengthTarget,
+                                isShortenedTarget,
+                                shouldApplyShortening,
+                                isEndBeam: !isTopShelf && (i === 0 || i === surfaceBeams.length - 1)
+                            }, null, 2));
+                        }
+                    }
+                    
                     // בדיקה אם זה קורות מקוצרות או לא מקוצרות לפי הצ'קבוקס הנוכחי
+                    // 🎯 עכשיו נבדוק את האורך הסופי של הקורה (אחרי החלטה על קיצור)
                     let shouldShowThisBeam = true;
                     
                     if (isPreliminaryDrillsCabinet && firstUncheckedCompositeKey) {
@@ -6238,38 +6565,22 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                         const firstUncheckedBeamLengthLocal = parseFloat(parts.slice(1).join('-')); // אורך הקורה
                         
                         if (firstUncheckedParamNameLocal === 'shelfs') {
-                            // חישוב אורך הקורה הנוכחית (לפני או אחרי קיצור)
-                            let currentBeamLength = beam.depth;
+                            // חישוב אורך הקורה הסופי (אחרי החלטה על קיצור)
+                            let finalBeamLength: number;
                             
-                            // אם הקורה הזו מקוצרת, נחשב את האורך המקוצר
-                            if (!isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) {
-                                const outsideParamCabShelves = this.getParam('is-reinforcement-beams-outside');
-                                const isOutsideCabShelves = !!(outsideParamCabShelves && outsideParamCabShelves.default === true);
-                                if (isOutsideCabShelves) {
-                                    currentBeamLength = Math.max(0.1, this.surfaceLength - ((2 * frameBeamWidth) + (2 * legDepth)));
-                                } else {
-                                    currentBeamLength = this.surfaceLength - 2 * frameBeamWidth;
-                                }
+                            // אם הקורה הזו אמורה להיות מקוצרת
+                            if (shouldApplyShortening && !isTopShelf && (i === 0 || i === surfaceBeams.length - 1)) {
+                                finalBeamLength = shortenedLengthTarget;
                             } else {
                                 // קורה לא מקוצרת
-                                currentBeamLength = this.surfaceLength;
+                                finalBeamLength = fullLengthTarget;
                             }
                             
                             // השוואה עם האורך של הצ'קבוקס הנוכחי
-                            const legParamForShorteningCheck = this.getParam('leg');
-                            const legBeamSelectedCheck = legParamForShorteningCheck?.beams?.[legParamForShorteningCheck.selectedBeamIndex || 0];
-                            const legBeamHeightCheck = legBeamSelectedCheck?.height / 10 || 0;
-                            const outsideParamCabForShorteningCheck = this.getParam('is-reinforcement-beams-outside');
-                            const isOutsideCabForShorteningCheck = !!(outsideParamCabForShorteningCheck && outsideParamCabForShorteningCheck.default === true);
-                            const defaultShortenCheck = (legBeamHeightCheck * 2);
-                            const extraShortenCheck = isOutsideCabForShorteningCheck ? (2 * (this.frameWidth || 0)) : 0;
-                            const shortenedLengthCheck = Math.max(0.1, this.surfaceLength - (defaultShortenCheck + extraShortenCheck));
-                            const fullLengthCheck = this.surfaceLength;
-                            
-                            const isCurrentBeamShortened = Math.abs(currentBeamLength - shortenedLengthCheck) < 0.1;
-                            const isCurrentBeamFullLength = Math.abs(currentBeamLength - fullLengthCheck) < 0.1;
-                            const isShortenedBeamCheck = Math.abs(firstUncheckedBeamLengthLocal - shortenedLengthCheck) < 0.1;
-                            const isFullLengthBeamCheck = Math.abs(firstUncheckedBeamLengthLocal - fullLengthCheck) < 0.1;
+                            const isCurrentBeamShortened = Math.abs(finalBeamLength - shortenedLengthTarget) < 0.1;
+                            const isCurrentBeamFullLength = Math.abs(finalBeamLength - fullLengthTarget) < 0.1;
+                            const isShortenedBeamCheck = Math.abs(firstUncheckedBeamLengthLocal - shortenedLengthTarget) < 0.1;
+                            const isFullLengthBeamCheck = Math.abs(firstUncheckedBeamLengthLocal - fullLengthTarget) < 0.1;
                             
                             // אם הצ'קבוקס הוא של קורות מקוצרות - נציג רק קורות מקוצרות
                             if (isShortenedBeamCheck) {
@@ -6278,14 +6589,64 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                                 // אם הצ'קבוקס הוא של קורות לא מקוצרות - נציג רק קורות לא מקוצרות
                                 shouldShowThisBeam = isCurrentBeamFullLength;
                             }
+                            
+                            console.log('CHACH_3D_DELAY SHELF_BEAM_VISIBILITY_DECISION', JSON.stringify({
+                                shelfIndex: shelfIndex + 1,
+                                beamIndex: i,
+                                isTopShelf,
+                                activeCompositeKey: firstUncheckedCompositeKey,
+                                targetLengthFromKey: firstUncheckedBeamLengthLocal,
+                                finalBeamLength,
+                                shortenedLengthTarget,
+                                fullLengthTarget,
+                                shouldApplyShortening,
+                                isEndBeam: !isTopShelf && (i === 0 || i === surfaceBeams.length - 1),
+                                calculations: {
+                                    isCurrentBeamShortened,
+                                    isCurrentBeamFullLength,
+                                    isShortenedBeamCheck,
+                                    isFullLengthBeamCheck,
+                                    shortenedDiff: Math.abs(finalBeamLength - shortenedLengthTarget),
+                                    fullLengthDiff: Math.abs(finalBeamLength - fullLengthTarget),
+                                    targetToShortenedDiff: Math.abs(firstUncheckedBeamLengthLocal - shortenedLengthTarget),
+                                    targetToFullLengthDiff: Math.abs(firstUncheckedBeamLengthLocal - fullLengthTarget)
+                                },
+                                decision: {
+                                    shouldShowThisBeam,
+                                    reason: isShortenedBeamCheck 
+                                        ? (isCurrentBeamShortened ? 'SHOW_SHORTENED' : 'HIDE_NOT_SHORTENED')
+                                        : isFullLengthBeamCheck
+                                        ? (isCurrentBeamFullLength ? 'SHOW_FULL_LENGTH' : 'HIDE_NOT_FULL_LENGTH')
+                                        : 'SHOW_ALL'
+                                }
+                            }, null, 2));
+                        }
+                    } else {
+                        // לא במצב preliminary-drills - לוג קצר
+                        if (isPreliminaryDrillsCabinet) {
+                            console.log('CHACH_3D_DELAY SHELF_BEAM_VISIBILITY_DECISION', JSON.stringify({
+                                shelfIndex: shelfIndex + 1,
+                                beamIndex: i,
+                                isTopShelf,
+                                activeCompositeKey: firstUncheckedCompositeKey,
+                                note: 'NOT_IN_PRELIMINARY_DRILLS_MODE_OR_NOT_SHELFS',
+                                shouldShowThisBeam: true
+                            }, null, 2));
                         }
                     }
                     
                     if (!shouldShowThisBeam) {
+                        console.log('CHACH_3D_DELAY SHELF_BEAM_SKIPPED', JSON.stringify({
+                            shelfIndex: shelfIndex + 1,
+                            beamIndex: i,
+                            isTopShelf,
+                            activeCompositeKey: firstUncheckedCompositeKey,
+                            reason: 'shouldShowThisBeam = false'
+                        }, null, 2));
                         continue; // מדלג על יצירת הקורה הזאת אם היא לא צריכה להיות מוצגת
                     }
-
                     if (
+                        shouldApplyShortening &&
                         !isTopShelf &&
                         (i === 0 || i === surfaceBeams.length - 1)
                     ) {
@@ -6330,6 +6691,7 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 this.beamMeshes.push(mesh);
                 // הוספת ברגים או חורים לקורת המדף
                     let isShortenedBeam =
+                        shouldApplyShortening &&
                         !isTopShelf &&
                         (i === 0 || i === surfaceBeams.length - 1)
                             ? 'not-top'
@@ -6347,10 +6709,18 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                         currentY + frameBeamHeightCorrect,
                         beamHeightCorrect,
                         frameBeamWidth,
-                        isShortenedBeam
+                        isShortenedBeam,
+                        isPreliminaryDrillsShelfForScrews // העברת התוצאה המחושבת מראש
                     );
                 }
+            const surfaceBeamsEndTime = performance.now();
             this.endTimer(`CABINET - Render ${surfaceBeams.length} Beams for Shelf ${shelfIndex + 1}`);
+            console.log('CHACH_3D_DELAY SURFACE_BEAMS_LOOP_DONE', JSON.stringify({
+                shelfIndex: shelfIndex + 1,
+                surfaceBeamsCount: surfaceBeams.length,
+                surfaceBeamsDuration: surfaceBeamsEndTime - surfaceBeamsStartTime,
+                timestamp: surfaceBeamsEndTime
+            }, null, 2));
             } // סיום if (shouldShowShelfBeamsCabinet)
             
             const isAssemblyInstructionStep =
@@ -6391,6 +6761,7 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 }
 
                 this.startTimer(`CABINET - Create and Render Frame Beams for Shelf ${shelfIndex + 1}`);
+                const frameBeamsStartTime = performance.now();
                 const frameBeams = this.createFrameBeams(
                     this.surfaceWidth,
                     this.surfaceLength,
@@ -6632,16 +7003,39 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                     }
                 }
                 // סיום לולאת frameBeams
-
+                const frameBeamsEndTime = performance.now();
                 this.endTimer(`CABINET - Create and Render Frame Beams for Shelf ${shelfIndex + 1}`);
+                console.log('CHACH_3D_DELAY FRAME_BEAMS_LOOP_DONE', JSON.stringify({
+                    shelfIndex: shelfIndex + 1,
+                    frameBeamsCount: frameBeams.length,
+                    frameBeamsDuration: frameBeamsEndTime - frameBeamsStartTime,
+                    timestamp: frameBeamsEndTime
+                }, null, 2));
             }
             
             // Add the height of the shelf itself for the next shelf
             currentY += frameBeamHeightCorrect + beamHeightCorrect;
+            const shelfEndTime = performance.now();
             this.endTimer(`CABINET - Shelf ${shelfIndex + 1}`);
+            console.log('CHACH_3D_DELAY SHELF_DONE', JSON.stringify({ 
+                shelfIndex: shelfIndex + 1,
+                totalShelves: this.shelves.length,
+                shelfDuration: shelfEndTime - shelfStartTime,
+                currentY: currentY,
+                totalMeshesSoFar: this.beamMeshes.length,
+                timestamp: shelfEndTime
+            }, null, 2));
         }
+        const shelvesLoopEndTime = performance.now();
         this.endTimer('CABINET - Total Rendering');
-        } // סיום if (!this.isTable && !this.isFuton && !this.isPlanter && !this.isBox)
+        const endTs = (typeof performance !== 'undefined' && (performance as any).now) ? (performance as any).now() : Date.now();
+        console.log('CHACH_3D_DELAY RENDER_COMPLETE', JSON.stringify({ 
+            durationMs: endTs - this._updateBeamsStartTs,
+            shelvesLoopDuration: shelvesLoopEndTime - shelvesLoopStartTime,
+            totalShelves: this.shelves.length,
+            totalMeshes: this.beamMeshes.length,
+            timestamp: endTs
+        }, null, 2));
         
         // לא מעדכן מיקום מצלמה/zoom אחרי עדכון אלמנטים
         // Ensure scene rotation is maintained after updates
@@ -6681,6 +7075,33 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
             }, 1000);
         }
         
+        }
+        } finally {
+            // סימון שסיימנו ריצה
+            const finallyStartTime = performance.now();
+            this._updateBeamsInFlight = false;
+            const pending = this._pendingUpdateBeams;
+            this._pendingUpdateBeams = null;
+            console.log('CHACH_3D_DELAY FINALLY_START', JSON.stringify({ 
+                hasPending: !!pending,
+                timestamp: finallyStartTime
+            }, null, 2));
+            // אם התקבלה בקשה בזמן ריצה - נריץ עדכון נוסף מיידית (ממוזער)
+            if (pending) {
+                console.log('CHACH_3D_DELAY PENDING_FLUSH', JSON.stringify({ 
+                    pending: pending,
+                    timestamp: performance.now()
+                }, null, 2));
+                this.scheduleUpdateBeams(pending.skipPricing === true, 0);
+            }
+            const endTs = (typeof performance !== 'undefined' && (performance as any).now) ? (performance as any).now() : Date.now();
+            console.log('CHACH_3D_DELAY UPDATE_FINALLY_DONE', JSON.stringify({ 
+                totalDurationMs: endTs - this._updateBeamsStartTs,
+                finalMeshCount: this.beamMeshes.length,
+                finalScrewGroupCount: this.screwGroups.length,
+                timestamp: endTs
+            }, null, 2));
+        }
     }
     
     
@@ -10456,14 +10877,10 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         shelfY: number,
         beamHeight: number,
         frameBeamWidth: number,
-        isShortenedBeam: string = 'top'
+        isShortenedBeam: string = 'top',
+        isPreliminaryDrillsShelf: boolean = false // פרמטר חדש - מחושב מראש מחוץ ללולאה
     ) {
-        // בדיקה אם אנחנו במצב preliminary-drills
-        const isPreliminaryDrills = this.isPreliminaryDrillsMode();
-        const firstUncheckedKey = isPreliminaryDrills ? this.getFirstUncheckedBeamParamName() : null;
-        // חילוץ paramName מה-compositeKey (format: "paramName-beamLength")
-        const firstUncheckedParam = firstUncheckedKey ? firstUncheckedKey.split('-')[0] : null;
-        const isPreliminaryDrillsShelf = isPreliminaryDrills && firstUncheckedParam === 'shelfs';
+        // 🎯 הבדיקה כבר בוצעה מחוץ ללולאה - משתמשים בפרמטר
         
         // חישוב אורך הבורג - במצב preliminary-drills לפי height של קורת המדף, אחרת לפי הלוגיקה הרגילה
         const calculatedScrewLength = isPreliminaryDrillsShelf 
