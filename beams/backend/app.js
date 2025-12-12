@@ -3,6 +3,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const fs = require("fs");
+const multer = require("multer");
+const { v4: uuidv4 } = require("uuid");
 
 const userRoutes = require("./routes/user");
 const productsRoutes = require("./routes/products");
@@ -48,6 +50,91 @@ app.use("/api/products", productsRoutes);
 app.use("/api/screws", screwsRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/woods", woodsRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true });
+});
+
+// File upload endpoints
+const uploadsDir = path.join(__dirname, '..', '..', 'server', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const uniqueId = uuidv4();
+    const ext = path.extname(file.originalname);
+    const name = path.basename(file.originalname, ext);
+    const uniqueFilename = `${timestamp}-${uniqueId}-${name}${ext}`;
+    cb(null, uniqueFilename);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  
+  res.json({
+    success: true,
+    filename: req.file.filename,
+    originalName: req.file.originalname,
+    size: req.file.size,
+    path: `/api/files/${req.file.filename}`
+  });
+});
+
+app.get('/api/files', (req, res) => {
+  fs.readdir(uploadsDir, (err, files) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to read files directory' });
+    }
+    
+    const actualFiles = files.filter(f => f !== '.gitkeep' && !f.startsWith('.'));
+    
+    const fileList = actualFiles.map(filename => {
+      const filePath = path.join(uploadsDir, filename);
+      const stats = fs.statSync(filePath);
+      return {
+        filename,
+        size: stats.size,
+        uploadedAt: stats.birthtime,
+        url: `/api/files/${filename}`
+      };
+    });
+    
+    res.json({ files: fileList });
+  });
+});
+
+app.get('/api/files/:name', (req, res) => {
+  const filename = req.params.name;
+  const filePath = path.join(uploadsDir, filename);
+  
+  // Security: prevent directory traversal
+  if (!filePath.startsWith(uploadsDir)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+  
+  res.sendFile(filePath);
+});
 
 // Blender parameters endpoint
 const PARAMS_FILE = path.join(__dirname, '..', 'blender_params.json');

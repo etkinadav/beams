@@ -10,10 +10,10 @@
     "start:server": "nodemon ./beams/backend/server.js",
     "extract-translations": "ngx-translate-extract --input ./src --output ./src/assets/i18n/*.json --clean --sort --format namespaced-json --marker _",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "npm --prefix server run dev",
+    "dev:server": "nodemon ./beams/backend/server.js",
     "dev:client": "ng serve --proxy-config proxy.conf.json",
     "start": "node server/index.js",
-    "heroku-postbuild": "npm install --prefix server && npm run build"
+    "heroku-postbuild": "npm run build"
   },
   "private": true,
   "dependencies": {
@@ -53,6 +53,7 @@
     "rxjs": "~7.8.0",
     "three": "^0.171.0",
     "tslib": "^2.3.0",
+    "uuid": "^9.0.1",
     "validator": "^13.11.0",
     "zone.js": "~0.13.0"
   },
