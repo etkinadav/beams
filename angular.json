@@ -4,13 +4,6 @@
   "newProjectRoot": "projects",
   "projects": {
     "mean-corse-01": {
-      "i18n": {
-        "sourceLocale": "he",
-        "locales": {
-          "en": "beams/src/assets/i18n/en.json",
-          "ar": "beams/src/assets/i18n/ar.json"
-        }
-      },
       "projectType": "application",
       "schematics": {},
       "root": "beams",
@@ -38,33 +31,17 @@
             "scripts": []
           },
           "configurations": {
-            "he": {
-              "localize": [
-                "he"
-              ]
-            },
-            "en": {
-              "localize": [
-                "en"
-              ]
-            },
-            "ar": {
-              "localize": [
-                "ar"
-              ]
-            },
             "production": {
-              "localize": true,
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumWarning": "3mb",
+                  "maximumError": "5mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "50kb",
+                  "maximumError": "100kb"
                 }
               ],
               "outputHashing": "all"
@@ -75,8 +52,7 @@
               "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
-              "namedChunks": true,
-              "localize": false
+              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
@@ -88,15 +64,6 @@
             "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
-            "he": {
-              "browserTarget": "mean-corse-01:build:development,he"
-            },
-            "en": {
-              "browserTarget": "mean-corse-01:build:development,en"
-            },
-            "ar": {
-              "browserTarget": "mean-corse-01:build:development,ar"
-            },
             "production": {
               "browserTarget": "mean-corse-01:build:production"
             },
