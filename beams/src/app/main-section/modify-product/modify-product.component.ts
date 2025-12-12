@@ -385,7 +385,11 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 legBeamWidth: legWidth,
                 legBeamLength: legLength,
                 instructions: this.product?.instructions || [],
-                currentInstructionStage: this.currentInstructionStage
+                currentInstructionStage: this.currentInstructionStage,
+                productExists: !!this.product,
+                hasInstructions: !!this.product?.instructions,
+                instructionsLength: this.product?.instructions?.length || 0,
+                isInstructionMode: this.isInstructionMode
             }, null, 2));
             
             // איפוס מבט בפעם הראשונה בלבד
@@ -939,6 +943,34 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                     }
                 }
             }
+        }
+        
+        // סידור מחדש של ה-result כדי להפוך את הסדר של שלבים 3 ו-4 כאשר is-reinforcement-beams-outside חיובי
+        // כאשר is-reinforcement-beams-outside חיובי: שלב 3 = קורות רגל, שלב 4 = קורות חיזוק לרוחב
+        // כלומר: קורות רגל לפני קורות חיזוק
+        const outsideParamForSort = this.getParam('is-reinforcement-beams-outside');
+        const rawOutsideValueForSort = outsideParamForSort?.default;
+        const isExternalReinforcementEnabledForSort =
+            typeof rawOutsideValueForSort === 'number'
+                ? rawOutsideValueForSort > 0
+                : rawOutsideValueForSort === true;
+        
+        if (isExternalReinforcementEnabledForSort) {
+            // כאשר חיזוק חיצוני - מסדרים כך שקורות רגל יבואו לפני קורות חיזוק
+            result.sort((a, b) => {
+                // קורות רגל (leg ללא reinforcementDirection) לפני קורות חיזוק (leg עם reinforcementDirection)
+                if (a.paramName === 'leg' && b.paramName === 'leg') {
+                    const aIsReinforcement = !!a.reinforcementDirection;
+                    const bIsReinforcement = !!b.reinforcementDirection;
+                    if (aIsReinforcement && !bIsReinforcement) {
+                        return 1; // a (חיזוק) אחרי b (רגל)
+                    } else if (!aIsReinforcement && bIsReinforcement) {
+                        return -1; // a (רגל) לפני b (חיזוק)
+                    }
+                }
+                // שמירה על הסדר המקורי עבור שאר הקורות
+                return 0;
+            });
         }
         
         const reinforcementEntries = result.filter(info =>
@@ -2837,6 +2869,10 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
         this.http.get(`/api/products/${id}`).subscribe({
             next: (data) => {
                 this.product = data;
+                // Ensure instructions are preserved
+                if (!this.product.instructions && (data as any).instructions) {
+                    this.product.instructions = (data as any).instructions;
+                }
                 const prod: any = data;
                 
                 // 🎯 לוג חיפוש פרמטר leg בנתונים שהתקבלו מהבקאנד
@@ -2869,11 +2905,43 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 // אם זה תת-מוצר (יש configIndex), נעדכן את הפרמטרים לפי ה-configuration
                 if (configIndex !== undefined && prod.configurations && prod.configurations[configIndex]) {
                     console.log(`SAVE_PRO - Applying configuration #${configIndex}: ${prod.configurations[configIndex].translatedName}`);
+                    // Ensure instructions are preserved before modifying prod
+                    const instructionsBackup = prod.instructions || this.product.instructions;
                     prod.params = this.updateParamsWithConfiguration(prod.params, configIndex, prod);
                     prod.translatedName = prod.configurations[configIndex].translatedName;
                     prod.configurationName = prod.configurations[configIndex].name;
                     prod.configurationIndex = configIndex;
+                    // Restore instructions if they were lost
+                    if (!prod.instructions && instructionsBackup) {
+                        prod.instructions = instructionsBackup;
+                        this.product.instructions = instructionsBackup;
+                    }
                 }
+                // Final check: ensure instructions are set on this.product
+                if (!this.product.instructions && prod.instructions) {
+                    this.product.instructions = prod.instructions;
+                }
+                // Also ensure prod.instructions is set if it exists in data
+                if (!prod.instructions && (data as any).instructions) {
+                    prod.instructions = (data as any).instructions;
+                    this.product.instructions = (data as any).instructions;
+                }
+                console.log('INSTRUCTIONS_CHECK - After product load:', {
+                    hasInstructions: !!this.product.instructions,
+                    instructionsLength: this.product.instructions?.length || 0,
+                    instructions: this.product.instructions,
+                    dataHasInstructions: !!(data as any).instructions,
+                    dataInstructionsLength: (data as any).instructions?.length || 0,
+                    productExists: !!this.product,
+                    productInstructions: this.product?.instructions
+                });
+                // Ensure instructions are always set on product object
+                if (this.product && !this.product.instructions && (data as any).instructions) {
+                    this.product.instructions = (data as any).instructions;
+                    console.log('INSTRUCTIONS_CHECK - Restored instructions to product:', this.product.instructions);
+                }
+                // Trigger change detection to ensure template updates
+                this.cdr.detectChanges();
                 
                     // יצירת deep copy של הפרמטרים כדי למנוע שינוי של המקור
                     const paramsCopy = this.deepCopyParams(prod.params || []);
@@ -6011,10 +6079,19 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                             shouldShowReinforcementBeams = false;
                         }
                     } else {
-                        if (!hasValidLength || isLegBeamLength) {
+                        // כאשר חיזוק פנימי (isExternalReinforcementDisabled)
+                        // אם יש כיוון (x-spanning או z-spanning), מציגים רק את קורות הרגל לכיוון הזה
+                        // לא מציגים קורות חיזוק
+                        if (firstUncheckedReinforcementDirection) {
+                            // יש כיוון מוגדר - מציגים רק קורות רגל (לא קורות חיזוק)
+                            shouldShowLegBeams = isLegBeamLength;
+                            shouldShowReinforcementBeams = false;
+                        } else if (!hasValidLength || isLegBeamLength) {
+                            // אין כיוון מוגדר או זה אורך רגל - מציגים קורות רגל
                             shouldShowLegBeams = true;
                             shouldShowReinforcementBeams = false;
                         } else if (isXReinforcementLength || isZReinforcementLength) {
+                            // זה קורת חיזוק (אבל לא אמור להיות כאשר יש כיוון מוגדר)
                             shouldShowLegBeams = false;
                             shouldShowReinforcementBeams = true;
                         }
@@ -6047,7 +6124,29 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 legHeight
             );
             if (shouldShowLegBeams) {
+            // פירוק ה-compositeKey ל-checking כיוון אם יש
+            const legDirection = activeCompositeKeyGlobal?.includes('x-spanning')
+                ? 'x-spanning'
+                : activeCompositeKeyGlobal?.includes('z-spanning')
+                    ? 'z-spanning'
+                    : null;
+            
             for (const leg of legs) {
+                // אם יש כיוון מוגדר, נציג רק את הרגליים המתאימות
+                let shouldShowThisLeg = true;
+                if (legDirection === 'x-spanning') {
+                    // x-spanning = רגליים עם אותו x (שמאליות או ימניות)
+                    // נציג רק רגליים שמאליות (x < 0) - סט אחד
+                    shouldShowThisLeg = leg.x < 0;
+                } else if (legDirection === 'z-spanning') {
+                    // z-spanning = רגליים עם אותו z (אחוריות או קדמיות)
+                    // נציג רק רגליים אחוריות (z < 0) - סט אחד
+                    shouldShowThisLeg = leg.z < 0;
+                }
+                
+                if (!shouldShowThisLeg) {
+                    continue; // מדלג על רגל זו
+                }
                 
                 const geometry = new THREE.BoxGeometry(
                     leg.width,
@@ -6093,7 +6192,26 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                 !isPreliminaryDrills ||
                 (activeCompositeKeyGlobal && activeCompositeKeyGlobal.startsWith('leg'))
             ) {
-                this.addScrewsToLegs(totalShelves, legs, frameBeamHeightCorrect, 0, isOutsideEnabled);
+                // פירוק ה-compositeKey לזיהוי כיוון אם יש
+                const legDirection = activeCompositeKeyGlobal?.includes('x-spanning')
+                    ? 'x-spanning'
+                    : activeCompositeKeyGlobal?.includes('z-spanning')
+                        ? 'z-spanning'
+                        : null;
+                
+                // אם יש כיוון מוגדר, מסננים רק את הרגליים המתאימות
+                let legsToAddScrews = legs;
+                if (legDirection === 'x-spanning') {
+                    // x-spanning = רגליים עם אותו x (שמאליות או ימניות)
+                    // נציג רק רגליים שמאליות (x < 0) - סט אחד
+                    legsToAddScrews = legs.filter(leg => leg.x < 0);
+                } else if (legDirection === 'z-spanning') {
+                    // z-spanning = רגליים עם אותו z (אחוריות או קדמיות)
+                    // נציג רק רגליים אחוריות (z < 0) - סט אחד
+                    legsToAddScrews = legs.filter(leg => leg.z < 0);
+                }
+                
+                this.addScrewsToLegs(totalShelves, legsToAddScrews, frameBeamHeightCorrect, 0, isOutsideEnabled);
             }
         }
         
@@ -6155,9 +6273,9 @@ export class ModifyProductComponent implements AfterViewInit, OnDestroy, OnInit 
                         shouldShowReinforcementBeamsCabinet = isCurrentReinforcementCabinet;
                     }
                     } else {
-                    shouldShowReinforcementBeamsCabinet = reinforcementDirectionFromKey
-                        ? true
-                        : false;
+                        // כאשר חיזוק פנימי (isOutsideCab = false)
+                        // אם יש כיוון (x-spanning או z-spanning), מציגים רק קורות רגל (לא קורות חיזוק)
+                        shouldShowReinforcementBeamsCabinet = false; // לא מציגים קורות חיזוק כאשר יש כיוון מוגדר
                     }
                 }
             }

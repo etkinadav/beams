@@ -42,3 +42,9 @@ testem.log
 Thumbs.db
 /backend/node_modules/
 /backend/package-lock.json
+
+# Server uploads (keep directory structure, ignore files)
+/server/uploads/*
+!/server/uploads/.gitkeep
+/server/node_modules/
+/server/package-lock.json
