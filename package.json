@@ -13,7 +13,7 @@
     "dev:server": "npm --prefix server run dev",
     "dev:client": "ng serve --proxy-config proxy.conf.json",
     "start": "node server/index.js",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm install --prefix server && npm run build"
   },
   "private": true,
   "dependencies": {
