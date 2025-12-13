@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { DirectionService } from '../../direction.service';
 import { ThreedPlannerService, BaseFile, Machine } from '../../services/threedplanner.service';
 import { environment } from '../../../environments/environment';
@@ -79,7 +80,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
   constructor(
     private directionService: DirectionService,
-    private threedPlannerService: ThreedPlannerService
+    private threedPlannerService: ThreedPlannerService,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit() {
@@ -1220,8 +1222,12 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.isAddingMachine = true;
       this.updateGridPointsVisibility();
       
-      // Show popup message
-      alert('בחר נקודת פינה למיקום המכונה');
+      // Show snackbar message
+      this.snackBar.open('בחר נקודת פינה למיקום המכונה', '', {
+        duration: 5000, // 5 seconds
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
     }
     console.log('🔄 [3D Planner] Add machine mode toggled:', this.isAddingMachine);
   }
