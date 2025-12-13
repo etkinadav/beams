@@ -348,7 +348,7 @@
                     (click)="selectedCorner = corner; $event.stopPropagation()">
                   <label [for]="'corner-' + corner" class="mb-0 flex-grow-1" style="cursor: pointer;">
                     <div class="d-flex align-items-center gap-2">
-                      <mat-icon>arrow_forward</mat-icon>
+                      <mat-icon [style.color]="getCornerArrowColorHex(corner)">arrow_forward</mat-icon>
                       <span>כיוון החץ ה{{ getCornerArrowColor(corner) }}</span>
                     </div>
                   </label>

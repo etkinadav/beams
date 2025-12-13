@@ -830,9 +830,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     
     const directions = [
       { corner: 3, angle: 45, label: '1', color: 0xff0000 },    // Arrow southeast (45°) → bottom-left corner at point - Red
-      { corner: 4, angle: 135, label: '2', color: 0x00ff00 },   // Arrow southwest (135°) → bottom-right corner at point - Green
+      { corner: 4, angle: 135, label: '2', color: 0x008800 },   // Arrow southwest (135°) → bottom-right corner at point - Dark Green
       { corner: 1, angle: -45, label: '3', color: 0x0000ff },   // Arrow northeast (-45°) → top-left corner at point - Blue
-      { corner: 2, angle: -135, label: '4', color: 0xffff00 }   // Arrow northwest (-135°) → top-right corner at point - Yellow
+      { corner: 2, angle: -135, label: '4', color: 0xccaa00 }   // Arrow northwest (-135°) → top-right corner at point - Dark Yellow
     ];
     
     directions.forEach(dir => {
@@ -1043,6 +1043,21 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       case 3: return 'אדום';
       case 4: return 'ירוק';
       default: return '';
+    }
+  }
+
+  getCornerArrowColorHex(corner: number): string {
+    // Map corner number to arrow color hex code (matching the 3D arrows)
+    // Corner 1 → Blue arrow (0x0000ff)
+    // Corner 2 → Dark Yellow arrow (0xccaa00)
+    // Corner 3 → Red arrow (0xff0000)
+    // Corner 4 → Dark Green arrow (0x008800)
+    switch (corner) {
+      case 1: return '#0000FF'; // Blue (matches 0x0000ff)
+      case 2: return '#CCAA00'; // Dark Yellow (matches 0xccaa00)
+      case 3: return '#FF0000'; // Red (matches 0xff0000)
+      case 4: return '#008800'; // Dark Green (matches 0x008800)
+      default: return '#000000'; // Black
     }
   }
 
