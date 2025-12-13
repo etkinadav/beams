@@ -283,34 +283,13 @@
             </div>
           </div>
 
-          <!-- Corner Selection -->
-          <div class="mb-4">
-            <h6 class="mb-3">בחר פינה:</h6>
-            <div class="corner-selection-container d-flex justify-content-center">
-              <div class="corner-square" style="position: relative; width: 200px; height: 200px; border: 3px solid #333;">
-                <div 
-                  *ngFor="let corner of [1,2,3,4]; let i = index"
-                  class="corner-button"
-                  [class.selected]="selectedCorner === corner"
-                  [style.position]="'absolute'"
-                  [style.width]="'40px'"
-                  [style.height]="'40px'"
-                  [style.border]="'2px solid #666'"
-                  [style.borderRadius]="'50%'"
-                  [style.backgroundColor]="selectedCorner === corner ? '#2196F3' : '#f0f0f0'"
-                  [style.cursor]="'pointer'"
-                  [style.display]="'flex'"
-                  [style.alignItems]="'center'"
-                  [style.justifyContent]="'center'"
-                  [style.fontWeight]="'bold'"
-                  [style.transition]="'all 0.2s'"
-                  [style.top]="i < 2 ? '10px' : 'auto'"
-                  [style.bottom]="i >= 2 ? '10px' : 'auto'"
-                  [style.left]="(i === 0 || i === 2) ? '10px' : 'auto'"
-                  [style.right]="(i === 1 || i === 3) ? '10px' : 'auto'"
-                  (click)="onCornerSelected(corner)">
-                  {{ corner }}
-                </div>
+          <!-- Corner Selection Info (already selected via arrows) -->
+          <div class="mb-4" *ngIf="selectedCorner">
+            <h6 class="mb-2">פינה נבחרה:</h6>
+            <div class="p-3 rounded-2" style="background-color: #e3f2fd; border: 2px solid #2196F3;">
+              <div class="d-flex align-items-center gap-2">
+                <mat-icon>check_circle</mat-icon>
+                <span class="fw-bold">פינה #{{ selectedCorner }}</span>
               </div>
             </div>
           </div>

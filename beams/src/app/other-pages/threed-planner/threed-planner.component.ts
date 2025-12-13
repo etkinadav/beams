@@ -65,6 +65,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   // Point selection and machine selection
   selectedPoint: THREE.Mesh | null = null;
   showMachineSelection: boolean = false;
+  showDirectionSelection: boolean = false; // Show direction arrows for corner selection
+  directionArrowsGroup: THREE.Group | null = null; // Group containing direction arrows
   availableMachines: Machine[] = [];
   selectedMachine: Machine | null = null;
   selectedCorner: number | null = null; // 1, 2, 3, or 4 for the 4 corners
@@ -621,6 +623,36 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Only allow point selection if in "adding machine" mode
     if (!this.isAddingMachine) return;
     
+    // If direction selection is active, check for arrow clicks first
+    if (this.showDirectionSelection && this.directionArrowsGroup) {
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      const arrowIntersects = this.raycaster.intersectObjects(this.directionArrowsGroup.children, false);
+      
+      if (arrowIntersects.length > 0) {
+        let clickedObject = arrowIntersects[0].object;
+        
+        // If clicked on hitbox, get the arrow helper
+        if ((clickedObject as any).arrowHelper) {
+          clickedObject = (clickedObject as any).arrowHelper;
+        }
+        
+        const corner = (clickedObject as any).corner;
+        
+        if (corner && (clickedObject as any).isDirectionArrow) {
+          // Corner selected, remove arrows and show machine selection
+          this.selectedCorner = corner;
+          this.removeDirectionArrows();
+          
+          // Load machines and show selection dialog
+          this.loadMachinesForSelection();
+          this.showMachineSelection = true;
+          
+          console.log('✅ [3D Planner] Corner selected:', corner);
+          return;
+        }
+      }
+    }
+    
     if (!this.gridPointsGroup) return;
 
     // Update raycaster
@@ -642,21 +674,148 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         return; // Not a point, ignore
       }
       
-      // Reset previous selected point
+      // Reset previous selected point and arrows
       if (this.selectedPoint && this.selectedPoint !== clickedObject) {
         this.resetPointToOriginal(this.selectedPoint);
+        this.removeDirectionArrows();
       }
       
       // Select new point
       this.selectedPoint = clickedObject;
       this.highlightSelectedPoint(clickedObject);
       
-      // Load machines and show selection dialog
-      this.loadMachinesForSelection();
-      this.showMachineSelection = true;
+      // Show direction arrows for corner selection
+      this.showDirectionArrows(clickedObject.position);
       
       console.log('✅ [3D Planner] Point selected at:', clickedObject.position);
     }
+  }
+
+  private showDirectionArrows(pointPosition: THREE.Vector3) {
+    // Remove existing arrows if any
+    this.removeDirectionArrows();
+    
+    // Create arrows group
+    this.directionArrowsGroup = new THREE.Group();
+    
+    // Arrow parameters
+    const arrowLength = 0.5;
+    const arrowHeight = pointPosition.y + 0.15; // Slightly above the point
+    
+    // Create 4 arrows at 45-degree angles
+    // The arrow points in the direction where the machine will extend
+    // The corner at the point is OPPOSITE to the arrow direction
+    //
+    // Arrow directions and corresponding corners:
+    // - Arrow southeast (45°): machine extends southeast → top-left corner (northwest) at point = Corner 1
+    // - Arrow southwest (135°): machine extends southwest → top-right corner (northeast) at point = Corner 2
+    // - Arrow northeast (-45°): machine extends northeast → bottom-left corner (southwest) at point = Corner 3
+    // - Arrow northwest (-135°): machine extends northwest → bottom-right corner (southeast) at point = Corner 4
+    
+    // Arrow directions and corner mapping:
+    // In Three.js: Z increases forward (away from camera), so max Z = forward/up, min Z = back/down
+    // Arrow southeast (45°): right and down → bottom-right corner at point → Corner 4
+    // Arrow southwest (135°): left and down → bottom-left corner at point → Corner 3
+    // Arrow northeast (-45°): right and up → top-right corner at point → Corner 2
+    // Arrow northwest (-135°): left and up → top-left corner at point → Corner 1
+    //
+    // But if Z is inverted (max Z = down, min Z = up), we need to swap:
+    // Arrow southeast (45°): right and down → top-right corner at point → Corner 2
+    // Arrow southwest (135°): left and down → top-left corner at point → Corner 1
+    // Arrow northeast (-45°): right and up → bottom-right corner at point → Corner 4
+    // Arrow northwest (-135°): left and up → bottom-left corner at point → Corner 3
+    
+    const directions = [
+      { corner: 3, angle: 45, label: '1', color: 0xff0000 },    // Arrow southeast (45°) → bottom-left corner at point - Red
+      { corner: 4, angle: 135, label: '2', color: 0x00ff00 },   // Arrow southwest (135°) → bottom-right corner at point - Green
+      { corner: 1, angle: -45, label: '3', color: 0x0000ff },   // Arrow northeast (-45°) → top-left corner at point - Blue
+      { corner: 2, angle: -135, label: '4', color: 0xffff00 }   // Arrow northwest (-135°) → top-right corner at point - Yellow
+    ];
+    
+    directions.forEach(dir => {
+      // Convert angle to radians
+      const angleRad = (dir.angle * Math.PI) / 180;
+      
+      // Calculate arrow direction (pointing away from the point)
+      const direction = new THREE.Vector3(
+        Math.cos(angleRad),
+        0,
+        Math.sin(angleRad)
+      );
+      
+      // Arrow starts from the point and extends outward
+      const origin = new THREE.Vector3(
+        pointPosition.x,
+        arrowHeight,
+        pointPosition.z
+      );
+      
+      const arrowHelper = new THREE.ArrowHelper(
+        direction,
+        origin,
+        arrowLength,
+        dir.color, // Different color for each arrow
+        arrowLength * 0.4, // Head length
+        arrowLength * 0.2 // Head width
+      );
+      
+      // Store corner number in userData for click detection
+      (arrowHelper as any).corner = dir.corner;
+      (arrowHelper as any).isDirectionArrow = true;
+      
+      // Create a larger hitbox sphere for easier clicking
+      const hitboxGeometry = new THREE.SphereGeometry(arrowLength * 0.3, 8, 8);
+      const hitboxMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0,
+        color: dir.color
+      });
+      const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+      hitbox.position.copy(origin);
+      hitbox.position.add(direction.multiplyScalar(arrowLength * 0.5));
+      (hitbox as any).corner = dir.corner;
+      (hitbox as any).isDirectionArrow = true;
+      (hitbox as any).arrowHelper = arrowHelper;
+      
+      // Add label sphere
+      const labelGeometry = new THREE.SphereGeometry(0.03, 8, 8);
+      const labelMaterial = new THREE.MeshBasicMaterial({ color: dir.color });
+      const label = new THREE.Mesh(labelGeometry, labelMaterial);
+      label.position.copy(origin);
+      label.position.add(direction.clone().multiplyScalar(arrowLength * 0.7));
+      label.position.y += 0.05;
+      (label as any).corner = dir.corner;
+      (label as any).isDirectionArrow = true;
+      
+      this.directionArrowsGroup.add(arrowHelper);
+      this.directionArrowsGroup.add(hitbox);
+      this.directionArrowsGroup.add(label);
+    });
+    
+    this.scene.add(this.directionArrowsGroup);
+    this.showDirectionSelection = true;
+  }
+
+  private removeDirectionArrows() {
+    if (this.directionArrowsGroup) {
+      this.scene.remove(this.directionArrowsGroup);
+      this.directionArrowsGroup.traverse((child) => {
+        if (child instanceof THREE.ArrowHelper || child instanceof THREE.Mesh) {
+          if (child instanceof THREE.Mesh && child.geometry) {
+            child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(material => material.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          }
+        }
+      });
+      this.directionArrowsGroup = null;
+    }
+    this.showDirectionSelection = false;
   }
 
   private handleMachineRemovalClick() {
@@ -827,6 +986,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.showMachineSelection = false;
     this.selectedMachine = null;
     this.selectedCorner = null;
+    // Remove direction arrows
+    this.removeDirectionArrows();
     // Reset selected point
     if (this.selectedPoint) {
       this.resetPointToOriginal(this.selectedPoint);
