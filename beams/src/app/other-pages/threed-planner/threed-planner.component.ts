@@ -1219,6 +1219,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       // Turn on add mode
       this.isAddingMachine = true;
       this.updateGridPointsVisibility();
+      
+      // Show popup message
+      alert('בחר נקודת פינה למיקום המכונה');
     }
     console.log('🔄 [3D Planner] Add machine mode toggled:', this.isAddingMachine);
   }
