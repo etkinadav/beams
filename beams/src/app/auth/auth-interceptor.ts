@@ -23,7 +23,9 @@ export class AuthInterceptor implements HttpInterceptor {
         // const authRequest = req.clone({ headers });
         let body = req.body;
 
-        if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') {
+        // Don't modify body if it's FormData (for file uploads)
+        if ((req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') 
+            && !(body instanceof FormData)) {
             body = {
                 ...body,
                 printingservice: printingService,
