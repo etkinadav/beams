@@ -774,6 +774,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedPoint = clickedObject;
       this.highlightSelectedPoint(clickedObject);
       
+      // Reset corner and rotation selections
+      this.selectedCorner = null;
+      this.selectedRotation = 0;
+      
       // Show direction arrows for corner selection
       this.showDirectionArrows(clickedObject.position);
       
@@ -1085,14 +1089,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   closeMachineSelection() {
     this.showMachineSelection = false;
     this.selectedMachine = null;
-    this.selectedCorner = null;
+    // Don't reset selectedCorner - keep it so user can change it in the dialog
     this.selectedRotation = 0; // Reset rotation
-    // Remove direction arrows
-    this.removeDirectionArrows();
-    // Reset selected point
+    // Remove direction arrows and reset selected point
     if (this.selectedPoint) {
       this.resetPointToOriginal(this.selectedPoint);
       this.selectedPoint = null;
+      this.removeDirectionArrows();
     }
   }
 

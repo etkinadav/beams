@@ -319,13 +319,28 @@
             </div>
           </div>
 
-          <!-- Corner Selection Info (already selected via arrows) -->
-          <div class="mb-4" *ngIf="selectedCorner">
-            <h6 class="mb-2">כיוון נבחר:</h6>
-            <div class="p-3 rounded-2" style="background-color: #e3f2fd; border: 2px solid #2196F3;">
-              <div class="d-flex align-items-center gap-2">
-                <mat-icon>check_circle</mat-icon>
-                <span class="fw-bold">בכיוון החץ ה{{ getCornerArrowColor(selectedCorner) }}</span>
+          <!-- Corner Selection (Direction) -->
+          <div class="mb-4">
+            <h6 class="mb-2">כיוון המכונה:</h6>
+            <div class="d-flex flex-column gap-2">
+              <div *ngFor="let corner of [1, 2, 3, 4]" class="machine-radio-item p-2 rounded-2" 
+                   [class.selected]="selectedCorner === corner"
+                   (click)="selectedCorner = corner"
+                   style="cursor: pointer; border: 2px solid #e0e0e0; transition: all 0.2s;">
+                <div class="d-flex align-items-center gap-2">
+                  <input 
+                    type="radio" 
+                    name="cornerSelection"
+                    [id]="'corner-' + corner"
+                    [checked]="selectedCorner === corner"
+                    (click)="selectedCorner = corner; $event.stopPropagation()">
+                  <label [for]="'corner-' + corner" class="mb-0 flex-grow-1" style="cursor: pointer;">
+                    <div class="d-flex align-items-center gap-2">
+                      <mat-icon>arrow_forward</mat-icon>
+                      <span>כיוון החץ ה{{ getCornerArrowColor(corner) }}</span>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
