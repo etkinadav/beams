@@ -1500,9 +1500,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private placeMachineModel(model: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string = '#888888', rotation: number = 0) {
-    // First, set model to origin to calculate bounding box correctly
+    // First, set model to origin and reset scale to 1 to calculate bounding box correctly
     model.position.set(0, 0, 0);
     model.rotation.set(0, 0, 0); // Reset rotation
+    model.scale.set(1, 1, 1); // Reset scale to 1 first
     model.updateMatrixWorld(true);
     
     // Apply rotation (in radians, clockwise around Y axis)
@@ -1511,9 +1512,12 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       model.rotateY(rotationRad); // Rotate around Y axis (vertical)
     }
     
-    // Apply the same scale as the base model
-    model.scale.multiplyScalar(this.baseModelScale);
+    // Apply the same scale as the base model (ensure baseModelScale is defined, default to 1 if not)
+    const scaleToApply = this.baseModelScale || 1;
+    model.scale.multiplyScalar(scaleToApply);
     model.updateMatrixWorld(true);
+    
+    console.log('📏 [3D Planner] Applying scale to machine:', scaleToApply);
     
     // Calculate bounding box of the machine after scaling
     const box = new THREE.Box3().setFromObject(model);
