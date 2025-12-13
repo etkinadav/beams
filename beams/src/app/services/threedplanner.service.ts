@@ -129,5 +129,22 @@ export class ThreedPlannerService {
     console.log('🔵 [3D Planner Service] DELETE request:', url);
     return this.http.delete<{ success: boolean; message: string }>(url);
   }
+
+  updateMachineConfig(configId: string, machineId: string, pointX: number, pointY: number, pointZ: number, corner: number, rotation: number = 0): Observable<{ success: boolean; message: string; config: any }> {
+    const url = BACKEND_URL + "machine-config/" + configId;
+    const body = {
+      machineId: machineId,
+      pointX: pointX,
+      pointY: pointY,
+      pointZ: pointZ,
+      corner: corner,
+      rotation: rotation
+    };
+    
+    console.log('🔵 [3D Planner Service] PUT request:', url);
+    console.log('📤 [3D Planner Service] Update machine config:', body);
+    
+    return this.http.put<{ success: boolean; message: string; config: any }>(url, body);
+  }
 }
 

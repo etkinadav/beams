@@ -619,6 +619,102 @@ exports.getMachineConfigs = async (req, res, next) => {
     }
 };
 
+// Update a machine configuration
+exports.updateMachineConfig = async (req, res, next) => {
+    try {
+        const configId = req.params.id;
+        const { machineId, pointX, pointY, pointZ, corner, rotation } = req.body;
+
+        console.log('⚙️ Update machine config request received:', configId);
+
+        if (!mongoose.Types.ObjectId.isValid(configId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid configuration ID format'
+            });
+        }
+
+        // Validate required fields
+        if (!machineId || pointX === undefined || pointY === undefined || pointZ === undefined || !corner) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: machineId, pointX, pointY, pointZ, corner'
+            });
+        }
+
+        // Validate rotation (optional, default 0)
+        const validRotation = rotation !== undefined ? rotation : 0;
+        if (![0, 90, 180, 270].includes(validRotation)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Rotation must be 0, 90, 180, or 270 degrees'
+            });
+        }
+
+        // Validate corner (1-4)
+        if (![1, 2, 3, 4].includes(corner)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Corner must be 1, 2, 3, or 4'
+            });
+        }
+
+        // Verify machine exists
+        const machine = await ThreedPlannerFile.findById(machineId);
+        if (!machine || machine.fileType !== 'machine') {
+            return res.status(404).json({
+                success: false,
+                error: 'Machine not found'
+            });
+        }
+
+        // Update machine configuration
+        const updatedConfig = await ThreedPlannerMachineConfig.findByIdAndUpdate(
+            configId,
+            {
+                machineId: machineId,
+                pointX: pointX,
+                pointY: pointY,
+                pointZ: pointZ,
+                corner: corner,
+                rotation: validRotation
+            },
+            { new: true }
+        );
+
+        if (!updatedConfig) {
+            return res.status(404).json({
+                success: false,
+                error: 'Machine configuration not found'
+            });
+        }
+
+        console.log('✅ Machine configuration updated:', updatedConfig._id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Machine configuration updated successfully',
+            config: {
+                id: updatedConfig._id,
+                machineId: updatedConfig.machineId,
+                pointX: updatedConfig.pointX,
+                pointY: updatedConfig.pointY,
+                pointZ: updatedConfig.pointZ,
+                corner: updatedConfig.corner,
+                rotation: updatedConfig.rotation || 0
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating machine configuration:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error updating machine configuration",
+            error: error.message
+        });
+    }
+};
+
 // Delete a machine configuration
 exports.deleteMachineConfig = async (req, res, next) => {
     try {

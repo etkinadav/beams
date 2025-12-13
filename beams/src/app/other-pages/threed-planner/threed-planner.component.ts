@@ -25,7 +25,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   isAdminMode: boolean = false; // Start in User Mode
   isAddingMachine: boolean = false; // Toggle for showing/hiding grid points and allowing machine placement
   isRemovingMachine: boolean = false; // Toggle for removing machines mode
+  isEditingMachine: boolean = false; // Toggle for editing machines mode
   selectedMachineForRemoval: THREE.Group | null = null; // Selected machine to remove
+  selectedMachineForEdit: THREE.Group | null = null; // Selected machine to edit
+  selectedConfigForEdit: any = null; // Configuration of machine being edited
   private directionSubscription: Subscription;
 
   // File upload related
@@ -681,8 +684,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       }
     }
 
-    // Check for intersections with placed machines if in removal mode
-    if (this.isRemovingMachine && this.placedMachines.size > 0) {
+    // Check for intersections with placed machines if in removal or edit mode
+    if ((this.isRemovingMachine || this.isEditingMachine) && this.placedMachines.size > 0) {
       const machineMeshes: THREE.Mesh[] = [];
       this.placedMachines.forEach((machineGroup) => {
         machineGroup.traverse((child) => {
@@ -707,6 +710,12 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Handle machine removal mode
     if (this.isRemovingMachine) {
       this.handleMachineRemovalClick();
+      return;
+    }
+    
+    // Handle machine edit mode
+    if (this.isEditingMachine) {
+      this.handleMachineEditClick();
       return;
     }
     
@@ -1038,52 +1047,126 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   addMachine() {
-    if (!this.selectedMachine || !this.selectedCorner || !this.selectedPoint) {
-      console.warn('⚠️ [3D Planner] Cannot add machine - machine, corner, or point not selected');
+    if (!this.selectedMachine || !this.selectedCorner) {
+      console.warn('⚠️ [3D Planner] Cannot add/edit machine - machine or corner not selected');
       return;
     }
     
-    const pointPosition = this.selectedPoint.position;
-    console.log('✅ [3D Planner] Adding machine:', {
-      machine: this.selectedMachine,
-      corner: this.selectedCorner,
-      point: pointPosition
-    });
-    
-    // Send configuration to backend
-    this.threedPlannerService.addMachineConfig(
-      this.selectedMachine.id,
-      pointPosition.x,
-      pointPosition.y,
-      pointPosition.z,
-      this.selectedCorner,
-      this.selectedRotation
-    ).subscribe({
-      next: (response) => {
-        console.log('✅ [3D Planner] Machine configuration saved:', response);
-        if (response.success) {
-          // Load and place the machine in 3D scene
-          const machineColor = this.selectedMachine!.color || '#888888';
-          this.loadAndPlaceMachine(
-            this.selectedMachine!,
-            pointPosition.x,
-            pointPosition.y,
-            pointPosition.z,
-            this.selectedCorner!,
-            response.config.id,
-            machineColor,
-            this.selectedRotation
-          );
-          
-          // Close dialog and reset
-          this.closeMachineSelection();
+    // If editing, use the existing config ID and point position
+    if (this.isEditingMachine && this.selectedConfigForEdit) {
+      const config = this.selectedConfigForEdit;
+      console.log('✅ [3D Planner] Updating machine:', {
+        configId: config.id,
+        machine: this.selectedMachine,
+        corner: this.selectedCorner,
+        rotation: this.selectedRotation
+      });
+      
+      // Update configuration in backend
+      this.threedPlannerService.updateMachineConfig(
+        config.id,
+        this.selectedMachine.id,
+        config.pointX,
+        config.pointY,
+        config.pointZ,
+        this.selectedCorner,
+        this.selectedRotation
+      ).subscribe({
+        next: (response) => {
+          console.log('✅ [3D Planner] Machine configuration updated:', response);
+          if (response.success) {
+            // Remove old machine from scene
+            if (this.selectedMachineForEdit) {
+              this.scene.remove(this.selectedMachineForEdit);
+              this.placedMachines.delete(config.id);
+              
+              // Clean up old machine
+              this.selectedMachineForEdit.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                  child.geometry.dispose();
+                  if (Array.isArray(child.material)) {
+                    child.material.forEach(material => material.dispose());
+                  } else {
+                    child.material.dispose();
+                  }
+                }
+              });
+            }
+            
+            // Load and place the updated machine in 3D scene
+            const machineColor = this.selectedMachine!.color || '#888888';
+            this.loadAndPlaceMachine(
+              this.selectedMachine!,
+              config.pointX,
+              config.pointY,
+              config.pointZ,
+              this.selectedCorner!,
+              config.id,
+              machineColor,
+              this.selectedRotation
+            );
+            
+            // Close dialog and reset
+            this.closeMachineSelection();
+            this.isEditingMachine = false;
+            this.selectedMachineForEdit = null;
+            this.selectedConfigForEdit = null;
+          }
+        },
+        error: (error) => {
+          console.error('❌ [3D Planner] Error updating machine configuration:', error);
+          alert('שגיאה בעדכון קונפיגורציית המכונה. אנא נסה שוב.');
         }
-      },
-      error: (error) => {
-        console.error('❌ [3D Planner] Error saving machine configuration:', error);
-        alert('שגיאה בשמירת קונפיגורציית המכונה. אנא נסה שוב.');
+      });
+    } else {
+      // Adding new machine
+      if (!this.selectedPoint) {
+        console.warn('⚠️ [3D Planner] Cannot add machine - point not selected');
+        return;
       }
-    });
+      
+      const pointPosition = this.selectedPoint.position;
+      console.log('✅ [3D Planner] Adding machine:', {
+        machine: this.selectedMachine,
+        corner: this.selectedCorner,
+        point: pointPosition
+      });
+      
+      // Send configuration to backend
+      this.threedPlannerService.addMachineConfig(
+        this.selectedMachine.id,
+        pointPosition.x,
+        pointPosition.y,
+        pointPosition.z,
+        this.selectedCorner,
+        this.selectedRotation
+      ).subscribe({
+        next: (response) => {
+          console.log('✅ [3D Planner] Machine configuration saved:', response);
+          if (response.success) {
+            // Load and place the machine in 3D scene
+            const machineColor = this.selectedMachine!.color || '#888888';
+            this.loadAndPlaceMachine(
+              this.selectedMachine!,
+              pointPosition.x,
+              pointPosition.y,
+              pointPosition.z,
+              this.selectedCorner!,
+              response.config.id,
+              machineColor,
+              this.selectedRotation
+            );
+            
+            // Close dialog and reset
+            this.closeMachineSelection();
+          }
+        },
+        error: (error) => {
+          console.error('❌ [3D Planner] Error saving machine configuration:', error);
+          alert('שגיאה בשמירת קונפיגורציית המכונה. אנא נסה שוב.');
+        }
+      });
+    }
   }
 
   closeMachineSelection() {
@@ -1106,11 +1189,17 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.closeMachineSelection();
       this.updateGridPointsVisibility();
     } else {
-      // Turn off remove mode if active
+      // Turn off other modes if active
       if (this.isRemovingMachine) {
         this.isRemovingMachine = false;
         this.selectedMachineForRemoval = null;
         this.updateMachinesSelectionMode();
+      }
+      if (this.isEditingMachine) {
+        this.isEditingMachine = false;
+        this.selectedMachineForEdit = null;
+        this.selectedConfigForEdit = null;
+        this.updateMachinesEditMode();
       }
       // Turn on add mode
       this.isAddingMachine = true;
@@ -1126,11 +1215,17 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedMachineForRemoval = null;
       this.updateMachinesSelectionMode();
     } else {
-      // Turn off add mode if active
+      // Turn off other modes if active
       if (this.isAddingMachine) {
         this.isAddingMachine = false;
         this.closeMachineSelection();
         this.updateGridPointsVisibility();
+      }
+      if (this.isEditingMachine) {
+        this.isEditingMachine = false;
+        this.selectedMachineForEdit = null;
+        this.selectedConfigForEdit = null;
+        this.updateMachinesEditMode();
       }
       // Turn on remove mode
       this.isRemovingMachine = true;
@@ -1139,12 +1234,166 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     console.log('🔄 [3D Planner] Remove machine mode toggled:', this.isRemovingMachine);
   }
 
+  toggleEditMachineMode() {
+    // If already in edit mode, toggle it off
+    if (this.isEditingMachine) {
+      this.isEditingMachine = false;
+      this.selectedMachineForEdit = null;
+      this.selectedConfigForEdit = null;
+      this.closeMachineSelection();
+      this.updateMachinesEditMode();
+    } else {
+      // Turn off other modes if active
+      if (this.isAddingMachine) {
+        this.isAddingMachine = false;
+        this.closeMachineSelection();
+        this.updateGridPointsVisibility();
+      }
+      if (this.isRemovingMachine) {
+        this.isRemovingMachine = false;
+        this.selectedMachineForRemoval = null;
+        this.updateMachinesSelectionMode();
+      }
+      // Turn on edit mode
+      this.isEditingMachine = true;
+      this.updateMachinesEditMode();
+    }
+    console.log('🔄 [3D Planner] Edit machine mode toggled:', this.isEditingMachine);
+  }
+
   private updateMachinesSelectionMode() {
     // Reset all machine selections
     if (this.selectedMachineForRemoval) {
       this.resetMachineSelectionForRemoval(this.selectedMachineForRemoval);
       this.selectedMachineForRemoval = null;
     }
+  }
+
+  private updateMachinesEditMode() {
+    // Reset all machine edit selections
+    if (this.selectedMachineForEdit) {
+      this.resetMachineSelectionForEdit(this.selectedMachineForEdit);
+      this.selectedMachineForEdit = null;
+      this.selectedConfigForEdit = null;
+    }
+  }
+
+  private handleMachineEditClick() {
+    if (!this.raycaster) return;
+
+    // Update raycaster
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    // Check for intersections with placed machines
+    const machineMeshes: THREE.Mesh[] = [];
+    this.placedMachines.forEach((machineGroup) => {
+      machineGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          machineMeshes.push(child);
+        }
+      });
+    });
+
+    const intersects = this.raycaster.intersectObjects(machineMeshes, false);
+    
+    if (intersects.length > 0) {
+      // Find which machine group this mesh belongs to
+      const clickedMesh = intersects[0].object as THREE.Mesh;
+      let clickedMachine: THREE.Group | null = null;
+      
+      this.placedMachines.forEach((machineGroup) => {
+        machineGroup.traverse((child) => {
+          if (child === clickedMesh) {
+            clickedMachine = machineGroup;
+          }
+        });
+      });
+
+      if (clickedMachine) {
+        const configId = (clickedMachine as any).configId;
+        console.log('🔵 [3D Planner] Machine clicked for editing, configId:', configId);
+        
+        // Get the configuration for this machine
+        this.threedPlannerService.getMachineConfigs().subscribe({
+          next: (response) => {
+            console.log('🔵 [3D Planner] Machine configs response:', response);
+            if (response.success) {
+              const config = response.configs.find((c: any) => c.id === configId);
+              console.log('🔵 [3D Planner] Found config:', config);
+              if (config) {
+                // Reset previous selection
+                if (this.selectedMachineForEdit && this.selectedMachineForEdit !== clickedMachine) {
+                  this.resetMachineSelectionForEdit(this.selectedMachineForEdit);
+                }
+                
+                // Select new machine for editing
+                this.selectedMachineForEdit = clickedMachine;
+                this.selectedConfigForEdit = config;
+                this.highlightMachineForEdit(clickedMachine);
+                
+                // Load machines and show selection dialog with current values
+                this.threedPlannerService.getMachines().subscribe({
+                  next: (machinesResponse) => {
+                    if (machinesResponse.success) {
+                      this.availableMachines = machinesResponse.machines;
+                      
+                      // Set current values in the dialog
+                      this.selectedMachine = this.availableMachines.find(m => m.id === config.machine.id) || null;
+                      this.selectedCorner = config.corner;
+                      this.selectedRotation = config.rotation || 0;
+                      
+                      console.log('🔵 [3D Planner] Setting dialog values:', {
+                        selectedMachine: this.selectedMachine,
+                        selectedCorner: this.selectedCorner,
+                        selectedRotation: this.selectedRotation
+                      });
+                      
+                      this.showMachineSelection = true;
+                      
+                      console.log('✅ [3D Planner] Machine selected for editing:', configId);
+                    }
+                  },
+                  error: (error) => {
+                    console.error('❌ [3D Planner] Error loading machines for editing:', error);
+                  }
+                });
+              } else {
+                console.error('❌ [3D Planner] Config not found for configId:', configId);
+              }
+            }
+          },
+          error: (error) => {
+            console.error('❌ [3D Planner] Error loading machine configs for editing:', error);
+          }
+        });
+      }
+    }
+  }
+
+  private highlightMachineForEdit(machine: THREE.Group) {
+    machine.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.material instanceof THREE.MeshStandardMaterial || 
+            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
+          const material = Array.isArray(child.material) ? child.material[0] : child.material;
+          (material as THREE.MeshStandardMaterial).emissive.setHex(0x00ff00); // Green emissive
+          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
+        }
+      }
+    });
+  }
+
+  private resetMachineSelectionForEdit(machine: THREE.Group) {
+    machine.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.material instanceof THREE.MeshStandardMaterial || 
+            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
+          const material = Array.isArray(child.material) ? child.material[0] : child.material;
+          (material as THREE.MeshStandardMaterial).emissive.setHex(0x000000); // Reset emissive
+          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
+        }
+      }
+    });
   }
 
   private updateGridPointsVisibility() {
