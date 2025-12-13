@@ -1128,6 +1128,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
             this.isEditingMachine = false;
             this.selectedMachineForEdit = null;
             this.selectedConfigForEdit = null;
+            
+            // Normalize all machines scale after editing
+            setTimeout(() => {
+              this.normalizeAllMachinesScale();
+            }, 100);
           }
         },
         error: (error) => {
@@ -1180,6 +1185,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
             // Exit add machine mode and hide grid points
             this.isAddingMachine = false;
             this.updateGridPointsVisibility();
+            
+            // Normalize all machines scale after adding
+            setTimeout(() => {
+              this.normalizeAllMachinesScale();
+            }, 100);
           }
         },
         error: (error) => {
@@ -1258,6 +1268,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       // Turn on remove mode
       this.isRemovingMachine = true;
       this.updateMachinesSelectionMode();
+      
+      // Show snackbar message
+      this.snackBar.open('בחר מכונה להסרה', '', {
+        duration: 5000, // 5 seconds
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
     }
     console.log('🔄 [3D Planner] Remove machine mode toggled:', this.isRemovingMachine);
   }
@@ -1285,6 +1302,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       // Turn on edit mode
       this.isEditingMachine = true;
       this.updateMachinesEditMode();
+      
+      // Show snackbar message
+      this.snackBar.open('בחר מכונה לעריכה', '', {
+        duration: 5000, // 5 seconds
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
     }
     console.log('🔄 [3D Planner] Edit machine mode toggled:', this.isEditingMachine);
   }
@@ -1540,12 +1564,21 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       model.rotateY(rotationRad); // Rotate around Y axis (vertical)
     }
     
-    // Apply the same scale as the base model (ensure baseModelScale is defined, default to 1 if not)
+    // Apply the same scale as the base model (ensure baseModelScale is defined)
+    if (!this.baseModelScale || this.baseModelScale === 1) {
+      console.warn('⚠️ [3D Planner] baseModelScale not set, using default scale of 1. This may cause incorrect machine size!');
+    }
     const scaleToApply = this.baseModelScale || 1;
+    
+    // Reset scale to 1 first to ensure clean scaling
+    model.scale.set(1, 1, 1);
+    model.updateMatrixWorld(true);
+    
+    // Apply the scale
     model.scale.multiplyScalar(scaleToApply);
     model.updateMatrixWorld(true);
     
-    console.log('📏 [3D Planner] Applying scale to machine:', scaleToApply);
+    console.log('📏 [3D Planner] Applying scale to machine:', scaleToApply, 'baseModelScale:', this.baseModelScale);
     
     // Calculate bounding box of the machine after scaling
     const box = new THREE.Box3().setFromObject(model);
@@ -1669,6 +1702,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           this.selectedMachineForRemoval = null;
           this.isRemovingMachine = false;
           this.updateMachinesSelectionMode();
+          
+          // Normalize all machines scale after deletion
+          setTimeout(() => {
+            this.normalizeAllMachinesScale();
+          }, 100);
         }
       },
       error: (error) => {
@@ -1681,6 +1719,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private loadMachineConfigs() {
     if (!this.renderer || !this.scene) {
       console.warn('⚠️ [3D Planner] Cannot load machine configs - renderer or scene not available');
+      return;
+    }
+
+    // Ensure baseModelScale is set before loading machines
+    if (!this.baseModelScale || this.baseModelScale === 1) {
+      console.warn('⚠️ [3D Planner] baseModelScale not set, waiting for model setup...');
+      // Wait a bit for model setup to complete
+      setTimeout(() => {
+        this.loadMachineConfigs();
+      }, 100);
       return;
     }
 
@@ -1705,10 +1753,47 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
             );
           });
           this.hasPlacedMachines = this.placedMachines.size > 0;
+          
+          // Normalize all machines scale after loading
+          setTimeout(() => {
+            this.normalizeAllMachinesScale();
+          }, 500);
         }
       },
       error: (error) => {
         console.error('❌ [3D Planner] Error loading machine configs:', error);
+      }
+    });
+  }
+
+  private normalizeAllMachinesScale() {
+    if (!this.baseModelScale || this.baseModelScale === 1) {
+      console.warn('⚠️ [3D Planner] Cannot normalize machines - baseModelScale not set');
+      return;
+    }
+
+    console.log('🔧 [3D Planner] Normalizing all machines scale, baseModelScale:', this.baseModelScale);
+    
+    this.placedMachines.forEach((machine, configId) => {
+      // Get current scale
+      const currentScale = machine.scale.x; // Assuming uniform scaling
+      
+      // Calculate expected scale (should be baseModelScale)
+      const expectedScale = this.baseModelScale;
+      
+      // Check if scale is wrong (more than 10% difference)
+      const scaleDifference = Math.abs(currentScale - expectedScale) / expectedScale;
+      
+      if (scaleDifference > 0.1) {
+        console.log(`🔧 [3D Planner] Fixing machine ${configId} scale: ${currentScale} -> ${expectedScale}`);
+        
+        // Reset scale to 1 first
+        machine.scale.set(1, 1, 1);
+        machine.updateMatrixWorld(true);
+        
+        // Apply correct scale
+        machine.scale.multiplyScalar(expectedScale);
+        machine.updateMatrixWorld(true);
       }
     });
   }
