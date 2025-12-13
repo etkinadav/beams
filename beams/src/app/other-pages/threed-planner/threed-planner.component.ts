@@ -22,7 +22,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   
   isRTL: boolean = true;
   isDarkMode: boolean = false;
-  isAdminMode: boolean = false;
+  isAdminMode: boolean = false; // Start in User Mode
   isAddingMachine: boolean = false; // Toggle for showing/hiding grid points and allowing machine placement
   isRemovingMachine: boolean = false; // Toggle for removing machines mode
   selectedMachineForRemoval: THREE.Group | null = null; // Selected machine to remove
@@ -40,6 +40,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   machines: Machine[] = [];
   selectedMachineFile: File | null = null;
   machineName: string = '';
+  machineColor: string = '#888888'; // Default color for new machines
   isUploadingMachine: boolean = false;
   machineUploadError: string | null = null;
   machineUploadSuccess: boolean = false;
@@ -389,7 +390,22 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       if (!this.machineName) {
         this.machineName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
       }
+      
+      // Generate random color if not set
+      if (!this.machineColor || this.machineColor === '#888888') {
+        this.machineColor = this.generateRandomColor();
+      }
     }
+  }
+
+  generateRandomColor(): string {
+    // Generate a random color that's not too dark or too light
+    const colors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+      '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52BE80',
+      '#EC7063', '#5DADE2', '#58D68D', '#F4D03F', '#AF7AC5'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
   }
 
   uploadMachine() {
@@ -408,13 +424,14 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.machineUploadError = null;
     this.machineUploadSuccess = false;
 
-    this.threedPlannerService.uploadMachine(this.selectedMachineFile, this.machineName.trim()).subscribe({
+    this.threedPlannerService.uploadMachine(this.selectedMachineFile, this.machineName.trim(), this.machineColor).subscribe({
       next: (response) => {
         console.log('✅ [3D Planner] Machine upload response:', response);
         if (response.success) {
           this.machineUploadSuccess = true;
           this.selectedMachineFile = null;
           this.machineName = '';
+          this.machineColor = this.generateRandomColor(); // Generate new color for next machine
           
           // Reset file input
           const fileInput = document.getElementById('machineFileInput') as HTMLInputElement;
@@ -447,6 +464,50 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         }
         this.machineUploadError = errorMessage;
         this.isUploadingMachine = false;
+      }
+    });
+  }
+
+  updateMachineColor(machineId: string, color: string) {
+    console.log('🔵 [3D Planner] Updating machine color:', { machineId, color });
+    this.threedPlannerService.updateMachineColor(machineId, color).subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machine color updated:', response);
+        if (response.success) {
+          // Update the machine in the local array
+          const machine = this.machines.find(m => m.id === machineId);
+          if (machine) {
+            machine.color = color;
+          }
+          
+          // If the machine is placed in the scene, update its color
+          this.placedMachines.forEach((placedMachine, configId) => {
+            const machineConfig = (placedMachine as any).machineConfig;
+            if (machineConfig && machineConfig.machine && machineConfig.machine.id === machineId) {
+              // Update the color of the placed machine
+              placedMachine.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                  const colorHex = parseInt(color.replace('#', '0x'));
+                  if (child.material) {
+                    if (Array.isArray(child.material)) {
+                      child.material.forEach(mat => {
+                        if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshBasicMaterial || mat instanceof THREE.MeshPhongMaterial) {
+                          mat.color.setHex(colorHex);
+                        }
+                      });
+                    } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshBasicMaterial || child.material instanceof THREE.MeshPhongMaterial) {
+                      child.material.color.setHex(colorHex);
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error updating machine color:', error);
+        alert('שגיאה בעדכון צבע המכונה. אנא נסה שוב.');
       }
     });
   }
@@ -978,13 +1039,15 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         console.log('✅ [3D Planner] Machine configuration saved:', response);
         if (response.success) {
           // Load and place the machine in 3D scene
+          const machineColor = this.selectedMachine!.color || '#888888';
           this.loadAndPlaceMachine(
             this.selectedMachine!,
             pointPosition.x,
             pointPosition.y,
             pointPosition.z,
             this.selectedCorner!,
-            response.config.id
+            response.config.id,
+            machineColor
           );
           
           // Close dialog and reset
@@ -1066,7 +1129,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.gridPointsGroup.visible = this.isAddingMachine;
   }
 
-  private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+  private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, machineColor?: string) {
     if (!this.renderer || !this.scene) {
       console.warn('⚠️ [3D Planner] Cannot place machine - renderer or scene not available');
       return;
@@ -1093,25 +1156,28 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     const fileName = machine.originalName.toLowerCase();
     const fileExtension = fileName.split('.').pop();
 
+    // Get machine color from parameter, machine object, or use default
+    const color = machineColor || (machine && machine.color) || '#888888';
+    
     // Load based on file extension
     if (fileExtension === 'obj') {
-      this.loadMachineOBJ(fileUrl, pointX, pointY, pointZ, corner, configId);
+      this.loadMachineOBJ(fileUrl, pointX, pointY, pointZ, corner, configId, color);
     } else if (fileExtension === 'gltf' || fileExtension === 'glb') {
-      this.loadMachineGLTF(fileUrl, pointX, pointY, pointZ, corner, configId);
+      this.loadMachineGLTF(fileUrl, pointX, pointY, pointZ, corner, configId, color);
     } else if (fileExtension === 'stl') {
-      this.loadMachineSTL(fileUrl, pointX, pointY, pointZ, corner, configId);
+      this.loadMachineSTL(fileUrl, pointX, pointY, pointZ, corner, configId, color);
     } else {
       console.error('❌ [3D Planner] Unsupported file format for machine:', fileExtension);
     }
   }
 
-  private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+  private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string) {
     const loader = new OBJLoader();
     loader.load(
       url,
       (object) => {
         console.log('✅ [3D Planner] Machine OBJ model loaded');
-        this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId);
+        this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId, color);
       },
       undefined,
       (error) => {
@@ -1120,13 +1186,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     );
   }
 
-  private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+  private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string) {
     const loader = new GLTFLoader();
     loader.load(
       url,
       (gltf) => {
         console.log('✅ [3D Planner] Machine GLTF model loaded');
-        this.placeMachineModel(gltf.scene, pointX, pointY, pointZ, corner, configId);
+        this.placeMachineModel(gltf.scene, pointX, pointY, pointZ, corner, configId, color);
       },
       undefined,
       (error) => {
@@ -1135,21 +1201,22 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     );
   }
 
-  private loadMachineSTL(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+  private loadMachineSTL(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string) {
     const loader = new STLLoader();
     loader.load(
       url,
       (geometry) => {
         console.log('✅ [3D Planner] Machine STL model loaded');
+        const colorHex = parseInt(color.replace('#', '0x'));
         const material = new THREE.MeshStandardMaterial({ 
-          color: 0x888888,
+          color: colorHex,
           metalness: 0.3,
           roughness: 0.7
         });
         const mesh = new THREE.Mesh(geometry, material);
         const group = new THREE.Group();
         group.add(mesh);
-        this.placeMachineModel(group, pointX, pointY, pointZ, corner, configId);
+        this.placeMachineModel(group, pointX, pointY, pointZ, corner, configId, color);
       },
       undefined,
       (error) => {
@@ -1158,7 +1225,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     );
   }
 
-  private placeMachineModel(model: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+  private placeMachineModel(model: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string = '#888888') {
     // First, set model to origin to calculate bounding box correctly
     model.position.set(0, 0, 0);
     model.updateMatrixWorld(true);
@@ -1293,13 +1360,15 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         if (response.success) {
           // Load and place each machine
           response.configs.forEach(config => {
+            const machineColor = config.machine?.color || '#888888';
             this.loadAndPlaceMachine(
               config.machine,
               config.pointX,
               config.pointY,
               config.pointZ,
               config.corner,
-              config.id
+              config.id,
+              machineColor
             );
           });
           this.hasPlacedMachines = this.placedMachines.size > 0;

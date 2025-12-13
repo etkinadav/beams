@@ -38,6 +38,11 @@
   mat-sidenav-content {
     padding-top: 52px !important;
   }
+  
+  // הסרת padding-top לעמוד 3D planner גם ב-media query
+  mat-sidenav-container.threed-planner-fullscreen mat-sidenav-content {
+    padding-top: 0 !important;
+  }
 }
 
 .mat-toolbar button {
@@ -419,6 +424,7 @@ mat-sidenav-container.threed-planner-fullscreen {
   mat-sidenav-content {
     height: 100vh !important;
     min-height: 100vh !important;
+    padding-top: 0 !important;
   }
 }
 
@@ -428,6 +434,11 @@ mat-sidenav-container.threed-planner-fullscreen {
   padding-right: 0 !important;
   padding-bottom: 0 !important;
   margin: 0 !important;
+}
+
+// הסרת padding-top לעמוד 3D planner
+::ng-deep mat-sidenav-container.threed-planner-fullscreen mat-sidenav-content {
+  padding-top: 0 !important;
 }
 
 ::ng-deep .mat-drawer-content {

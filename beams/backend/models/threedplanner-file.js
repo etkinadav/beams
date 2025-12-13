@@ -24,6 +24,11 @@ const threedPlannerFileSchema = new Schema({
         type: Number,
         required: false // רק למכונות - מספר לפי סדר ההעלאה
     },
+    color: {
+        type: String,
+        required: false, // רק למכונות - צבע במבנה hex (#RRGGBB)
+        default: '#888888' // צבע ברירת מחדל
+    },
     gridfsId: {
         type: Schema.Types.ObjectId,
         required: true,

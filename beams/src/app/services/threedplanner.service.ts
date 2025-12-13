@@ -23,6 +23,7 @@ export interface Machine {
   fileType: string;
   name: string;
   machineNumber: number;
+  color: string; // Hex color string (e.g., "#FF0000")
   size: number;
   mimeType?: string;
   uploadedAt: string;
@@ -65,15 +66,17 @@ export class ThreedPlannerService {
     return this.http.get<{ success: boolean; machines: Machine[] }>(url);
   }
 
-  uploadMachine(file: File, name: string): Observable<{ success: boolean; message: string; machine: Machine }> {
+  uploadMachine(file: File, name: string, color: string): Observable<{ success: boolean; message: string; machine: Machine }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name);
+    formData.append('color', color);
     const url = BACKEND_URL + "machines";
     
     console.log('🔵 [3D Planner Service] POST request:', url);
     console.log('📤 [3D Planner Service] Machine upload:', {
       name: name,
+      color: color,
       fileName: file.name,
       size: file.size,
       type: file.type
@@ -83,6 +86,13 @@ export class ThreedPlannerService {
       url,
       formData
     );
+  }
+
+  updateMachineColor(machineId: string, color: string): Observable<{ success: boolean; message: string; machine: any }> {
+    const url = BACKEND_URL + "machines/" + machineId + "/color";
+    console.log('🔵 [3D Planner Service] PUT request:', url);
+    console.log('📤 [3D Planner Service] Update machine color:', { machineId, color });
+    return this.http.put<{ success: boolean; message: string; machine: any }>(url, { color });
   }
 
   deleteMachine(machineId: string): Observable<{ success: boolean; message: string }> {

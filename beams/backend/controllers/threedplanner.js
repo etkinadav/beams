@@ -208,6 +208,7 @@ exports.getMachines = async (req, res, next) => {
                 fileType: machine.fileType,
                 name: machine.name,
                 machineNumber: machine.machineNumber,
+                color: machine.color || '#888888',
                 size: machine.size,
                 mimeType: machine.mimeType,
                 uploadedAt: machine.uploadedAt,
@@ -252,8 +253,9 @@ exports.uploadMachine = async (req, res, next) => {
             });
         }
 
-        // Get machine name from request body
+        // Get machine name and color from request body
         const machineName = req.body.name || req.file.originalname;
+        const machineColor = req.body.color || generateRandomColor(); // Use provided color or generate new one
 
         // Get the next machine number
         const lastMachine = await ThreedPlannerFile.findOne({ fileType: 'machine' })
@@ -291,6 +293,7 @@ exports.uploadMachine = async (req, res, next) => {
                         fileType: 'machine',
                         name: machineName,
                         machineNumber: nextMachineNumber,
+                        color: machineColor,
                         gridfsId: gridfsFileId,
                         size: req.file.size,
                         mimeType: req.file.mimetype,
@@ -337,6 +340,7 @@ exports.uploadMachine = async (req, res, next) => {
                 fileType: savedFile.fileType,
                 name: savedFile.name,
                 machineNumber: savedFile.machineNumber,
+                color: savedFile.color || '#888888',
                 size: savedFile.size,
                 mimeType: savedFile.mimeType,
                 uploadedAt: savedFile.uploadedAt,
@@ -349,6 +353,51 @@ exports.uploadMachine = async (req, res, next) => {
         res.status(500).json({
             success: false,
             message: "Error uploading machine file",
+            error: error.message
+        });
+    }
+};
+
+// Update machine color
+exports.updateMachineColor = async (req, res, next) => {
+    try {
+        const machineId = req.params.id;
+        const { color } = req.body;
+
+        if (!color || !/^#[0-9A-Fa-f]{6}$/.test(color)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid color format. Must be a hex color (e.g., #FF0000)'
+            });
+        }
+
+        const machine = await ThreedPlannerFile.findByIdAndUpdate(
+            machineId,
+            { color: color },
+            { new: true }
+        );
+
+        if (!machine || machine.fileType !== 'machine') {
+            return res.status(404).json({
+                success: false,
+                error: 'Machine not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Machine color updated successfully',
+            machine: {
+                id: machine._id,
+                name: machine.name,
+                color: machine.color
+            }
+        });
+    } catch (error) {
+        console.error('Error updating machine color:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error updating machine color",
             error: error.message
         });
     }
