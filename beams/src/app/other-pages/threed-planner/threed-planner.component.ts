@@ -589,7 +589,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Update raycaster
     this.raycaster.setFromCamera(this.mouse, this.camera);
 
-    // Check for intersections with grid points
+    // Check for intersections with grid points (including hitboxes)
     const intersects = this.raycaster.intersectObjects(this.gridPointsGroup.children, false);
     
     if (intersects.length > 0) {
@@ -607,26 +607,36 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Update raycaster
     this.raycaster.setFromCamera(this.mouse, this.camera);
 
-    // Check for intersections with grid points
+    // Check for intersections with grid points (including hitboxes)
     const intersects = this.raycaster.intersectObjects(this.gridPointsGroup.children, false);
     
     if (intersects.length > 0) {
-      const clickedPoint = intersects[0].object as THREE.Mesh;
+      let clickedObject = intersects[0].object as THREE.Mesh;
+      
+      // If we clicked on a hitbox, get the actual point mesh
+      if ((clickedObject as any).pointMesh) {
+        clickedObject = (clickedObject as any).pointMesh;
+      }
+      
+      // Make sure it's actually a point (has originalColor property)
+      if (!(clickedObject as any).originalColor) {
+        return; // Not a point, ignore
+      }
       
       // Reset previous selected point
-      if (this.selectedPoint && this.selectedPoint !== clickedPoint) {
+      if (this.selectedPoint && this.selectedPoint !== clickedObject) {
         this.resetPointToOriginal(this.selectedPoint);
       }
       
       // Select new point
-      this.selectedPoint = clickedPoint;
-      this.highlightSelectedPoint(clickedPoint);
+      this.selectedPoint = clickedObject;
+      this.highlightSelectedPoint(clickedObject);
       
       // Load machines and show selection dialog
       this.loadMachinesForSelection();
       this.showMachineSelection = true;
       
-      console.log('✅ [3D Planner] Point selected at:', clickedPoint.position);
+      console.log('✅ [3D Planner] Point selected at:', clickedObject.position);
     }
   }
 
@@ -1013,6 +1023,19 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           point.position.set(x, pointY, z);
           // Store original color for this point
           (point as any).originalColor = 0x0000ff; // Blue
+          
+          // Create invisible larger hitbox for easier selection
+          const hitboxGeometry = new THREE.SphereGeometry(0.02, 8, 8); // 3x larger than point
+          const hitboxMaterial = new THREE.MeshBasicMaterial({ 
+            visible: false, // Invisible
+            transparent: true,
+            opacity: 0
+          });
+          const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+          hitbox.position.set(x, pointY, z);
+          // Store reference to the actual point in the hitbox
+          (hitbox as any).pointMesh = point;
+          this.gridPointsGroup.add(hitbox);
           this.gridPointsGroup.add(point);
           largePointsCreated++;
         }
@@ -1066,6 +1089,19 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           smallPoint.position.set(x, pointY, z);
           // Store original color for this point
           (smallPoint as any).originalColor = 0x800080; // Purple
+          
+          // Create invisible larger hitbox for easier selection
+          const hitboxGeometry = new THREE.SphereGeometry(0.02, 8, 8); // 3x larger than point
+          const hitboxMaterial = new THREE.MeshBasicMaterial({ 
+            visible: false, // Invisible
+            transparent: true,
+            opacity: 0
+          });
+          const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+          hitbox.position.set(x, pointY, z);
+          // Store reference to the actual point in the hitbox
+          (hitbox as any).pointMesh = smallPoint;
+          this.gridPointsGroup.add(hitbox);
           this.gridPointsGroup.add(smallPoint);
           smallPointsCreated++;
         }
