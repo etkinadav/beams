@@ -19,7 +19,87 @@
 
       <!-- ========================== CONTENT AREA ========================== -->
       <div class="d-flex flex-column px-lg-big-threed-planner flex-grow-1">
-        <!-- Content will be added here in the future -->
+        
+        <!-- Admin Mode Content -->
+        <div *ngIf="isAdminMode" class="d-flex flex-column gap-3">
+          <h4 class="mb-3">ניהול קובץ בסיס</h4>
+          
+          <!-- Current Base File Info -->
+          <div *ngIf="baseFile" class="base-file-info p-3 rounded-3" [class.zx-bg-gray-light]="!isDarkMode" [class.zx-bg-gray-dark]="isDarkMode">
+            <div class="d-flex flex-column gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <mat-icon>insert_drive_file</mat-icon>
+                <span class="fw-bold">קובץ בסיס נוכחי:</span>
+              </div>
+              <div class="d-flex flex-column gap-1 px-4">
+                <div><strong>שם הקובץ:</strong> {{ baseFile.originalName }}</div>
+                <div><strong>גודל:</strong> {{ formatFileSize(baseFile.size) }}</div>
+                <div><strong>תאריך העלאה:</strong> {{ baseFile.uploadedAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                <div class="mt-2">
+                  <a [href]="baseFile.downloadUrl" target="_blank" mat-stroked-button color="primary">
+                    <mat-icon>download</mat-icon>
+                    הורד קובץ
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Upload Section -->
+          <div class="file-upload-section p-3 rounded-3" [class.zx-bg-gray-light]="!isDarkMode" [class.zx-bg-gray-dark]="isDarkMode">
+            <div class="d-flex flex-column gap-3">
+              <div>
+                <label for="baseFileInput" class="d-block mb-2 fw-bold">העלאת קובץ בסיס חדש:</label>
+                <input 
+                  type="file" 
+                  id="baseFileInput"
+                  class="form-control"
+                  accept=".obj,.fbx,.gltf,.glb,.dae,.3ds,.blend,.stl,.ply"
+                  (change)="onFileSelected($event)"
+                  [disabled]="isUploading">
+                <small class="text-muted d-block mt-1">
+                  פורמטים נתמכים: OBJ, FBX, GLTF, GLB, DAE, 3DS, BLEND, STL, PLY (עד 100MB)
+                </small>
+              </div>
+
+              <!-- Selected File Info -->
+              <div *ngIf="selectedFile" class="selected-file-info p-2 rounded-2" [class.zx-bg-gray-light]="!isDarkMode">
+                <div class="d-flex align-items-center gap-2">
+                  <mat-icon>description</mat-icon>
+                  <span><strong>קובץ נבחר:</strong> {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</span>
+                </div>
+              </div>
+
+              <!-- Upload Button -->
+              <button 
+                type="button" 
+                mat-raised-button 
+                color="primary"
+                (click)="uploadFile()"
+                [disabled]="!selectedFile || isUploading"
+                class="w-100">
+                <span *ngIf="!isUploading">העלה קובץ</span>
+                <span *ngIf="isUploading">מעלה...</span>
+              </button>
+
+              <!-- Success Message -->
+              <div *ngIf="uploadSuccess" class="alert alert-success" role="alert">
+                הקובץ הועלה בהצלחה!
+              </div>
+
+              <!-- Error Message -->
+              <div *ngIf="uploadError" class="alert alert-danger" role="alert">
+                {{ uploadError }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Mode Content -->
+        <div *ngIf="!isAdminMode" class="d-flex flex-column gap-3">
+          <!-- User mode content will be added here -->
+        </div>
+
       </div>
       <!-- // ========================== CONTENT AREA ========================== -->
 

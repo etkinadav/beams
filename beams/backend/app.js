@@ -11,6 +11,7 @@ const productsRoutes = require("./routes/products");
 const screwsRoutes = require("./routes/screws");
 const ordersRoutes = require("./routes/orders");
 const woodsRoutes = require("./routes/woods");
+const threedplannerRoutes = require("./routes/threedplanner");
 
 require('dotenv').config();
 
@@ -50,6 +51,7 @@ app.use("/api/products", productsRoutes);
 app.use("/api/screws", screwsRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/woods", woodsRoutes);
+app.use("/api/threedplanner", threedplannerRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -135,6 +137,8 @@ app.get('/api/files/:name', (req, res) => {
   
   res.sendFile(filePath);
 });
+
+// 3D planner files are now served through GridFS via /api/threedplanner/files/:id endpoint
 
 // Blender parameters endpoint
 const PARAMS_FILE = path.join(__dirname, '..', 'blender_params.json');
