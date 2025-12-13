@@ -1276,12 +1276,30 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Set position
     model.position.set(machineX, machineY, machineZ);
 
-    // Add material if needed
+    // Apply color to all meshes
+    const colorHex = parseInt(color.replace('#', '0x'));
     model.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+        // Update or create material with the specified color
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(mat => {
+              if (mat instanceof THREE.MeshStandardMaterial || mat instanceof THREE.MeshBasicMaterial || mat instanceof THREE.MeshPhongMaterial) {
+                mat.color.setHex(colorHex);
+              }
+            });
+          } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshBasicMaterial || child.material instanceof THREE.MeshPhongMaterial) {
+            child.material.color.setHex(colorHex);
+          } else {
+            child.material = new THREE.MeshStandardMaterial({ 
+              color: colorHex,
+              metalness: 0.3,
+              roughness: 0.7
+            });
+          }
+        } else {
           child.material = new THREE.MeshStandardMaterial({ 
-            color: 0x888888,
+            color: colorHex,
             metalness: 0.3,
             roughness: 0.7
           });

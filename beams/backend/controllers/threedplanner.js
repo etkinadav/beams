@@ -587,6 +587,7 @@ exports.getMachineConfigs = async (req, res, next) => {
                     name: config.machineId.name,
                     machineNumber: config.machineId.machineNumber,
                     originalName: config.machineId.originalName,
+                    color: config.machineId.color || '#888888',
                     downloadUrl: `/api/threedplanner/files/${config.machineId._id}`
                 },
                 pointX: config.pointX,
