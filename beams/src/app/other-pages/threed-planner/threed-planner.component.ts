@@ -24,6 +24,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   isDarkMode: boolean = false;
   isAdminMode: boolean = false;
   isAddingMachine: boolean = false; // Toggle for showing/hiding grid points and allowing machine placement
+  isRemovingMachine: boolean = false; // Toggle for removing machines mode
+  selectedMachineForRemoval: THREE.Group | null = null; // Selected machine to remove
   private directionSubscription: Subscription;
 
   // File upload related
@@ -610,6 +612,12 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private onMouseClick(event: MouseEvent) {
+    // Handle machine removal mode
+    if (this.isRemovingMachine) {
+      this.handleMachineRemovalClick();
+      return;
+    }
+    
     // Only allow point selection if in "adding machine" mode
     if (!this.isAddingMachine) return;
     
@@ -649,6 +657,78 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       
       console.log('✅ [3D Planner] Point selected at:', clickedObject.position);
     }
+  }
+
+  private handleMachineRemovalClick() {
+    if (!this.raycaster) return;
+
+    // Update raycaster
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    // Check for intersections with placed machines
+    const machineMeshes: THREE.Mesh[] = [];
+    this.placedMachines.forEach((machineGroup) => {
+      machineGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          machineMeshes.push(child);
+        }
+      });
+    });
+
+    const intersects = this.raycaster.intersectObjects(machineMeshes, false);
+    
+    if (intersects.length > 0) {
+      // Find which machine group this mesh belongs to
+      const clickedMesh = intersects[0].object as THREE.Mesh;
+      let clickedMachine: THREE.Group | null = null;
+      
+      this.placedMachines.forEach((machineGroup) => {
+        machineGroup.traverse((child) => {
+          if (child === clickedMesh) {
+            clickedMachine = machineGroup;
+          }
+        });
+      });
+
+      if (clickedMachine) {
+        // Reset previous selection
+        if (this.selectedMachineForRemoval && this.selectedMachineForRemoval !== clickedMachine) {
+          this.resetMachineSelectionForRemoval(this.selectedMachineForRemoval);
+        }
+        
+        // Select new machine
+        this.selectedMachineForRemoval = clickedMachine;
+        this.highlightMachineForRemoval(clickedMachine);
+        
+        console.log('✅ [3D Planner] Machine selected for removal:', (clickedMachine as any).configId);
+      }
+    }
+  }
+
+  private highlightMachineForRemoval(machine: THREE.Group) {
+    machine.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.material instanceof THREE.MeshStandardMaterial || 
+            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
+          const material = Array.isArray(child.material) ? child.material[0] : child.material;
+          (material as THREE.MeshStandardMaterial).emissive.setHex(0xff0000); // Red emissive
+          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
+        }
+      }
+    });
+  }
+
+  private resetMachineSelectionForRemoval(machine: THREE.Group) {
+    machine.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.material instanceof THREE.MeshStandardMaterial || 
+            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
+          const material = Array.isArray(child.material) ? child.material[0] : child.material;
+          (material as THREE.MeshStandardMaterial).emissive.setHex(0x000000); // Reset emissive
+          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
+        }
+      }
+    });
   }
 
   private resetPointToOriginal(point: THREE.Mesh) {
@@ -755,16 +835,51 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   toggleAddMachineMode() {
-    this.isAddingMachine = !this.isAddingMachine;
-    console.log('🔄 [3D Planner] Add machine mode toggled:', this.isAddingMachine);
-    
-    // If closing add machine mode, reset selected point and close dialog
-    if (!this.isAddingMachine) {
+    // If already in add mode, toggle it off
+    if (this.isAddingMachine) {
+      this.isAddingMachine = false;
       this.closeMachineSelection();
+      this.updateGridPointsVisibility();
+    } else {
+      // Turn off remove mode if active
+      if (this.isRemovingMachine) {
+        this.isRemovingMachine = false;
+        this.selectedMachineForRemoval = null;
+        this.updateMachinesSelectionMode();
+      }
+      // Turn on add mode
+      this.isAddingMachine = true;
+      this.updateGridPointsVisibility();
     }
-    
-    // Update grid points visibility
-    this.updateGridPointsVisibility();
+    console.log('🔄 [3D Planner] Add machine mode toggled:', this.isAddingMachine);
+  }
+
+  toggleRemoveMachineMode() {
+    // If already in remove mode, toggle it off
+    if (this.isRemovingMachine) {
+      this.isRemovingMachine = false;
+      this.selectedMachineForRemoval = null;
+      this.updateMachinesSelectionMode();
+    } else {
+      // Turn off add mode if active
+      if (this.isAddingMachine) {
+        this.isAddingMachine = false;
+        this.closeMachineSelection();
+        this.updateGridPointsVisibility();
+      }
+      // Turn on remove mode
+      this.isRemovingMachine = true;
+      this.updateMachinesSelectionMode();
+    }
+    console.log('🔄 [3D Planner] Remove machine mode toggled:', this.isRemovingMachine);
+  }
+
+  private updateMachinesSelectionMode() {
+    // Reset all machine selections
+    if (this.selectedMachineForRemoval) {
+      this.resetMachineSelectionForRemoval(this.selectedMachineForRemoval);
+      this.selectedMachineForRemoval = null;
+    }
   }
 
   private updateGridPointsVisibility() {
@@ -940,6 +1055,50 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.placedMachines.set(configId, model);
 
     console.log('✅ [3D Planner] Machine placed at:', { x: machineX, y: machineY, z: machineZ, corner });
+  }
+
+  deleteSelectedMachine() {
+    if (!this.selectedMachineForRemoval) return;
+
+    const configId = (this.selectedMachineForRemoval as any).configId;
+    if (!configId) {
+      console.error('❌ [3D Planner] Cannot delete machine: no config ID');
+      return;
+    }
+
+    console.log('🔵 [3D Planner] Deleting machine configuration:', configId);
+
+    // Call backend API to delete machine configuration
+    this.threedPlannerService.deleteMachineConfig(configId).subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machine configuration deleted:', response);
+        if (response.success) {
+          // Remove from scene
+          this.scene.remove(this.selectedMachineForRemoval!);
+          this.placedMachines.delete(configId);
+          
+          // Clean up
+          this.selectedMachineForRemoval!.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              child.geometry.dispose();
+              if (Array.isArray(child.material)) {
+                child.material.forEach(material => material.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          });
+          
+          this.selectedMachineForRemoval = null;
+          this.isRemovingMachine = false;
+          this.updateMachinesSelectionMode();
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error deleting machine configuration:', error);
+        alert('שגיאה במחיקת קונפיגורציית המכונה. אנא נסה שוב.');
+      }
+    });
   }
 
   private loadMachineConfigs() {

@@ -112,5 +112,11 @@ export class ThreedPlannerService {
     console.log('🔵 [3D Planner Service] GET request:', url);
     return this.http.get<{ success: boolean; configs: any[] }>(url);
   }
+
+  deleteMachineConfig(configId: string): Observable<{ success: boolean; message: string }> {
+    const url = BACKEND_URL + "machine-config/" + configId;
+    console.log('🔵 [3D Planner Service] DELETE request:', url);
+    return this.http.delete<{ success: boolean; message: string }>(url);
+  }
 }
 

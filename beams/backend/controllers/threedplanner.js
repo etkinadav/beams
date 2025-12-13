@@ -556,3 +556,44 @@ exports.getMachineConfigs = async (req, res, next) => {
         });
     }
 };
+
+// Delete a machine configuration
+exports.deleteMachineConfig = async (req, res, next) => {
+    try {
+        const configId = req.params.id;
+        console.log('⚙️ Delete machine config request received:', configId);
+
+        if (!mongoose.Types.ObjectId.isValid(configId)) {
+            console.error('❌ Invalid config ID format');
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid configuration ID format'
+            });
+        }
+
+        const deletedConfig = await ThreedPlannerMachineConfig.findByIdAndDelete(configId);
+        
+        if (!deletedConfig) {
+            console.error('❌ Machine configuration not found:', configId);
+            return res.status(404).json({
+                success: false,
+                error: 'Machine configuration not found'
+            });
+        }
+
+        console.log('✅ Machine configuration deleted:', configId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Machine configuration deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Error deleting machine configuration:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error deleting machine configuration",
+            error: error.message
+        });
+    }
+};

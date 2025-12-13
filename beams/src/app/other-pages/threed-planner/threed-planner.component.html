@@ -25,6 +25,18 @@
       </button>
       <!-- // ========================== ADD MACHINE TOGGLE BUTTON ========================== -->
 
+      <!-- ========================== REMOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
+      <button 
+        *ngIf="!isAdminMode"
+        type="button" 
+        mat-stroked-button 
+        color="primary" 
+        class="zx-remove-machine-btn-floating rounded-pill"
+        (click)="toggleRemoveMachineMode()">
+        {{ isRemovingMachine ? 'ביטול' : 'הסר מכונה' }}
+      </button>
+      <!-- // ========================== REMOVE MACHINE TOGGLE BUTTON ========================== -->
+
       <!-- ========================== CONTENT AREA ========================== -->
       
       <!-- Admin Mode Content -->
@@ -317,6 +329,39 @@
               (click)="addMachine()">
               הוסף מכונה
             </button>
+          </div>
+        </div>
+
+        <!-- Machine Removal Confirmation Dialog -->
+        <div *ngIf="isRemovingMachine && selectedMachineForRemoval" 
+             class="machine-removal-dialog position-absolute" 
+             style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); max-width: 400px;">
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">מחיקת מכונה</h5>
+              <button mat-icon-button (click)="toggleRemoveMachineMode()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            
+            <div class="alert alert-warning" role="alert">
+              <mat-icon class="mb-2">warning</mat-icon>
+              <div>האם אתה בטוח שאתה רוצה למחוק מכונה זאת?</div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button 
+                mat-stroked-button 
+                (click)="toggleRemoveMachineMode()">
+                ביטול
+              </button>
+              <button 
+                mat-raised-button 
+                color="warn"
+                (click)="deleteSelectedMachine()">
+                מחק מכונה
+              </button>
+            </div>
           </div>
         </div>
       </div>
