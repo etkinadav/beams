@@ -498,13 +498,22 @@ exports.downloadFile = async (req, res, next) => {
 // Add machine configuration (place machine at a point)
 exports.addMachineConfig = async (req, res, next) => {
     try {
-        const { machineId, pointX, pointY, pointZ, corner } = req.body;
+        const { machineId, pointX, pointY, pointZ, corner, rotation } = req.body;
 
         // Validate required fields
         if (!machineId || pointX === undefined || pointY === undefined || pointZ === undefined || !corner) {
             return res.status(400).json({
                 success: false,
                 error: 'Missing required fields: machineId, pointX, pointY, pointZ, corner'
+            });
+        }
+
+        // Validate rotation (optional, default 0)
+        const validRotation = rotation !== undefined ? rotation : 0;
+        if (![0, 90, 180, 270].includes(validRotation)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Rotation must be 0, 90, 180, or 270 degrees'
             });
         }
 
@@ -539,7 +548,8 @@ exports.addMachineConfig = async (req, res, next) => {
             pointX: pointX,
             pointY: pointY,
             pointZ: pointZ,
-            corner: corner
+            corner: corner,
+            rotation: validRotation
         });
 
         const savedConfig = await machineConfig.save();
@@ -556,6 +566,7 @@ exports.addMachineConfig = async (req, res, next) => {
                 pointY: savedConfig.pointY,
                 pointZ: savedConfig.pointZ,
                 corner: savedConfig.corner,
+                rotation: savedConfig.rotation || 0,
                 createdAt: savedConfig.createdAt
             }
         });
@@ -594,6 +605,7 @@ exports.getMachineConfigs = async (req, res, next) => {
                 pointY: config.pointY,
                 pointZ: config.pointZ,
                 corner: config.corner,
+                rotation: config.rotation || 0,
                 createdAt: config.createdAt
             }))
         });

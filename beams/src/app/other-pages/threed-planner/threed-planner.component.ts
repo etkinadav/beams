@@ -72,6 +72,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   availableMachines: Machine[] = [];
   selectedMachine: Machine | null = null;
   selectedCorner: number | null = null; // 1, 2, 3, or 4 for the 4 corners
+  selectedRotation: number = 0; // 0, 90, 180, or 270 degrees
 
   constructor(
     private directionService: DirectionService,
@@ -1051,7 +1052,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       pointPosition.x,
       pointPosition.y,
       pointPosition.z,
-      this.selectedCorner
+      this.selectedCorner,
+      this.selectedRotation
     ).subscribe({
       next: (response) => {
         console.log('✅ [3D Planner] Machine configuration saved:', response);
@@ -1065,7 +1067,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
             pointPosition.z,
             this.selectedCorner!,
             response.config.id,
-            machineColor
+            machineColor,
+            this.selectedRotation
           );
           
           // Close dialog and reset
@@ -1083,6 +1086,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.showMachineSelection = false;
     this.selectedMachine = null;
     this.selectedCorner = null;
+    this.selectedRotation = 0; // Reset rotation
     // Remove direction arrows
     this.removeDirectionArrows();
     // Reset selected point
@@ -1147,7 +1151,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.gridPointsGroup.visible = this.isAddingMachine;
   }
 
-  private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, machineColor?: string) {
+  private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, machineColor?: string, rotation: number = 0) {
     if (!this.renderer || !this.scene) {
       console.warn('⚠️ [3D Planner] Cannot place machine - renderer or scene not available');
       return;
@@ -1179,23 +1183,23 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     
     // Load based on file extension
     if (fileExtension === 'obj') {
-      this.loadMachineOBJ(fileUrl, pointX, pointY, pointZ, corner, configId, color);
+      this.loadMachineOBJ(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation);
     } else if (fileExtension === 'gltf' || fileExtension === 'glb') {
-      this.loadMachineGLTF(fileUrl, pointX, pointY, pointZ, corner, configId, color);
+      this.loadMachineGLTF(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation);
     } else if (fileExtension === 'stl') {
-      this.loadMachineSTL(fileUrl, pointX, pointY, pointZ, corner, configId, color);
+      this.loadMachineSTL(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation);
     } else {
       console.error('❌ [3D Planner] Unsupported file format for machine:', fileExtension);
     }
   }
 
-  private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string) {
+  private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0) {
     const loader = new OBJLoader();
     loader.load(
       url,
       (object) => {
         console.log('✅ [3D Planner] Machine OBJ model loaded');
-        this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId, color);
+        this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId, color, rotation);
       },
       undefined,
       (error) => {
@@ -1204,13 +1208,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     );
   }
 
-  private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string) {
+  private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0) {
     const loader = new GLTFLoader();
     loader.load(
       url,
       (gltf) => {
         console.log('✅ [3D Planner] Machine GLTF model loaded');
-        this.placeMachineModel(gltf.scene, pointX, pointY, pointZ, corner, configId, color);
+        this.placeMachineModel(gltf.scene, pointX, pointY, pointZ, corner, configId, color, rotation);
       },
       undefined,
       (error) => {
@@ -1219,7 +1223,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     );
   }
 
-  private loadMachineSTL(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string) {
+  private loadMachineSTL(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0) {
     const loader = new STLLoader();
     loader.load(
       url,
@@ -1234,7 +1238,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         const mesh = new THREE.Mesh(geometry, material);
         const group = new THREE.Group();
         group.add(mesh);
-        this.placeMachineModel(group, pointX, pointY, pointZ, corner, configId, color);
+        this.placeMachineModel(group, pointX, pointY, pointZ, corner, configId, color, rotation);
       },
       undefined,
       (error) => {
@@ -1243,10 +1247,17 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     );
   }
 
-  private placeMachineModel(model: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string = '#888888') {
+  private placeMachineModel(model: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string = '#888888', rotation: number = 0) {
     // First, set model to origin to calculate bounding box correctly
     model.position.set(0, 0, 0);
+    model.rotation.set(0, 0, 0); // Reset rotation
     model.updateMatrixWorld(true);
+    
+    // Apply rotation (in radians, clockwise around Y axis)
+    if (rotation !== 0) {
+      const rotationRad = (rotation * Math.PI) / 180; // Convert degrees to radians
+      model.rotateY(rotationRad); // Rotate around Y axis (vertical)
+    }
     
     // Apply the same scale as the base model
     model.scale.multiplyScalar(this.baseModelScale);
@@ -1397,6 +1408,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           // Load and place each machine
           response.configs.forEach(config => {
             const machineColor = config.machine?.color || '#888888';
+            const rotation = config.rotation || 0;
             this.loadAndPlaceMachine(
               config.machine,
               config.pointX,
@@ -1404,7 +1416,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
               config.pointZ,
               config.corner,
               config.id,
-              machineColor
+              machineColor,
+              rotation
             );
           });
           this.hasPlacedMachines = this.placedMachines.size > 0;

@@ -101,14 +101,15 @@ export class ThreedPlannerService {
     return this.http.delete<{ success: boolean; message: string }>(url);
   }
 
-  addMachineConfig(machineId: string, pointX: number, pointY: number, pointZ: number, corner: number): Observable<{ success: boolean; message: string; config: any }> {
+  addMachineConfig(machineId: string, pointX: number, pointY: number, pointZ: number, corner: number, rotation: number = 0): Observable<{ success: boolean; message: string; config: any }> {
     const url = BACKEND_URL + "machine-config";
     const body = {
       machineId: machineId,
       pointX: pointX,
       pointY: pointY,
       pointZ: pointZ,
-      corner: corner
+      corner: corner,
+      rotation: rotation
     };
     
     console.log('🔵 [3D Planner Service] POST request:', url);

@@ -26,6 +26,12 @@ const threedPlannerMachineConfigSchema = new Schema({
         min: 1,
         max: 4
     },
+    rotation: {
+        type: Number,
+        required: false,
+        default: 0,
+        enum: [0, 90, 180, 270] // Rotation in degrees (clockwise)
+    },
     createdAt: {
         type: Date,
         default: Date.now

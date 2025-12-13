@@ -330,6 +330,32 @@
             </div>
           </div>
 
+          <!-- Rotation Selection -->
+          <div class="mb-4" *ngIf="selectedMachine">
+            <h6 class="mb-2">סיבוב המכונה:</h6>
+            <div class="d-flex flex-column gap-2">
+              <div *ngFor="let rot of [0, 90, 180, 270]" class="machine-radio-item p-2 rounded-2" 
+                   [class.selected]="selectedRotation === rot"
+                   (click)="selectedRotation = rot"
+                   style="cursor: pointer; border: 2px solid #e0e0e0; transition: all 0.2s;">
+                <div class="d-flex align-items-center gap-2">
+                  <input 
+                    type="radio" 
+                    name="rotationSelection"
+                    [id]="'rotation-' + rot"
+                    [checked]="selectedRotation === rot"
+                    (click)="selectedRotation = rot; $event.stopPropagation()">
+                  <label [for]="'rotation-' + rot" class="mb-0 flex-grow-1" style="cursor: pointer;">
+                    <div class="d-flex align-items-center gap-2">
+                      <mat-icon>rotate_right</mat-icon>
+                      <span>{{ rot }}°</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Add Machine Button -->
           <div class="d-flex justify-content-end gap-2">
             <button 
