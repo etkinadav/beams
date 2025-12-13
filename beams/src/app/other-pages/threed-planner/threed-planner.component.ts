@@ -1460,14 +1460,20 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, machineColor?: string, rotation: number = 0) {
+    this.loadAndPlaceMachineWithCallback(machine, pointX, pointY, pointZ, corner, configId, machineColor, rotation, () => {});
+  }
+
+  private loadAndPlaceMachineWithCallback(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, machineColor?: string, rotation: number = 0, onComplete?: () => void) {
     if (!this.renderer || !this.scene) {
       console.warn('⚠️ [3D Planner] Cannot place machine - renderer or scene not available');
+      if (onComplete) onComplete();
       return;
     }
 
     // Check if machine is already placed
     if (this.placedMachines.has(configId)) {
       console.log('ℹ️ [3D Planner] Machine already placed, skipping:', configId);
+      if (onComplete) onComplete();
       return;
     }
 
@@ -1491,47 +1497,52 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     
     // Load based on file extension
     if (fileExtension === 'obj') {
-      this.loadMachineOBJ(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation);
+      this.loadMachineOBJ(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation, onComplete);
     } else if (fileExtension === 'gltf' || fileExtension === 'glb') {
-      this.loadMachineGLTF(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation);
+      this.loadMachineGLTF(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation, onComplete);
     } else if (fileExtension === 'stl') {
-      this.loadMachineSTL(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation);
+      this.loadMachineSTL(fileUrl, pointX, pointY, pointZ, corner, configId, color, rotation, onComplete);
     } else {
       console.error('❌ [3D Planner] Unsupported file format for machine:', fileExtension);
+      if (onComplete) onComplete();
     }
   }
 
-  private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0) {
+  private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0, onComplete?: () => void) {
     const loader = new OBJLoader();
     loader.load(
       url,
       (object) => {
         console.log('✅ [3D Planner] Machine OBJ model loaded');
         this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId, color, rotation);
+        if (onComplete) onComplete();
       },
       undefined,
       (error) => {
         console.error('❌ [3D Planner] Error loading machine OBJ:', error);
+        if (onComplete) onComplete();
       }
     );
   }
 
-  private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0) {
+  private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0, onComplete?: () => void) {
     const loader = new GLTFLoader();
     loader.load(
       url,
       (gltf) => {
         console.log('✅ [3D Planner] Machine GLTF model loaded');
         this.placeMachineModel(gltf.scene, pointX, pointY, pointZ, corner, configId, color, rotation);
+        if (onComplete) onComplete();
       },
       undefined,
       (error) => {
         console.error('❌ [3D Planner] Error loading machine GLTF:', error);
+        if (onComplete) onComplete();
       }
     );
   }
 
-  private loadMachineSTL(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0) {
+  private loadMachineSTL(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0, onComplete?: () => void) {
     const loader = new STLLoader();
     loader.load(
       url,
@@ -1547,10 +1558,12 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         const group = new THREE.Group();
         group.add(mesh);
         this.placeMachineModel(group, pointX, pointY, pointZ, corner, configId, color, rotation);
+        if (onComplete) onComplete();
       },
       undefined,
       (error) => {
         console.error('❌ [3D Planner] Error loading machine STL:', error);
+        if (onComplete) onComplete();
       }
     );
   }
@@ -1741,11 +1754,46 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       next: (response) => {
         console.log('✅ [3D Planner] Machine configs response:', response);
         if (response.success) {
+          const configs = response.configs;
+          const totalMachines = configs.length;
+          let loadedMachines = 0;
+          
+          if (totalMachines === 0) {
+            // No machines to load, hide spinner
+            this.hasPlacedMachines = false;
+            this.isLoadingModel = false;
+            return;
+          }
+          
+          // Keep spinner visible while loading machines
+          this.isLoadingModel = true;
+          
           // Load and place each machine
-          response.configs.forEach(config => {
+          configs.forEach((config, index) => {
             const machineColor = config.machine?.color || '#888888';
             const rotation = config.rotation || 0;
-            this.loadAndPlaceMachine(
+            
+            // Track when this machine is loaded
+            const originalLoadAndPlace = this.loadAndPlaceMachine.bind(this);
+            const checkComplete = () => {
+              loadedMachines++;
+              console.log(`📦 [3D Planner] Machine ${loadedMachines}/${totalMachines} loaded`);
+              
+              // When all machines are loaded, hide spinner
+              if (loadedMachines >= totalMachines) {
+                this.hasPlacedMachines = this.placedMachines.size > 0;
+                
+                // Normalize all machines scale after loading
+                setTimeout(() => {
+                  this.normalizeAllMachinesScale();
+                  this.isLoadingModel = false;
+                  console.log('✅ [3D Planner] All machines loaded, hiding spinner');
+                }, 500);
+              }
+            };
+            
+            // Load machine and check completion
+            this.loadAndPlaceMachineWithCallback(
               config.machine,
               config.pointX,
               config.pointY,
@@ -1753,19 +1801,15 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
               config.corner,
               config.id,
               machineColor,
-              rotation
+              rotation,
+              checkComplete
             );
           });
-          this.hasPlacedMachines = this.placedMachines.size > 0;
-          
-          // Normalize all machines scale after loading
-          setTimeout(() => {
-            this.normalizeAllMachinesScale();
-          }, 500);
         }
       },
       error: (error) => {
         console.error('❌ [3D Planner] Error loading machine configs:', error);
+        this.isLoadingModel = false;
       }
     });
   }
@@ -2033,10 +2077,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.controls.target.set(0, 0, 0);
     this.controls.update();
 
-    this.isLoadingModel = false;
+    // Don't set isLoadingModel = false here - wait for all machines to load
     console.log('✅ [3D Planner] Model setup complete');
     
     // Load machine configurations after model is set up
+    // isLoadingModel will be set to false in loadMachineConfigs after all machines are loaded
     this.loadMachineConfigs();
   }
 
