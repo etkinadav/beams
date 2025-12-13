@@ -1,6 +1,6 @@
 <div class="fill-height d-flex justify-content-center">
   <div class="d-flex w-100 flex-grow-1 position-relative">
-    <div class="d-flex flex-column position-absolute w-100 h-100 overflow-auto">
+    <div class="d-flex flex-column position-absolute w-100 h-100 overflow-hidden">
 
       <!-- ========================== HEADER WITH MODE TOGGLE ========================== -->
       <div class="d-flex flex-column px-lg-big-threed-planner pt-3">
@@ -20,7 +20,7 @@
       <!-- ========================== CONTENT AREA ========================== -->
       
       <!-- Admin Mode Content -->
-      <div *ngIf="isAdminMode" class="d-flex flex-column px-lg-big-threed-planner flex-grow-1 gap-3">
+      <div *ngIf="isAdminMode" class="d-flex flex-column px-lg-big-threed-planner flex-grow-1 gap-3 overflow-hidden">
           <h4 class="mb-3">ניהול קובץ בסיס</h4>
           
           <!-- Current Base File Info -->
@@ -157,7 +157,7 @@
             </div>
 
             <!-- Machines List -->
-            <div class="machines-list">
+            <div class="machines-list overflow-y-auto" style="max-height: 300px;">
               <h5 class="mb-3">מכונות קיימות ({{ machines.length }})</h5>
               <div *ngIf="machines.length === 0" class="text-muted p-3 text-center">
                 אין מכונות מועלות
