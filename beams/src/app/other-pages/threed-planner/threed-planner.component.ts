@@ -49,6 +49,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private currentModel: THREE.Group | null = null;
   private gridPointsGroup: THREE.Group | null = null;
   private placedMachines: Map<string, THREE.Group> = new Map(); // Map of config ID to machine model
+  private baseModelScale: number = 1; // Store the scale applied to the base model
   private animationFrameId: number | null = null;
   isLoadingModel: boolean = false;
   modelLoadError: string | null = null;
@@ -846,7 +847,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     model.position.set(0, 0, 0);
     model.updateMatrixWorld(true);
     
-    // Calculate bounding box of the machine
+    // Apply the same scale as the base model
+    model.scale.multiplyScalar(this.baseModelScale);
+    model.updateMatrixWorld(true);
+    
+    // Calculate bounding box of the machine after scaling
     const box = new THREE.Box3().setFromObject(model);
     const min = box.min;
     const max = box.max;
@@ -1140,6 +1145,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = 5 / maxDim; // Scale to fit in a 5 unit space
+
+    // Store the scale for use with machines
+    this.baseModelScale = scale;
 
     model.scale.multiplyScalar(scale);
     model.position.sub(center.multiplyScalar(scale));
