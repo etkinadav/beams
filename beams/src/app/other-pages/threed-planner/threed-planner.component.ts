@@ -157,6 +157,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
   }
 
   uploadFile() {
+    console.log('🔵 [3D Planner] uploadFile() called');
+    console.log('🔵 [3D Planner] Current state:', {
+      selectedFile: this.selectedFile ? this.selectedFile.name : null,
+      isUploading: this.isUploading,
+      baseFile: this.baseFile
+    });
+    
     if (!this.selectedFile) {
       this.uploadError = 'אנא בחר קובץ להעלאה';
       console.warn('⚠️ [3D Planner] No file selected for upload');
