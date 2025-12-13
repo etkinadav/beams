@@ -32,6 +32,16 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
+.zx-add-machine-btn-floating {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    min-width: 150px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 .base-file-info,
 .file-upload-section {
     border: 1px solid rgba(0, 0, 0, 0.1);

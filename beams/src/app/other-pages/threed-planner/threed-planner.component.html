@@ -13,6 +13,18 @@
       </button>
       <!-- // ========================== MODE TOGGLE BUTTON ========================== -->
 
+      <!-- ========================== ADD MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
+      <button 
+        *ngIf="!isAdminMode"
+        type="button" 
+        mat-stroked-button 
+        color="primary" 
+        class="zx-add-machine-btn-floating rounded-pill"
+        (click)="toggleAddMachineMode()">
+        {{ isAddingMachine ? 'ביטול' : 'הוסף מכונה' }}
+      </button>
+      <!-- // ========================== ADD MACHINE TOGGLE BUTTON ========================== -->
+
       <!-- ========================== CONTENT AREA ========================== -->
       
       <!-- Admin Mode Content -->

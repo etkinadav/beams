@@ -23,6 +23,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   isRTL: boolean = true;
   isDarkMode: boolean = false;
   isAdminMode: boolean = false;
+  isAddingMachine: boolean = false; // Toggle for showing/hiding grid points and allowing machine placement
   private directionSubscription: Subscription;
 
   // File upload related
@@ -609,6 +610,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private onMouseClick(event: MouseEvent) {
+    // Only allow point selection if in "adding machine" mode
+    if (!this.isAddingMachine) return;
+    
     if (!this.gridPointsGroup) return;
 
     // Update raycaster
@@ -748,6 +752,26 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.resetPointToOriginal(this.selectedPoint);
       this.selectedPoint = null;
     }
+  }
+
+  toggleAddMachineMode() {
+    this.isAddingMachine = !this.isAddingMachine;
+    console.log('🔄 [3D Planner] Add machine mode toggled:', this.isAddingMachine);
+    
+    // If closing add machine mode, reset selected point and close dialog
+    if (!this.isAddingMachine) {
+      this.closeMachineSelection();
+    }
+    
+    // Update grid points visibility
+    this.updateGridPointsVisibility();
+  }
+
+  private updateGridPointsVisibility() {
+    if (!this.gridPointsGroup) return;
+    
+    // Show/hide grid points based on isAddingMachine mode
+    this.gridPointsGroup.visible = this.isAddingMachine;
   }
 
   private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
@@ -1374,6 +1398,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     if (largePointsCreated > 0 || smallPointsCreated > 0) {
       this.scene.add(this.gridPointsGroup);
+      // Initially hide grid points
+      this.gridPointsGroup.visible = this.isAddingMachine;
       console.log(`✅ [3D Planner] Created ${largePointsCreated} large points and ${smallPointsCreated} small points`);
     } else {
       console.warn('⚠️ [3D Planner] No grid points created');
