@@ -680,6 +680,24 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       }
     }
 
+    // Check for intersections with placed machines if in removal mode
+    if (this.isRemovingMachine && this.placedMachines.size > 0) {
+      const machineMeshes: THREE.Mesh[] = [];
+      this.placedMachines.forEach((machineGroup) => {
+        machineGroup.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            machineMeshes.push(child);
+          }
+        });
+      });
+      
+      const intersects = this.raycaster.intersectObjects(machineMeshes, false);
+      if (intersects.length > 0) {
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+    }
+
     // Reset cursor
     canvas.style.cursor = 'default';
   }
