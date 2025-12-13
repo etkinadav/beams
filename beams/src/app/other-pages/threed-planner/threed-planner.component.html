@@ -2,25 +2,21 @@
   <div class="d-flex w-100 flex-grow-1 position-relative">
     <div class="d-flex flex-column position-absolute w-100 h-100 overflow-hidden">
 
-      <!-- ========================== HEADER WITH MODE TOGGLE ========================== -->
-      <div class="d-flex flex-column px-lg-big-threed-planner pt-3">
-        <div class="d-flex justify-content-end pb-3">
-          <button 
-            type="button" 
-            mat-stroked-button 
-            color="primary" 
-            class="zx-mode-toggle-btn rounded-pill"
-            (click)="toggleMode()">
-            {{ isAdminMode ? 'מצב מנהל' : 'מצב משתמש' }}
-          </button>
-        </div>
-      </div>
-      <!-- // ========================== HEADER WITH MODE TOGGLE ========================== -->
+      <!-- ========================== MODE TOGGLE BUTTON (FLOATING) ========================== -->
+      <button 
+        type="button" 
+        mat-stroked-button 
+        color="primary" 
+        class="zx-mode-toggle-btn-floating rounded-pill"
+        (click)="toggleMode()">
+        {{ isAdminMode ? 'מצב מנהל' : 'מצב משתמש' }}
+      </button>
+      <!-- // ========================== MODE TOGGLE BUTTON ========================== -->
 
       <!-- ========================== CONTENT AREA ========================== -->
       
       <!-- Admin Mode Content -->
-      <div *ngIf="isAdminMode" class="d-flex flex-column px-lg-big-threed-planner flex-grow-1 gap-3 overflow-hidden">
+      <div *ngIf="isAdminMode" class="d-flex flex-column px-lg-big-threed-planner flex-grow-1 gap-3 overflow-y-auto">
           <h4 class="mb-3">ניהול קובץ בסיס</h4>
           
           <!-- Current Base File Info -->
@@ -191,7 +187,7 @@
         </div>
 
       <!-- User Mode Content -->
-      <div *ngIf="!isAdminMode" class="user-mode-container position-absolute w-100" style="top: 80px; left: 0; right: 0; bottom: 0;">
+      <div *ngIf="!isAdminMode" class="user-mode-container position-absolute w-100" style="top: 0; left: 0; right: 0; bottom: 0;">
         <!-- Loading indicator -->
         <div *ngIf="isLoadingModel" class="loading-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center" 
              [class.zx-bg-gray-dark]="isDarkMode" [class.zx-bg-gray-light]="!isDarkMode">
