@@ -52,12 +52,31 @@ exports.getBaseFile = async (req, res, next) => {
 exports.uploadBaseFile = async (req, res, next) => {
     try {
         console.log('📤 Upload request received');
+        console.log('📤 req.file:', req.file);
+        console.log('📤 req.body:', req.body);
+        console.log('📤 req.headers:', req.headers['content-type']);
         
         if (!req.file) {
             console.error('❌ No file in request');
+            console.error('❌ req.file is:', req.file);
+            console.error('❌ req.body is:', req.body);
             return res.status(400).json({ 
                 success: false,
                 error: 'No file uploaded' 
+            });
+        }
+        
+        // Validate file type in controller instead of fileFilter
+        const allowedExtensions = ['.obj', '.fbx', '.gltf', '.glb', '.dae', '.3ds', '.blend', '.stl', '.ply'];
+        const fileNameParts = req.file.originalname.split('.');
+        const ext = fileNameParts.length > 1 ? '.' + fileNameParts.pop().toLowerCase() : '';
+        console.log('🔍 [Controller] File extension:', ext);
+        
+        if (!allowedExtensions.includes(ext)) {
+            console.error('❌ [Controller] Invalid file type:', ext);
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid file type. Only 3D file formats are allowed (obj, fbx, gltf, glb, dae, 3ds, blend, stl, ply).'
             });
         }
 
