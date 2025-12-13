@@ -111,6 +111,7 @@ router.post("/machines", (req, res, next) => {
   });
 }, threedPlannerController.uploadMachine);
 
+router.put("/machines/:id/color", threedPlannerController.updateMachineColor);
 router.delete("/machines/:id", threedPlannerController.deleteMachine);
 
 router.get("/files/:id", threedPlannerController.downloadFile);
