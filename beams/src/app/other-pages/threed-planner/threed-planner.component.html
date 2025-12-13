@@ -18,10 +18,9 @@
       <!-- // ========================== HEADER WITH MODE TOGGLE ========================== -->
 
       <!-- ========================== CONTENT AREA ========================== -->
-      <div class="d-flex flex-column px-lg-big-threed-planner flex-grow-1">
-        
-        <!-- Admin Mode Content -->
-        <div *ngIf="isAdminMode" class="d-flex flex-column gap-3">
+      
+      <!-- Admin Mode Content -->
+      <div *ngIf="isAdminMode" class="d-flex flex-column px-lg-big-threed-planner flex-grow-1 gap-3">
           <h4 class="mb-3">ניהול קובץ בסיס</h4>
           
           <!-- Current Base File Info -->
@@ -95,11 +94,36 @@
           </div>
         </div>
 
-        <!-- User Mode Content -->
-        <div *ngIf="!isAdminMode" class="d-flex flex-column gap-3">
-          <!-- User mode content will be added here -->
+      <!-- User Mode Content -->
+      <div *ngIf="!isAdminMode" class="user-mode-container position-absolute w-100" style="top: 80px; left: 0; right: 0; bottom: 0;">
+        <!-- Loading indicator -->
+        <div *ngIf="isLoadingModel" class="loading-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center" 
+             [class.zx-bg-gray-dark]="isDarkMode" [class.zx-bg-gray-light]="!isDarkMode">
+          <div class="d-flex flex-column align-items-center gap-3">
+            <mat-spinner diameter="50"></mat-spinner>
+            <span>טוען מודל תלת מימדי...</span>
+          </div>
         </div>
 
+        <!-- Error message -->
+        <div *ngIf="modelLoadError && !isLoadingModel" class="error-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center p-4">
+          <div class="alert alert-danger text-center">
+            <mat-icon class="mb-2">error</mat-icon>
+            <div>{{ modelLoadError }}</div>
+          </div>
+        </div>
+
+        <!-- No file message -->
+        <div *ngIf="!baseFile && !isLoadingModel && !modelLoadError" class="no-file-overlay position-absolute w-100 h-100 d-flex align-items-center justify-content-center p-4">
+          <div class="text-center">
+            <mat-icon class="mb-3" style="font-size: 64px; width: 64px; height: 64px; opacity: 0.5;">3d_rotation</mat-icon>
+            <h4>אין קובץ בסיס להצגה</h4>
+            <p>אנא העלה קובץ בסיס במצב מנהל</p>
+          </div>
+        </div>
+
+        <!-- Three.js Canvas -->
+        <canvas #threeCanvas class="three-canvas w-100 h-100"></canvas>
       </div>
       <!-- // ========================== CONTENT AREA ========================== -->
 

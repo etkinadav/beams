@@ -136,3 +136,39 @@
     width: 100%;
 }
 
+/* User Mode - Three.js Canvas */
+.user-mode-container {
+    height: 100%;
+    width: 100%;
+}
+
+.three-canvas {
+    display: block;
+    outline: none;
+    cursor: grab;
+}
+
+.three-canvas:active {
+    cursor: grabbing;
+}
+
+.loading-overlay,
+.error-overlay,
+.no-file-overlay {
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.zx-bg-gray-dark {
+    background-color: rgba(26, 26, 26, 0.95) !important;
+    color: white;
+}
+
+.zx-bg-gray-light {
+    background-color: rgba(245, 245, 245, 0.95) !important;
+}
+
+mat-spinner {
+    margin: 0 auto;
+}
+

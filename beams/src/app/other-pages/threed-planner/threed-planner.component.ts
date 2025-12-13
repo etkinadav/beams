@@ -1,7 +1,13 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DirectionService } from '../../direction.service';
 import { ThreedPlannerService, BaseFile } from '../../services/threedplanner.service';
+import { environment } from '../../../environments/environment';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 
 @Component({
   selector: 'app-threed-planner',
@@ -11,7 +17,9 @@ import { ThreedPlannerService, BaseFile } from '../../services/threedplanner.ser
     class: 'fill-screen'
   }
 })
-export class ThreedPlannerComponent implements OnInit, OnDestroy {
+export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('threeCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
+  
   isRTL: boolean = true;
   isDarkMode: boolean = false;
   isAdminMode: boolean = false;
@@ -24,6 +32,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
   uploadProgress: number = 0;
   uploadError: string | null = null;
   uploadSuccess: boolean = false;
+
+  // Three.js related
+  private scene!: THREE.Scene;
+  private camera!: THREE.PerspectiveCamera;
+  private renderer!: THREE.WebGLRenderer;
+  private controls!: OrbitControls;
+  private currentModel: THREE.Group | null = null;
+  private animationFrameId: number | null = null;
+  isLoadingModel: boolean = false;
+  modelLoadError: string | null = null;
 
   constructor(
     private directionService: DirectionService,
@@ -46,11 +64,18 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
     this.directionService.isDarkMode$.subscribe(isDarkMode => {
       this.isDarkMode = isDarkMode;
       console.log('🌓 [3D Planner] Dark mode changed:', isDarkMode);
+      if (this.renderer) {
+        this.updateSceneColors();
+      }
     });
 
-    // Load existing base file if in admin mode
-    if (this.isAdminMode) {
-      this.loadBaseFile();
+    // Load existing base file
+    this.loadBaseFile();
+  }
+
+  ngAfterViewInit() {
+    if (!this.isAdminMode) {
+      this.initThreeJS();
     }
   }
 
@@ -58,13 +83,24 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
     if (this.directionSubscription) {
       this.directionSubscription.unsubscribe();
     }
+    this.cleanupThreeJS();
   }
 
   toggleMode() {
     this.isAdminMode = !this.isAdminMode;
     console.log('🔄 [3D Planner] Mode toggled:', this.isAdminMode ? 'Admin Mode' : 'User Mode');
+    
     if (this.isAdminMode) {
-      this.loadBaseFile();
+      // Cleanup Three.js when switching to admin mode
+      this.cleanupThreeJS();
+    } else {
+      // Initialize Three.js when switching to user mode
+      setTimeout(() => {
+        this.initThreeJS();
+        if (this.baseFile) {
+          this.loadModel();
+        }
+      }, 100);
     }
   }
 
@@ -82,6 +118,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
               size: this.baseFile.size,
               fileType: this.baseFile.fileType
             });
+            // Load model if in user mode and Three.js is initialized
+            if (!this.isAdminMode && this.renderer) {
+              this.loadModel();
+            }
           } else {
             console.log('ℹ️ [3D Planner] No base file found');
           }
@@ -265,6 +305,313 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  // Three.js initialization
+  private initThreeJS() {
+    if (!this.canvasRef || !this.canvasRef.nativeElement) {
+      console.warn('⚠️ [3D Planner] Canvas not available yet');
+      return;
+    }
+
+    console.log('🎨 [3D Planner] Initializing Three.js...');
+
+    const canvas = this.canvasRef.nativeElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    // Scene
+    this.scene = new THREE.Scene();
+    this.updateSceneColors();
+
+    // Camera
+    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    this.camera.position.set(5, 5, 5);
+    this.camera.lookAt(0, 0, 0);
+
+    // Renderer
+    this.renderer = new THREE.WebGLRenderer({ 
+      canvas: canvas,
+      antialias: true,
+      alpha: true
+    });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.shadowMap.enabled = true;
+
+    // OrbitControls
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.enableZoom = true;
+    this.controls.enablePan = true;
+    this.controls.enableRotate = true;
+    this.controls.minDistance = 1;
+    this.controls.maxDistance = 100;
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    this.scene.add(ambientLight);
+
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight1.position.set(5, 10, 5);
+    directionalLight1.castShadow = true;
+    this.scene.add(directionalLight1);
+
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+    directionalLight2.position.set(-5, 5, -5);
+    this.scene.add(directionalLight2);
+
+    // Handle window resize
+    window.addEventListener('resize', () => this.onWindowResize());
+
+    // Start animation loop
+    this.animate();
+
+    console.log('✅ [3D Planner] Three.js initialized');
+
+    // Load model if base file exists
+    if (this.baseFile) {
+      this.loadModel();
+    }
+  }
+
+  private updateSceneColors() {
+    if (!this.scene) return;
+    
+    if (this.isDarkMode) {
+      this.scene.background = new THREE.Color(0x1a1a1a);
+    } else {
+      this.scene.background = new THREE.Color(0xf5f5f5);
+    }
+  }
+
+  private onWindowResize() {
+    if (!this.camera || !this.renderer || !this.canvasRef) return;
+
+    const canvas = this.canvasRef.nativeElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
+  }
+
+  private animate() {
+    if (!this.renderer || !this.scene || !this.camera) return;
+
+    this.animationFrameId = requestAnimationFrame(() => this.animate());
+
+    if (this.controls) {
+      this.controls.update();
+    }
+
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  private cleanupThreeJS() {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    if (this.currentModel) {
+      this.scene?.remove(this.currentModel);
+      this.currentModel.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+      this.currentModel = null;
+    }
+
+    if (this.controls) {
+      this.controls.dispose();
+    }
+
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer = null as any;
+    }
+
+    window.removeEventListener('resize', () => this.onWindowResize());
+  }
+
+  private loadModel() {
+    if (!this.baseFile || !this.renderer) {
+      console.warn('⚠️ [3D Planner] Cannot load model - baseFile or renderer not available');
+      return;
+    }
+
+    console.log('📦 [3D Planner] Loading 3D model...');
+    this.isLoadingModel = true;
+    this.modelLoadError = null;
+
+    // Remove existing model
+    if (this.currentModel) {
+      this.scene.remove(this.currentModel);
+      this.currentModel.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+      this.currentModel = null;
+    }
+
+    // Ensure downloadUrl includes the full path
+    let fileUrl = this.baseFile.downloadUrl;
+    if (fileUrl.startsWith('/api')) {
+      // Already has /api prefix, use as is
+      fileUrl = fileUrl;
+    } else if (fileUrl.startsWith('/')) {
+      // Relative URL without /api, add it
+      fileUrl = environment.apiUrl + fileUrl;
+    } else {
+      // Full URL or relative without leading slash
+      fileUrl = environment.apiUrl + '/' + fileUrl;
+    }
+    
+    const fileName = this.baseFile.originalName.toLowerCase();
+    const fileExtension = fileName.split('.').pop();
+
+    console.log('📦 [3D Planner] Loading file:', fileUrl, 'Extension:', fileExtension);
+
+    // Load based on file extension
+    if (fileExtension === 'obj') {
+      this.loadOBJModel(fileUrl);
+    } else if (fileExtension === 'gltf' || fileExtension === 'glb') {
+      this.loadGLTFModel(fileUrl);
+    } else if (fileExtension === 'stl') {
+      this.loadSTLModel(fileUrl);
+    } else {
+      this.modelLoadError = `פורמט קובץ לא נתמך: ${fileExtension}. נתמכים: OBJ, GLTF, GLB, STL`;
+      this.isLoadingModel = false;
+      console.error('❌ [3D Planner] Unsupported file format:', fileExtension);
+    }
+  }
+
+  private loadOBJModel(url: string) {
+    const loader = new OBJLoader();
+    loader.load(
+      url,
+      (object) => {
+        console.log('✅ [3D Planner] OBJ model loaded');
+        this.setupModel(object);
+      },
+      (progress) => {
+        if (progress.total > 0) {
+          const percent = (progress.loaded / progress.total) * 100;
+          console.log('📊 [3D Planner] Loading progress:', percent.toFixed(2) + '%');
+        }
+      },
+      (error) => {
+        console.error('❌ [3D Planner] Error loading OBJ:', error);
+        this.modelLoadError = 'שגיאה בטעינת המודל. אנא נסה שוב.';
+        this.isLoadingModel = false;
+      }
+    );
+  }
+
+  private loadGLTFModel(url: string) {
+    const loader = new GLTFLoader();
+    loader.load(
+      url,
+      (gltf) => {
+        console.log('✅ [3D Planner] GLTF model loaded');
+        this.setupModel(gltf.scene);
+      },
+      (progress) => {
+        if (progress.total > 0) {
+          const percent = (progress.loaded / progress.total) * 100;
+          console.log('📊 [3D Planner] Loading progress:', percent.toFixed(2) + '%');
+        }
+      },
+      (error) => {
+        console.error('❌ [3D Planner] Error loading GLTF:', error);
+        this.modelLoadError = 'שגיאה בטעינת המודל. אנא נסה שוב.';
+        this.isLoadingModel = false;
+      }
+    );
+  }
+
+  private loadSTLModel(url: string) {
+    const loader = new STLLoader();
+    loader.load(
+      url,
+      (geometry) => {
+        console.log('✅ [3D Planner] STL model loaded');
+        const material = new THREE.MeshStandardMaterial({ 
+          color: 0x888888,
+          metalness: 0.3,
+          roughness: 0.7
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        const group = new THREE.Group();
+        group.add(mesh);
+        this.setupModel(group);
+      },
+      (progress) => {
+        if (progress.total > 0) {
+          const percent = (progress.loaded / progress.total) * 100;
+          console.log('📊 [3D Planner] Loading progress:', percent.toFixed(2) + '%');
+        }
+      },
+      (error) => {
+        console.error('❌ [3D Planner] Error loading STL:', error);
+        this.modelLoadError = 'שגיאה בטעינת המודל. אנא נסה שוב.';
+        this.isLoadingModel = false;
+      }
+    );
+  }
+
+  private setupModel(model: THREE.Group) {
+    // Center and scale model
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = 5 / maxDim; // Scale to fit in a 5 unit space
+
+    model.scale.multiplyScalar(scale);
+    model.position.sub(center.multiplyScalar(scale));
+
+    // Add material if needed
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+          child.material = new THREE.MeshStandardMaterial({ 
+            color: 0x888888,
+            metalness: 0.3,
+            roughness: 0.7
+          });
+        }
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    this.currentModel = model;
+    this.scene.add(model);
+
+    // Reset camera position
+    this.camera.position.set(5, 5, 5);
+    this.camera.lookAt(0, 0, 0);
+    this.controls.target.set(0, 0, 0);
+    this.controls.update();
+
+    this.isLoadingModel = false;
+    console.log('✅ [3D Planner] Model setup complete');
   }
 }
 
