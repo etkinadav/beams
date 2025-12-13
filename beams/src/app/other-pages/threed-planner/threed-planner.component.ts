@@ -938,6 +938,21 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selectedCorner = corner;
   }
 
+  getCornerArrowColor(corner: number): string {
+    // Map corner number to arrow color
+    // Corner 1 → Blue arrow (-45°)
+    // Corner 2 → Yellow arrow (-135°)
+    // Corner 3 → Red arrow (45°)
+    // Corner 4 → Green arrow (135°)
+    switch (corner) {
+      case 1: return 'כחול';
+      case 2: return 'צהוב';
+      case 3: return 'אדום';
+      case 4: return 'ירוק';
+      default: return '';
+    }
+  }
+
   addMachine() {
     if (!this.selectedMachine || !this.selectedCorner || !this.selectedPoint) {
       console.warn('⚠️ [3D Planner] Cannot add machine - machine, corner, or point not selected');
