@@ -51,6 +51,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private animationFrameId: number | null = null;
   isLoadingModel: boolean = false;
   modelLoadError: string | null = null;
+  private raycaster!: THREE.Raycaster;
+  private mouse: THREE.Vector2 = new THREE.Vector2();
+  private hoveredPoint: THREE.Mesh | null = null;
+  private mouseMoveHandler: ((event: MouseEvent) => void) | null = null;
+  private mouseClickHandler: ((event: MouseEvent) => void) | null = null;
+  
+  // Point selection and machine selection
+  selectedPoint: THREE.Mesh | null = null;
+  showMachineSelection: boolean = false;
+  availableMachines: Machine[] = [];
 
   constructor(
     private directionService: DirectionService,
@@ -80,11 +90,6 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     // Load existing base file
     this.loadBaseFile();
-
-    // Load machines if in admin mode
-    if (this.isAdminMode) {
-      this.loadMachines();
-    }
   }
 
   ngAfterViewInit() {
@@ -496,6 +501,15 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.controls.minDistance = 1;
     this.controls.maxDistance = 100;
 
+    // Raycaster for point selection
+    this.raycaster = new THREE.Raycaster();
+
+    // Add event listeners for mouse interaction
+    this.mouseMoveHandler = (event: MouseEvent) => this.onMouseMove(event);
+    this.mouseClickHandler = (event: MouseEvent) => this.onMouseClick(event);
+    canvas.addEventListener('mousemove', this.mouseMoveHandler);
+    canvas.addEventListener('click', this.mouseClickHandler);
+
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
@@ -554,13 +568,133 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.controls.update();
     }
 
+    // Update raycaster with mouse position for hover detection
+    if (this.raycaster && this.camera) {
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+    }
+
     this.renderer.render(this.scene, this.camera);
+  }
+
+  private onMouseMove(event: MouseEvent) {
+    if (!this.canvasRef || !this.renderer || !this.gridPointsGroup) return;
+
+    const canvas = this.canvasRef.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Calculate mouse position in normalized device coordinates (-1 to +1)
+    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    // Update raycaster
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    // Check for intersections with grid points
+    const intersects = this.raycaster.intersectObjects(this.gridPointsGroup.children, false);
+    
+    if (intersects.length > 0) {
+      // Change cursor to pointer
+      canvas.style.cursor = 'pointer';
+    } else {
+      // Reset cursor
+      canvas.style.cursor = 'default';
+    }
+  }
+
+  private onMouseClick(event: MouseEvent) {
+    if (!this.gridPointsGroup) return;
+
+    // Update raycaster
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    // Check for intersections with grid points
+    const intersects = this.raycaster.intersectObjects(this.gridPointsGroup.children, false);
+    
+    if (intersects.length > 0) {
+      const clickedPoint = intersects[0].object as THREE.Mesh;
+      
+      // Reset previous selected point
+      if (this.selectedPoint && this.selectedPoint !== clickedPoint) {
+        this.resetPointToOriginal(this.selectedPoint);
+      }
+      
+      // Select new point
+      this.selectedPoint = clickedPoint;
+      this.highlightSelectedPoint(clickedPoint);
+      
+      // Load machines and show selection dialog
+      this.loadMachinesForSelection();
+      this.showMachineSelection = true;
+      
+      console.log('✅ [3D Planner] Point selected at:', clickedPoint.position);
+    }
+  }
+
+  private resetPointToOriginal(point: THREE.Mesh) {
+    point.scale.set(1, 1, 1);
+    if (point.material instanceof THREE.MeshBasicMaterial) {
+      point.material.opacity = 0.8;
+      // Restore original color
+      const originalColor = (point as any).originalColor;
+      if (originalColor !== undefined) {
+        point.material.color.setHex(originalColor);
+      }
+    }
+  }
+
+  private highlightSelectedPoint(point: THREE.Mesh) {
+    point.scale.set(2, 2, 2);
+    if (point.material instanceof THREE.MeshBasicMaterial) {
+      point.material.opacity = 1.0;
+      // Change color to yellow for selected point
+      point.material.color.setHex(0xffff00);
+    }
+  }
+
+  private loadMachinesForSelection() {
+    console.log('🔵 [3D Planner] Loading machines for selection...');
+    this.threedPlannerService.getMachines().subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machines loaded for selection:', response);
+        if (response.success) {
+          this.availableMachines = response.machines;
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error loading machines for selection:', error);
+        this.availableMachines = [];
+      }
+    });
+  }
+
+  onMachineSelected(machine: Machine) {
+    console.log('✅ [3D Planner] Machine selected:', machine);
+    // TODO: Handle machine selection
+    this.closeMachineSelection();
+  }
+
+  closeMachineSelection() {
+    this.showMachineSelection = false;
+    // Reset selected point
+    if (this.selectedPoint) {
+      this.resetPointToOriginal(this.selectedPoint);
+      this.selectedPoint = null;
+    }
   }
 
   private cleanupThreeJS() {
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
+    }
+
+    // Remove event listeners
+    if (this.canvasRef && this.canvasRef.nativeElement && this.mouseMoveHandler && this.mouseClickHandler) {
+      const canvas = this.canvasRef.nativeElement;
+      canvas.removeEventListener('mousemove', this.mouseMoveHandler);
+      canvas.removeEventListener('click', this.mouseClickHandler);
+      this.mouseMoveHandler = null;
+      this.mouseClickHandler = null;
     }
 
     // Cleanup grid points
@@ -875,8 +1009,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           const pointY = Math.max(...intersectionPoints);
 
           // Create large point at the highest Y position
-          const point = new THREE.Mesh(largePointGeometry, largePointMaterial);
+          const point = new THREE.Mesh(largePointGeometry, largePointMaterial.clone());
           point.position.set(x, pointY, z);
+          // Store original color for this point
+          (point as any).originalColor = 0x0000ff; // Blue
           this.gridPointsGroup.add(point);
           largePointsCreated++;
         }
@@ -926,8 +1062,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           const pointY = Math.max(...intersectionPoints);
 
           // Create small point at the highest Y position
-          const smallPoint = new THREE.Mesh(smallPointGeometry, smallPointMaterial);
+          const smallPoint = new THREE.Mesh(smallPointGeometry, smallPointMaterial.clone());
           smallPoint.position.set(x, pointY, z);
+          // Store original color for this point
+          (smallPoint as any).originalColor = 0x800080; // Purple
           this.gridPointsGroup.add(smallPoint);
           smallPointsCreated++;
         }
