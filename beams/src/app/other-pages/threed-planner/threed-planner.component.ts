@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DirectionService } from '../../direction.service';
-import { ThreedPlannerService, BaseFile } from '../../services/threedplanner.service';
+import { ThreedPlannerService, BaseFile, Machine } from '../../services/threedplanner.service';
 import { environment } from '../../../environments/environment';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -32,6 +32,14 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   uploadProgress: number = 0;
   uploadError: string | null = null;
   uploadSuccess: boolean = false;
+
+  // Machine upload related
+  machines: Machine[] = [];
+  selectedMachineFile: File | null = null;
+  machineName: string = '';
+  isUploadingMachine: boolean = false;
+  machineUploadError: string | null = null;
+  machineUploadSuccess: boolean = false;
 
   // Three.js related
   private scene!: THREE.Scene;
@@ -72,6 +80,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     // Load existing base file
     this.loadBaseFile();
+
+    // Load machines if in admin mode
+    if (this.isAdminMode) {
+      this.loadMachines();
+    }
   }
 
   ngAfterViewInit() {
@@ -94,6 +107,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     if (this.isAdminMode) {
       // Cleanup Three.js when switching to admin mode
       this.cleanupThreeJS();
+      // Load machines when entering admin mode
+      this.loadMachines();
     } else {
       // Initialize Three.js when switching to user mode
       setTimeout(() => {
@@ -306,6 +321,137 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  // Machine management
+  loadMachines() {
+    console.log('🔵 [3D Planner] Loading machines...');
+    this.threedPlannerService.getMachines().subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machines response:', response);
+        if (response.success) {
+          this.machines = response.machines;
+          console.log('📄 [3D Planner] Machines loaded:', this.machines.length);
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error loading machines:', error);
+      }
+    });
+  }
+
+  onMachineFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      console.log('📁 [3D Planner] Machine file selected:', file.name);
+      
+      // Validate file type
+      const allowedExtensions = ['.obj', '.fbx', '.gltf', '.glb', '.dae', '.3ds', '.blend', '.stl', '.ply'];
+      const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+      
+      if (!allowedExtensions.includes(fileExtension)) {
+        this.machineUploadError = 'סוג קובץ לא נתמך. אנא העלה קובץ תלת מימד (obj, fbx, gltf, glb, dae, 3ds, blend, stl, ply)';
+        this.selectedMachineFile = null;
+        return;
+      }
+
+      // Validate file size (100MB)
+      const maxSize = 100 * 1024 * 1024;
+      if (file.size > maxSize) {
+        this.machineUploadError = 'הקובץ גדול מדי. גודל מקסימלי: 100MB';
+        this.selectedMachineFile = null;
+        return;
+      }
+
+      this.selectedMachineFile = file;
+      this.machineUploadError = null;
+      this.machineUploadSuccess = false;
+      
+      // Set default name if empty
+      if (!this.machineName) {
+        this.machineName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+      }
+    }
+  }
+
+  uploadMachine() {
+    if (!this.selectedMachineFile) {
+      this.machineUploadError = 'אנא בחר קובץ להעלאה';
+      return;
+    }
+
+    if (!this.machineName || this.machineName.trim() === '') {
+      this.machineUploadError = 'אנא הזן שם למכונה';
+      return;
+    }
+
+    console.log('🔵 [3D Planner] Uploading machine...');
+    this.isUploadingMachine = true;
+    this.machineUploadError = null;
+    this.machineUploadSuccess = false;
+
+    this.threedPlannerService.uploadMachine(this.selectedMachineFile, this.machineName.trim()).subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machine upload response:', response);
+        if (response.success) {
+          this.machineUploadSuccess = true;
+          this.selectedMachineFile = null;
+          this.machineName = '';
+          
+          // Reset file input
+          const fileInput = document.getElementById('machineFileInput') as HTMLInputElement;
+          if (fileInput) {
+            fileInput.value = '';
+          }
+          
+          // Reload machines list
+          this.loadMachines();
+          
+          setTimeout(() => {
+            this.machineUploadSuccess = false;
+          }, 3000);
+        } else {
+          this.machineUploadError = response.message || 'שגיאה בהעלאת הקובץ';
+        }
+        this.isUploadingMachine = false;
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Machine upload error:', error);
+        let errorMessage = 'שגיאה בהעלאת הקובץ. אנא נסה שוב.';
+        if (error.error) {
+          if (typeof error.error === 'string') {
+            errorMessage = error.error;
+          } else if (error.error.error) {
+            errorMessage = error.error.error;
+          } else if (error.error.message) {
+            errorMessage = error.error.message;
+          }
+        }
+        this.machineUploadError = errorMessage;
+        this.isUploadingMachine = false;
+      }
+    });
+  }
+
+  deleteMachine(machineId: string) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק את המכונה?')) {
+      return;
+    }
+
+    console.log('🔵 [3D Planner] Deleting machine:', machineId);
+    this.threedPlannerService.deleteMachine(machineId).subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machine deleted:', response);
+        if (response.success) {
+          // Reload machines list
+          this.loadMachines();
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error deleting machine:', error);
+        alert('שגיאה במחיקת המכונה. אנא נסה שוב.');
+      }
+    });
   }
 
   // Three.js initialization

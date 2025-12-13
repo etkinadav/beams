@@ -192,6 +192,207 @@ exports.uploadBaseFile = async (req, res, next) => {
     }
 };
 
+// Get all machines
+exports.getMachines = async (req, res, next) => {
+    try {
+        const machines = await ThreedPlannerFile.find({ fileType: 'machine' })
+            .sort({ machineNumber: 1, uploadedAt: 1 });
+        
+        res.status(200).json({
+            success: true,
+            machines: machines.map(machine => ({
+                id: machine._id,
+                filename: machine.filename,
+                originalName: machine.originalName,
+                fileType: machine.fileType,
+                name: machine.name,
+                machineNumber: machine.machineNumber,
+                size: machine.size,
+                mimeType: machine.mimeType,
+                uploadedAt: machine.uploadedAt,
+                downloadUrl: `/api/threedplanner/files/${machine._id}`
+            }))
+        });
+    } catch (error) {
+        console.error('Error getting machines:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error getting machines",
+            error: error.message
+        });
+    }
+};
+
+// Upload a machine file
+exports.uploadMachine = async (req, res, next) => {
+    try {
+        console.log('📤 Machine upload request received');
+        console.log('📤 req.file:', req.file);
+        console.log('📤 req.body:', req.body);
+        
+        if (!req.file) {
+            console.error('❌ No file in request');
+            return res.status(400).json({
+                success: false,
+                error: 'No file uploaded'
+            });
+        }
+
+        // Validate file type
+        const allowedExtensions = ['.obj', '.fbx', '.gltf', '.glb', '.dae', '.3ds', '.blend', '.stl', '.ply'];
+        const fileNameParts = req.file.originalname.split('.');
+        const ext = fileNameParts.length > 1 ? '.' + fileNameParts.pop().toLowerCase() : '';
+        
+        if (!allowedExtensions.includes(ext)) {
+            console.error('❌ [Controller] Invalid file type:', ext);
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid file type. Only 3D file formats are allowed (obj, fbx, gltf, glb, dae, 3ds, blend, stl, ply).'
+            });
+        }
+
+        // Get machine name from request body
+        const machineName = req.body.name || req.file.originalname;
+
+        // Get the next machine number
+        const lastMachine = await ThreedPlannerFile.findOne({ fileType: 'machine' })
+            .sort({ machineNumber: -1 });
+        const nextMachineNumber = lastMachine ? (lastMachine.machineNumber || 0) + 1 : 1;
+
+        console.log('✅ File received:', req.file.originalname, 'Size:', req.file.size);
+        console.log('✅ Machine name:', machineName);
+        console.log('✅ Machine number:', nextMachineNumber);
+
+        const gridFSBucket = getGridFSBucket();
+
+        // Upload new file to GridFS using Promise
+        const uploadPromise = new Promise((resolve, reject) => {
+            const uploadStream = gridFSBucket.openUploadStream(req.file.originalname, {
+                metadata: {
+                    fileType: 'machine',
+                    originalName: req.file.originalname,
+                    name: machineName,
+                    machineNumber: nextMachineNumber,
+                    uploadedAt: new Date()
+                }
+            });
+
+            console.log('📝 Upload stream created, ID:', uploadStream.id);
+            const gridfsFileId = uploadStream.id;
+
+            uploadStream.on('finish', async () => {
+                console.log('✅ GridFS upload finished, ID:', gridfsFileId);
+                try {
+                    // Save file metadata
+                    const fileMetadata = new ThreedPlannerFile({
+                        filename: req.file.originalname,
+                        originalName: req.file.originalname,
+                        fileType: 'machine',
+                        name: machineName,
+                        machineNumber: nextMachineNumber,
+                        gridfsId: gridfsFileId,
+                        size: req.file.size,
+                        mimeType: req.file.mimetype,
+                        uploadedAt: new Date()
+                    });
+
+                    console.log('💾 Saving metadata to database...');
+                    const savedFile = await fileMetadata.save();
+                    console.log('✅ Metadata saved, ID:', savedFile._id);
+
+                    resolve(savedFile);
+                } catch (saveError) {
+                    console.error('❌ Error saving file metadata:', saveError);
+                    // Try to delete the GridFS file if metadata save failed
+                    try {
+                        const gridfsObjectId = new mongoose.Types.ObjectId(gridfsFileId);
+                        await gridFSBucket.delete(gridfsObjectId);
+                        console.log('🗑️ GridFS file cleaned up');
+                    } catch (deleteError) {
+                        console.error('❌ Error cleaning up GridFS file:', deleteError);
+                    }
+                    reject(saveError);
+                }
+            });
+
+            uploadStream.on('error', (error) => {
+                console.error('❌ Error uploading to GridFS:', error);
+                reject(error);
+            });
+
+            console.log('📤 Writing buffer to GridFS, buffer size:', req.file.buffer.length);
+            uploadStream.end(req.file.buffer);
+        });
+
+        const savedFile = await uploadPromise;
+
+        res.status(200).json({
+            success: true,
+            message: 'Machine file uploaded successfully',
+            machine: {
+                id: savedFile._id,
+                filename: savedFile.filename,
+                originalName: savedFile.originalName,
+                fileType: savedFile.fileType,
+                name: savedFile.name,
+                machineNumber: savedFile.machineNumber,
+                size: savedFile.size,
+                mimeType: savedFile.mimeType,
+                uploadedAt: savedFile.uploadedAt,
+                downloadUrl: `/api/threedplanner/files/${savedFile._id}`
+            }
+        });
+
+    } catch (error) {
+        console.error('Error uploading machine file:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error uploading machine file",
+            error: error.message
+        });
+    }
+};
+
+// Delete a machine
+exports.deleteMachine = async (req, res, next) => {
+    try {
+        const machineId = req.params.id;
+
+        if (!mongoose.Types.ObjectId.isValid(machineId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid machine ID'
+            });
+        }
+
+        const machine = await ThreedPlannerFile.findById(machineId);
+        if (!machine || machine.fileType !== 'machine') {
+            return res.status(404).json({
+                success: false,
+                error: 'Machine not found'
+            });
+        }
+
+        const gridFSBucket = getGridFSBucket();
+        const gridfsObjectId = new mongoose.Types.ObjectId(machine.gridfsId);
+        await gridFSBucket.delete(gridfsObjectId);
+        await ThreedPlannerFile.findByIdAndDelete(machineId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Machine deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Error deleting machine:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error deleting machine",
+            error: error.message
+        });
+    }
+};
+
 // Download file by ID
 exports.downloadFile = async (req, res, next) => {
     try {

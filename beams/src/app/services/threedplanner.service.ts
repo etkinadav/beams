@@ -16,6 +16,19 @@ export interface BaseFile {
   downloadUrl: string;
 }
 
+export interface Machine {
+  id: string;
+  filename: string;
+  originalName: string;
+  fileType: string;
+  name: string;
+  machineNumber: number;
+  size: number;
+  mimeType?: string;
+  uploadedAt: string;
+  downloadUrl: string;
+}
+
 @Injectable({
   providedIn: "root"
 })
@@ -44,6 +57,38 @@ export class ThreedPlannerService {
       url,
       formData
     );
+  }
+
+  getMachines(): Observable<{ success: boolean; machines: Machine[] }> {
+    const url = BACKEND_URL + "machines";
+    console.log('🔵 [3D Planner Service] GET request:', url);
+    return this.http.get<{ success: boolean; machines: Machine[] }>(url);
+  }
+
+  uploadMachine(file: File, name: string): Observable<{ success: boolean; message: string; machine: Machine }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('name', name);
+    const url = BACKEND_URL + "machines";
+    
+    console.log('🔵 [3D Planner Service] POST request:', url);
+    console.log('📤 [3D Planner Service] Machine upload:', {
+      name: name,
+      fileName: file.name,
+      size: file.size,
+      type: file.type
+    });
+    
+    return this.http.post<{ success: boolean; message: string; machine: Machine }>(
+      url,
+      formData
+    );
+  }
+
+  deleteMachine(machineId: string): Observable<{ success: boolean; message: string }> {
+    const url = BACKEND_URL + "machines/" + machineId;
+    console.log('🔵 [3D Planner Service] DELETE request:', url);
+    return this.http.delete<{ success: boolean; message: string }>(url);
   }
 }
 

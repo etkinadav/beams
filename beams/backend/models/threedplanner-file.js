@@ -13,8 +13,16 @@ const threedPlannerFileSchema = new Schema({
     fileType: {
         type: String,
         required: true,
-        enum: ['base', 'other'], // 'base' לקובץ הבסיס, 'other' לקבצים נוספים בעתיד
+        enum: ['base', 'machine'], // 'base' לקובץ הבסיס, 'machine' למכונות
         default: 'base'
+    },
+    name: {
+        type: String,
+        required: false // רק למכונות
+    },
+    machineNumber: {
+        type: Number,
+        required: false // רק למכונות - מספר לפי סדר ההעלאה
     },
     gridfsId: {
         type: Schema.Types.ObjectId,

@@ -79,6 +79,40 @@ router.post("/base-file", (req, res, next) => {
   });
 }, threedPlannerController.uploadBaseFile);
 
+router.get("/machines", threedPlannerController.getMachines);
+
+// Upload machine route
+router.post("/machines", (req, res, next) => {
+  console.log('🔵 [Route] POST /machines received');
+  console.log('🔵 [Route] Request headers:', req.headers['content-type']);
+  console.log('🔵 [Route] Request body keys:', Object.keys(req.body || {}));
+  
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      console.error('❌ [Route] Multer error:', err);
+      
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({
+            success: false,
+            error: 'File too large. Maximum size is 100MB'
+          });
+        }
+      }
+      
+      return res.status(400).json({
+        success: false,
+        error: err.message || 'File upload error'
+      });
+    }
+    
+    console.log('✅ [Route] Multer processing completed');
+    next();
+  });
+}, threedPlannerController.uploadMachine);
+
+router.delete("/machines/:id", threedPlannerController.deleteMachine);
+
 router.get("/files/:id", threedPlannerController.downloadFile);
 
 module.exports = router;
