@@ -520,3 +520,39 @@ exports.addMachineConfig = async (req, res, next) => {
         });
     }
 };
+
+// Get all machine configurations
+exports.getMachineConfigs = async (req, res, next) => {
+    try {
+        const configs = await ThreedPlannerMachineConfig.find()
+            .populate('machineId')
+            .sort({ createdAt: -1 });
+        
+        res.status(200).json({
+            success: true,
+            configs: configs.map(config => ({
+                id: config._id,
+                machineId: config.machineId._id,
+                machine: {
+                    id: config.machineId._id,
+                    name: config.machineId.name,
+                    machineNumber: config.machineId.machineNumber,
+                    originalName: config.machineId.originalName,
+                    downloadUrl: `/api/threedplanner/files/${config.machineId._id}`
+                },
+                pointX: config.pointX,
+                pointY: config.pointY,
+                pointZ: config.pointZ,
+                corner: config.corner,
+                createdAt: config.createdAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error getting machine configurations:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error getting machine configurations",
+            error: error.message
+        });
+    }
+};

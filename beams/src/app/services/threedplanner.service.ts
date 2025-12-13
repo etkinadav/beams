@@ -106,5 +106,11 @@ export class ThreedPlannerService {
     
     return this.http.post<{ success: boolean; message: string; config: any }>(url, body);
   }
+
+  getMachineConfigs(): Observable<{ success: boolean; configs: any[] }> {
+    const url = BACKEND_URL + "machine-config";
+    console.log('🔵 [3D Planner Service] GET request:', url);
+    return this.http.get<{ success: boolean; configs: any[] }>(url);
+  }
 }
 

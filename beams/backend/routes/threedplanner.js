@@ -116,5 +116,6 @@ router.delete("/machines/:id", threedPlannerController.deleteMachine);
 router.get("/files/:id", threedPlannerController.downloadFile);
 
 router.post("/machine-config", threedPlannerController.addMachineConfig);
+router.get("/machine-config", threedPlannerController.getMachineConfigs);
 
 module.exports = router;

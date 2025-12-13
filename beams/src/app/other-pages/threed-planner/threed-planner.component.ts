@@ -48,6 +48,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private controls!: OrbitControls;
   private currentModel: THREE.Group | null = null;
   private gridPointsGroup: THREE.Group | null = null;
+  private placedMachines: Map<string, THREE.Group> = new Map(); // Map of config ID to machine model
   private animationFrameId: number | null = null;
   isLoadingModel: boolean = false;
   modelLoadError: string | null = null;
@@ -122,6 +123,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         this.initThreeJS();
         if (this.baseFile) {
           this.loadModel();
+          // loadMachineConfigs will be called after model is loaded in setupModel
         }
       }, 100);
     }
@@ -144,6 +146,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
             // Load model if in user mode and Three.js is initialized
             if (!this.isAdminMode && this.renderer) {
               this.loadModel();
+              // Load machine configurations
+              this.loadMachineConfigs();
             }
           } else {
             console.log('ℹ️ [3D Planner] No base file found');
@@ -713,6 +717,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       next: (response) => {
         console.log('✅ [3D Planner] Machine configuration saved:', response);
         if (response.success) {
+          // Load and place the machine in 3D scene
+          this.loadAndPlaceMachine(
+            this.selectedMachine!,
+            pointPosition.x,
+            pointPosition.y,
+            pointPosition.z,
+            this.selectedCorner!,
+            response.config.id
+          );
+          
           // Close dialog and reset
           this.closeMachineSelection();
         }
@@ -733,6 +747,200 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.resetPointToOriginal(this.selectedPoint);
       this.selectedPoint = null;
     }
+  }
+
+  private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+    if (!this.renderer || !this.scene) {
+      console.warn('⚠️ [3D Planner] Cannot place machine - renderer or scene not available');
+      return;
+    }
+
+    // Check if machine is already placed
+    if (this.placedMachines.has(configId)) {
+      console.log('ℹ️ [3D Planner] Machine already placed, skipping:', configId);
+      return;
+    }
+
+    console.log('🔵 [3D Planner] Loading machine model:', machine.originalName || machine.name);
+
+    // Ensure downloadUrl includes the full path
+    let fileUrl = machine.downloadUrl;
+    if (fileUrl.startsWith('/api')) {
+      fileUrl = fileUrl;
+    } else if (fileUrl.startsWith('/')) {
+      fileUrl = environment.apiUrl + fileUrl;
+    } else {
+      fileUrl = environment.apiUrl + '/' + fileUrl;
+    }
+
+    const fileName = machine.originalName.toLowerCase();
+    const fileExtension = fileName.split('.').pop();
+
+    // Load based on file extension
+    if (fileExtension === 'obj') {
+      this.loadMachineOBJ(fileUrl, pointX, pointY, pointZ, corner, configId);
+    } else if (fileExtension === 'gltf' || fileExtension === 'glb') {
+      this.loadMachineGLTF(fileUrl, pointX, pointY, pointZ, corner, configId);
+    } else if (fileExtension === 'stl') {
+      this.loadMachineSTL(fileUrl, pointX, pointY, pointZ, corner, configId);
+    } else {
+      console.error('❌ [3D Planner] Unsupported file format for machine:', fileExtension);
+    }
+  }
+
+  private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+    const loader = new OBJLoader();
+    loader.load(
+      url,
+      (object) => {
+        console.log('✅ [3D Planner] Machine OBJ model loaded');
+        this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId);
+      },
+      undefined,
+      (error) => {
+        console.error('❌ [3D Planner] Error loading machine OBJ:', error);
+      }
+    );
+  }
+
+  private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+    const loader = new GLTFLoader();
+    loader.load(
+      url,
+      (gltf) => {
+        console.log('✅ [3D Planner] Machine GLTF model loaded');
+        this.placeMachineModel(gltf.scene, pointX, pointY, pointZ, corner, configId);
+      },
+      undefined,
+      (error) => {
+        console.error('❌ [3D Planner] Error loading machine GLTF:', error);
+      }
+    );
+  }
+
+  private loadMachineSTL(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+    const loader = new STLLoader();
+    loader.load(
+      url,
+      (geometry) => {
+        console.log('✅ [3D Planner] Machine STL model loaded');
+        const material = new THREE.MeshStandardMaterial({ 
+          color: 0x888888,
+          metalness: 0.3,
+          roughness: 0.7
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        const group = new THREE.Group();
+        group.add(mesh);
+        this.placeMachineModel(group, pointX, pointY, pointZ, corner, configId);
+      },
+      undefined,
+      (error) => {
+        console.error('❌ [3D Planner] Error loading machine STL:', error);
+      }
+    );
+  }
+
+  private placeMachineModel(model: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, configId: string) {
+    // First, set model to origin to calculate bounding box correctly
+    model.position.set(0, 0, 0);
+    model.updateMatrixWorld(true);
+    
+    // Calculate bounding box of the machine
+    const box = new THREE.Box3().setFromObject(model);
+    const min = box.min;
+    const max = box.max;
+
+    console.log('📊 [3D Planner] Machine bounding box:', { min, max });
+
+    // Calculate position based on corner
+    // The bounding box corners relative to model origin (0,0,0):
+    // Corner 1 = top-left (min X, max Z)
+    // Corner 2 = top-right (max X, max Z)
+    // Corner 3 = bottom-left (min X, min Z)
+    // Corner 4 = bottom-right (max X, min Z)
+    let machineX = pointX;
+    let machineZ = pointZ;
+
+    switch (corner) {
+      case 1: // Top-left: machine's top-left corner (min X, max Z) at point
+        machineX = pointX - min.x; // Shift so min.x aligns with pointX
+        machineZ = pointZ - max.z; // Shift so max.z aligns with pointZ
+        break;
+      case 2: // Top-right: machine's top-right corner (max X, max Z) at point
+        machineX = pointX - max.x; // Shift so max.x aligns with pointX
+        machineZ = pointZ - max.z; // Shift so max.z aligns with pointZ
+        break;
+      case 3: // Bottom-left: machine's bottom-left corner (min X, min Z) at point
+        machineX = pointX - min.x; // Shift so min.x aligns with pointX
+        machineZ = pointZ - min.z; // Shift so min.z aligns with pointZ
+        break;
+      case 4: // Bottom-right: machine's bottom-right corner (max X, min Z) at point
+        machineX = pointX - max.x; // Shift so max.x aligns with pointX
+        machineZ = pointZ - min.z; // Shift so min.z aligns with pointZ
+        break;
+    }
+
+    // For Y: the lowest point of the machine should be at the point's Y (height)
+    // The model's min.y is the lowest point, so we need to position it so min.y = pointY
+    const machineY = pointY - min.y;
+
+    // Set position
+    model.position.set(machineX, machineY, machineZ);
+
+    // Add material if needed
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+          child.material = new THREE.MeshStandardMaterial({ 
+            color: 0x888888,
+            metalness: 0.3,
+            roughness: 0.7
+          });
+        }
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    // Store reference to config ID
+    (model as any).configId = configId;
+
+    // Add to scene
+    this.scene.add(model);
+    this.placedMachines.set(configId, model);
+
+    console.log('✅ [3D Planner] Machine placed at:', { x: machineX, y: machineY, z: machineZ, corner });
+  }
+
+  private loadMachineConfigs() {
+    if (!this.renderer || !this.scene) {
+      console.warn('⚠️ [3D Planner] Cannot load machine configs - renderer or scene not available');
+      return;
+    }
+
+    console.log('🔵 [3D Planner] Loading machine configurations...');
+    this.threedPlannerService.getMachineConfigs().subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machine configs response:', response);
+        if (response.success) {
+          // Load and place each machine
+          response.configs.forEach(config => {
+            this.loadAndPlaceMachine(
+              config.machine,
+              config.pointX,
+              config.pointY,
+              config.pointZ,
+              config.corner,
+              config.id
+            );
+          });
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error loading machine configs:', error);
+      }
+    });
   }
 
   private cleanupThreeJS() {
@@ -965,6 +1173,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     this.isLoadingModel = false;
     console.log('✅ [3D Planner] Model setup complete');
+    
+    // Load machine configurations after model is set up
+    this.loadMachineConfigs();
   }
 
   private createGridPoints(model: THREE.Group) {
