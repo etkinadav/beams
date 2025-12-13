@@ -589,7 +589,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private onMouseMove(event: MouseEvent) {
-    if (!this.canvasRef || !this.renderer || !this.gridPointsGroup) return;
+    if (!this.canvasRef || !this.renderer) return;
 
     const canvas = this.canvasRef.nativeElement;
     const rect = canvas.getBoundingClientRect();
@@ -601,16 +601,26 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Update raycaster
     this.raycaster.setFromCamera(this.mouse, this.camera);
 
-    // Check for intersections with grid points (including hitboxes)
-    const intersects = this.raycaster.intersectObjects(this.gridPointsGroup.children, false);
-    
-    if (intersects.length > 0) {
-      // Change cursor to pointer
-      canvas.style.cursor = 'pointer';
-    } else {
-      // Reset cursor
-      canvas.style.cursor = 'default';
+    // Check for intersections with direction arrows first (if they exist)
+    if (this.showDirectionSelection && this.directionArrowsGroup) {
+      const arrowIntersects = this.raycaster.intersectObjects(this.directionArrowsGroup.children, false);
+      if (arrowIntersects.length > 0) {
+        canvas.style.cursor = 'pointer';
+        return;
+      }
     }
+
+    // Check for intersections with grid points (including hitboxes) if in adding machine mode
+    if (this.isAddingMachine && this.gridPointsGroup) {
+      const intersects = this.raycaster.intersectObjects(this.gridPointsGroup.children, false);
+      if (intersects.length > 0) {
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+    }
+
+    // Reset cursor
+    canvas.style.cursor = 'default';
   }
 
   private onMouseClick(event: MouseEvent) {
@@ -698,8 +708,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Create arrows group
     this.directionArrowsGroup = new THREE.Group();
     
-    // Arrow parameters
-    const arrowLength = 0.5;
+    // Arrow parameters - reduced by factor of 4
+    const arrowLength = 0.125; // 0.5 / 4
     const arrowHeight = pointPosition.y + 0.15; // Slightly above the point
     
     // Create 4 arrows at 45-degree angles
@@ -764,7 +774,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       (arrowHelper as any).isDirectionArrow = true;
       
       // Create a larger hitbox sphere for easier clicking
-      const hitboxGeometry = new THREE.SphereGeometry(arrowLength * 0.3, 8, 8);
+      const hitboxGeometry = new THREE.SphereGeometry(arrowLength * 0.5, 8, 8); // Larger hitbox for easier interaction
       const hitboxMaterial = new THREE.MeshBasicMaterial({ 
         transparent: true, 
         opacity: 0,
@@ -777,19 +787,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       (hitbox as any).isDirectionArrow = true;
       (hitbox as any).arrowHelper = arrowHelper;
       
-      // Add label sphere
-      const labelGeometry = new THREE.SphereGeometry(0.03, 8, 8);
-      const labelMaterial = new THREE.MeshBasicMaterial({ color: dir.color });
-      const label = new THREE.Mesh(labelGeometry, labelMaterial);
-      label.position.copy(origin);
-      label.position.add(direction.clone().multiplyScalar(arrowLength * 0.7));
-      label.position.y += 0.05;
-      (label as any).corner = dir.corner;
-      (label as any).isDirectionArrow = true;
+      // Remove label spheres - no longer needed
       
       this.directionArrowsGroup.add(arrowHelper);
       this.directionArrowsGroup.add(hitbox);
-      this.directionArrowsGroup.add(label);
     });
     
     this.scene.add(this.directionArrowsGroup);
