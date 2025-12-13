@@ -31,12 +31,21 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    console.log('🚀 [3D Planner] Component initialized');
+    console.log('🚀 [3D Planner] Initial state:', {
+      isAdminMode: this.isAdminMode,
+      isRTL: this.isRTL,
+      isDarkMode: this.isDarkMode
+    });
+    
     this.directionSubscription = this.directionService.direction$.subscribe(direction => {
       this.isRTL = direction === 'rtl';
+      console.log('🔄 [3D Planner] Direction changed:', direction);
     });
 
     this.directionService.isDarkMode$.subscribe(isDarkMode => {
       this.isDarkMode = isDarkMode;
+      console.log('🌓 [3D Planner] Dark mode changed:', isDarkMode);
     });
 
     // Load existing base file if in admin mode
@@ -92,29 +101,58 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
   }
 
   onFileSelected(event: any) {
+    console.log('🔵 [3D Planner] File selection event triggered');
+    console.log('🔵 [3D Planner] Event object:', event);
+    console.log('🔵 [3D Planner] Event target:', event.target);
+    console.log('🔵 [3D Planner] Event target files:', event.target?.files);
+    
     const file = event.target.files[0];
+    
     if (file) {
+      console.log('📁 [3D Planner] File selected:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: new Date(file.lastModified)
+      });
+      
       // Validate file type
       const allowedExtensions = ['.obj', '.fbx', '.gltf', '.glb', '.dae', '.3ds', '.blend', '.stl', '.ply'];
       const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+      console.log('🔍 [3D Planner] File extension:', fileExtension);
+      console.log('🔍 [3D Planner] Allowed extensions:', allowedExtensions);
       
       if (!allowedExtensions.includes(fileExtension)) {
-        this.uploadError = 'סוג קובץ לא נתמך. אנא העלה קובץ תלת מימד (obj, fbx, gltf, glb, dae, 3ds, blend, stl, ply)';
+        const errorMsg = 'סוג קובץ לא נתמך. אנא העלה קובץ תלת מימד (obj, fbx, gltf, glb, dae, 3ds, blend, stl, ply)';
+        console.warn('⚠️ [3D Planner] Invalid file type:', fileExtension);
+        this.uploadError = errorMsg;
         this.selectedFile = null;
         return;
       }
 
       // Validate file size (100MB)
       const maxSize = 100 * 1024 * 1024;
+      console.log('📏 [3D Planner] File size validation:', {
+        fileSize: file.size,
+        maxSize: maxSize,
+        isValid: file.size <= maxSize
+      });
+      
       if (file.size > maxSize) {
-        this.uploadError = 'הקובץ גדול מדי. גודל מקסימלי: 100MB';
+        const errorMsg = 'הקובץ גדול מדי. גודל מקסימלי: 100MB';
+        console.warn('⚠️ [3D Planner] File too large:', file.size, 'bytes');
+        this.uploadError = errorMsg;
         this.selectedFile = null;
         return;
       }
 
+      console.log('✅ [3D Planner] File validation passed');
       this.selectedFile = file;
       this.uploadError = null;
       this.uploadSuccess = false;
+      console.log('✅ [3D Planner] File set as selectedFile:', this.selectedFile?.name);
+    } else {
+      console.warn('⚠️ [3D Planner] No file in event');
     }
   }
 
