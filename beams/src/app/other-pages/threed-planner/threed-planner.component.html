@@ -1,0 +1,29 @@
+<div class="fill-height d-flex justify-content-center">
+  <div class="d-flex w-100 flex-grow-1 position-relative">
+    <div class="d-flex flex-column position-absolute w-100 h-100 overflow-auto">
+
+      <!-- ========================== HEADER WITH MODE TOGGLE ========================== -->
+      <div class="d-flex flex-column px-lg-big-threed-planner pt-3">
+        <div class="d-flex justify-content-end pb-3">
+          <button 
+            type="button" 
+            mat-stroked-button 
+            color="primary" 
+            class="zx-mode-toggle-btn rounded-pill"
+            (click)="toggleMode()">
+            {{ isAdminMode ? 'מצב מנהל' : 'מצב משתמש' }}
+          </button>
+        </div>
+      </div>
+      <!-- // ========================== HEADER WITH MODE TOGGLE ========================== -->
+
+      <!-- ========================== CONTENT AREA ========================== -->
+      <div class="d-flex flex-column px-lg-big-threed-planner flex-grow-1">
+        <!-- Content will be added here in the future -->
+      </div>
+      <!-- // ========================== CONTENT AREA ========================== -->
+
+    </div>
+  </div>
+</div>
+

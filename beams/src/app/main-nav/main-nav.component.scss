@@ -413,6 +413,15 @@ mat-sidenav-container {
   z-index: 1 !important;
 }
 
+mat-sidenav-container.threed-planner-fullscreen {
+  height: 100vh !important;
+  
+  mat-sidenav-content {
+    height: 100vh !important;
+    min-height: 100vh !important;
+  }
+}
+
 // דריסה של כל ה-padding וה-margin של mat-sidenav-content
 ::ng-deep mat-sidenav-content {
   padding-left: 0 !important;

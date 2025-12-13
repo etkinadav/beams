@@ -15,6 +15,7 @@ import { MyOrdersComponent } from "./other-pages/my-orders/my-orders.component";
 import { MyProfileComponent } from "./other-pages/my-profile/my-profile.component";
 import { QAndAComponent } from "./other-pages/q-and-a/q-and-a.component";
 import { ShoppingCartComponent } from "./main-nav/shopping-cart/shopping-cart.component";
+import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-planner.component";
 
 
 
@@ -23,6 +24,7 @@ const routes: Routes = [
 
     { path: "beams", component: ModifyProductComponent },
     { path: "shopping-cart", component: ShoppingCartComponent },
+    { path: "threedplanner", component: ThreedPlannerComponent },
 
     { path: "myorders/:userId", component: MyOrdersComponent },
     { path: "myprofile/:userId", component: MyProfileComponent },

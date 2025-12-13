@@ -32,6 +32,7 @@ import { DeleteUserComponent } from "./dialog/delete-user/delete-user.component"
 import { MyOrdersComponent } from "./other-pages/my-orders/my-orders.component";
 import { MyProfileComponent } from "./other-pages/my-profile/my-profile.component";
 import { QAndAComponent } from "./other-pages/q-and-a/q-and-a.component";
+import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-planner.component";
 import { PhoneComponent } from "./dialog/phone/phone.component";
 import { CopyScanComponent } from "./dialog/scan-copy/scan-copy.component";
 import { PropertyExplainComponent } from "./dialog/property-explain/property-explain.component";
@@ -55,6 +56,7 @@ import { ShoppingCartComponent } from './main-nav/shopping-cart/shopping-cart.co
     MyOrdersComponent,
     MyProfileComponent,
     QAndAComponent,
+    ThreedPlannerComponent,
     PreloginComponent,
     SocialComponent,
     TAndCComponent,

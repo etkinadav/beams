@@ -51,6 +51,7 @@ export class MainNavComponent implements OnInit, OnDestroy {
   user: any = {};
   userProfileImg: string;
   isRootScreen = false;
+  isThreeDPlannerPage = false;
   private defaultProfileUrl = "../../assets/images/profile-default.png";
   isLoggedOutLoading: boolean = false;
   
@@ -84,6 +85,7 @@ export class MainNavComponent implements OnInit, OnDestroy {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.isRootScreen = event.urlAfterRedirects.startsWith('/screen');
+        this.isThreeDPlannerPage = event.urlAfterRedirects === '/threedplanner';
       }
     });
   }
