@@ -230,6 +230,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
           error: error.error,
           url: error.url
         });
+        console.error('❌ [3D Planner] Full error object:', JSON.stringify(error, null, 2));
+        if (error.error) {
+          console.error('❌ [3D Planner] Error response body:', JSON.stringify(error.error, null, 2));
+          if (typeof error.error === 'object') {
+            console.error('❌ [3D Planner] Error keys:', Object.keys(error.error));
+          }
+        }
         console.error(`⏱️ [3D Planner] Upload failed after ${uploadDuration}ms`);
         
         // Extract error message
