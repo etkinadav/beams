@@ -198,10 +198,21 @@
     display: block;
     outline: none;
     cursor: grab;
+    touch-action: none; /* Prevent default touch behaviors for mobile navigation */
+    -webkit-touch-callout: none; /* Disable iOS callout */
+    -webkit-user-select: none; /* Disable text selection on iOS */
+    user-select: none; /* Disable text selection */
 }
 
 .three-canvas:active {
     cursor: grabbing;
+}
+
+/* Mobile specific styles */
+@media (hover: none) and (pointer: coarse) {
+    .three-canvas {
+        cursor: default;
+    }
 }
 
 .loading-overlay,

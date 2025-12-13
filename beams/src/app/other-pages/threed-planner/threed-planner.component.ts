@@ -572,7 +572,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
 
-    // OrbitControls
+    // OrbitControls with mobile support
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = false; // Disable damping to prevent jitter
     this.controls.enableZoom = true;
@@ -581,6 +581,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.controls.minDistance = 1;
     this.controls.maxDistance = 100;
     this.controls.screenSpacePanning = false; // Prevent unwanted panning
+    
+    // Mobile touch support - OrbitControls supports touch by default
+    // Single touch = rotate, Two finger pinch = zoom, Two finger drag = pan
+    // These are the default behaviors, but we can configure them if needed
 
     // Raycaster for point selection
     this.raycaster = new THREE.Raycaster();
