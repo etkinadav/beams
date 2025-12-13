@@ -501,18 +501,19 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       alpha: true
     });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    // Limit pixel ratio to prevent jitter on high DPI displays
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
 
     // OrbitControls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
+    this.controls.enableDamping = false; // Disable damping to prevent jitter
     this.controls.enableZoom = true;
     this.controls.enablePan = true;
     this.controls.enableRotate = true;
     this.controls.minDistance = 1;
     this.controls.maxDistance = 100;
+    this.controls.screenSpacePanning = false; // Prevent unwanted panning
 
     // Raycaster for point selection
     this.raycaster = new THREE.Raycaster();
@@ -577,15 +578,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     this.animationFrameId = requestAnimationFrame(() => this.animate());
 
-    if (this.controls) {
+    // Update controls only if damping is enabled (for smooth transitions)
+    // When damping is disabled, controls update automatically on interaction
+    if (this.controls && this.controls.enableDamping) {
       this.controls.update();
     }
 
-    // Update raycaster with mouse position for hover detection
-    if (this.raycaster && this.camera) {
-      this.raycaster.setFromCamera(this.mouse, this.camera);
-    }
-
+    // Render the scene
     this.renderer.render(this.scene, this.camera);
   }
 
