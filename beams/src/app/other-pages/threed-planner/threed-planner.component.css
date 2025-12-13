@@ -182,3 +182,29 @@ mat-spinner {
     margin: 0 auto;
 }
 
+/* Machine Selection Dialog */
+.machine-radio-item {
+    transition: all 0.2s;
+}
+
+.machine-radio-item:hover {
+    background-color: #f5f5f5;
+    border-color: #2196F3 !important;
+}
+
+.machine-radio-item.selected {
+    background-color: #e3f2fd;
+    border-color: #2196F3 !important;
+}
+
+.corner-button:hover {
+    background-color: #bbdefb !important;
+    transform: scale(1.1);
+}
+
+.corner-button.selected {
+    background-color: #2196F3 !important;
+    color: white;
+    border-color: #1976D2 !important;
+}
+

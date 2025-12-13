@@ -1,4 +1,5 @@
 const ThreedPlannerFile = require('../models/threedplanner-file');
+const ThreedPlannerMachineConfig = require('../models/threedplanner-machine-config');
 const mongoose = require('mongoose');
 const { GridFSBucket } = require('mongodb');
 const ObjectId = require('mongoose').Types.ObjectId;
@@ -440,6 +441,81 @@ exports.downloadFile = async (req, res, next) => {
         res.status(500).json({
             success: false,
             message: "Error downloading file",
+            error: error.message
+        });
+    }
+};
+
+// Add machine configuration (place machine at a point)
+exports.addMachineConfig = async (req, res, next) => {
+    try {
+        const { machineId, pointX, pointY, pointZ, corner } = req.body;
+
+        // Validate required fields
+        if (!machineId || pointX === undefined || pointY === undefined || pointZ === undefined || !corner) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: machineId, pointX, pointY, pointZ, corner'
+            });
+        }
+
+        // Validate machineId
+        if (!mongoose.Types.ObjectId.isValid(machineId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid machine ID'
+            });
+        }
+
+        // Validate corner (1-4)
+        if (![1, 2, 3, 4].includes(corner)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Corner must be 1, 2, 3, or 4'
+            });
+        }
+
+        // Verify machine exists
+        const machine = await ThreedPlannerFile.findById(machineId);
+        if (!machine || machine.fileType !== 'machine') {
+            return res.status(404).json({
+                success: false,
+                error: 'Machine not found'
+            });
+        }
+
+        // Create machine configuration
+        const machineConfig = new ThreedPlannerMachineConfig({
+            machineId: machineId,
+            pointX: pointX,
+            pointY: pointY,
+            pointZ: pointZ,
+            corner: corner
+        });
+
+        const savedConfig = await machineConfig.save();
+
+        console.log('✅ Machine configuration saved:', savedConfig._id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Machine configuration added successfully',
+            config: {
+                id: savedConfig._id,
+                machineId: savedConfig.machineId,
+                pointX: savedConfig.pointX,
+                pointY: savedConfig.pointY,
+                pointZ: savedConfig.pointZ,
+                corner: savedConfig.corner,
+                createdAt: savedConfig.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Error adding machine configuration:', error);
+        res.status(500).json({
+            success: false,
+            message: "Error adding machine configuration",
             error: error.message
         });
     }

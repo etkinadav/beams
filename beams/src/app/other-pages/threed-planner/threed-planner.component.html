@@ -219,29 +219,91 @@
 
         <!-- Machine Selection Dialog -->
         <div *ngIf="showMachineSelection" class="machine-selection-dialog position-absolute" 
-             style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); max-width: 400px; max-height: 500px; overflow-y: auto;">
+             style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); max-width: 500px; max-height: 600px; overflow-y: auto;">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">בחר מכונה</h5>
+            <h5 class="mb-0">הוסף מכונה לנקודה</h5>
             <button mat-icon-button (click)="closeMachineSelection()">
               <mat-icon>close</mat-icon>
             </button>
           </div>
-          <div *ngIf="availableMachines.length === 0" class="text-muted p-3 text-center">
-            אין מכונות זמינות
-          </div>
-          <div *ngIf="availableMachines.length > 0" class="d-flex flex-column gap-2">
-            <button 
-              *ngFor="let machine of availableMachines" 
-              mat-stroked-button 
-              class="w-100 text-start"
-              (click)="onMachineSelected(machine)">
-              <div class="d-flex align-items-center gap-2">
-                <mat-icon>precision_manufacturing</mat-icon>
-                <div class="d-flex flex-column">
-                  <span class="fw-bold">מכונה #{{ machine.machineNumber }}</span>
-                  <span class="text-muted small">{{ machine.name }}</span>
+
+          <!-- Machine Selection -->
+          <div class="mb-4">
+            <h6 class="mb-3">בחר מכונה:</h6>
+            <div *ngIf="availableMachines.length === 0" class="text-muted p-3 text-center">
+              אין מכונות זמינות
+            </div>
+            <div *ngIf="availableMachines.length > 0" class="d-flex flex-column gap-2">
+              <div *ngFor="let machine of availableMachines" class="machine-radio-item p-2 rounded-2" 
+                   [class.selected]="selectedMachine?.id === machine.id"
+                   (click)="onMachineSelected(machine)"
+                   style="cursor: pointer; border: 2px solid #e0e0e0; transition: all 0.2s;">
+                <div class="d-flex align-items-center gap-2">
+                  <input 
+                    type="radio" 
+                    [name]="'machineSelection'"
+                    [id]="'machine-' + machine.id"
+                    [checked]="selectedMachine?.id === machine.id"
+                    (click)="onMachineSelected(machine); $event.stopPropagation()">
+                  <label [for]="'machine-' + machine.id" class="mb-0 flex-grow-1" style="cursor: pointer;">
+                    <div class="d-flex align-items-center gap-2">
+                      <mat-icon>precision_manufacturing</mat-icon>
+                      <div class="d-flex flex-column">
+                        <span class="fw-bold">מכונה #{{ machine.machineNumber }}</span>
+                        <span class="text-muted small">{{ machine.name }}</span>
+                      </div>
+                    </div>
+                  </label>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Corner Selection -->
+          <div class="mb-4">
+            <h6 class="mb-3">בחר פינה:</h6>
+            <div class="corner-selection-container d-flex justify-content-center">
+              <div class="corner-square" style="position: relative; width: 200px; height: 200px; border: 3px solid #333;">
+                <div 
+                  *ngFor="let corner of [1,2,3,4]; let i = index"
+                  class="corner-button"
+                  [class.selected]="selectedCorner === corner"
+                  [style.position]="'absolute'"
+                  [style.width]="'40px'"
+                  [style.height]="'40px'"
+                  [style.border]="'2px solid #666'"
+                  [style.borderRadius]="'50%'"
+                  [style.backgroundColor]="selectedCorner === corner ? '#2196F3' : '#f0f0f0'"
+                  [style.cursor]="'pointer'"
+                  [style.display]="'flex'"
+                  [style.alignItems]="'center'"
+                  [style.justifyContent]="'center'"
+                  [style.fontWeight]="'bold'"
+                  [style.transition]="'all 0.2s'"
+                  [style.top]="i < 2 ? '10px' : 'auto'"
+                  [style.bottom]="i >= 2 ? '10px' : 'auto'"
+                  [style.left]="(i === 0 || i === 2) ? '10px' : 'auto'"
+                  [style.right]="(i === 1 || i === 3) ? '10px' : 'auto'"
+                  (click)="onCornerSelected(corner)">
+                  {{ corner }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Machine Button -->
+          <div class="d-flex justify-content-end gap-2">
+            <button 
+              mat-stroked-button 
+              (click)="closeMachineSelection()">
+              ביטול
+            </button>
+            <button 
+              mat-raised-button 
+              color="primary"
+              [disabled]="!selectedMachine || !selectedCorner"
+              (click)="addMachine()">
+              הוסף מכונה
             </button>
           </div>
         </div>

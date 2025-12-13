@@ -61,6 +61,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   selectedPoint: THREE.Mesh | null = null;
   showMachineSelection: boolean = false;
   availableMachines: Machine[] = [];
+  selectedMachine: Machine | null = null;
+  selectedCorner: number | null = null; // 1, 2, 3, or 4 for the 4 corners
 
   constructor(
     private directionService: DirectionService,
@@ -679,12 +681,53 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
   onMachineSelected(machine: Machine) {
     console.log('✅ [3D Planner] Machine selected:', machine);
-    // TODO: Handle machine selection
-    this.closeMachineSelection();
+    this.selectedMachine = machine;
+  }
+
+  onCornerSelected(corner: number) {
+    console.log('✅ [3D Planner] Corner selected:', corner);
+    this.selectedCorner = corner;
+  }
+
+  addMachine() {
+    if (!this.selectedMachine || !this.selectedCorner || !this.selectedPoint) {
+      console.warn('⚠️ [3D Planner] Cannot add machine - machine, corner, or point not selected');
+      return;
+    }
+    
+    const pointPosition = this.selectedPoint.position;
+    console.log('✅ [3D Planner] Adding machine:', {
+      machine: this.selectedMachine,
+      corner: this.selectedCorner,
+      point: pointPosition
+    });
+    
+    // Send configuration to backend
+    this.threedPlannerService.addMachineConfig(
+      this.selectedMachine.id,
+      pointPosition.x,
+      pointPosition.y,
+      pointPosition.z,
+      this.selectedCorner
+    ).subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machine configuration saved:', response);
+        if (response.success) {
+          // Close dialog and reset
+          this.closeMachineSelection();
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error saving machine configuration:', error);
+        alert('שגיאה בשמירת קונפיגורציית המכונה. אנא נסה שוב.');
+      }
+    });
   }
 
   closeMachineSelection() {
     this.showMachineSelection = false;
+    this.selectedMachine = null;
+    this.selectedCorner = null;
     // Reset selected point
     if (this.selectedPoint) {
       this.resetPointToOriginal(this.selectedPoint);
