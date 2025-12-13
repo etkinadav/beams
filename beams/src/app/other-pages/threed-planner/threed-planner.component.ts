@@ -39,6 +39,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private renderer!: THREE.WebGLRenderer;
   private controls!: OrbitControls;
   private currentModel: THREE.Group | null = null;
+  private gridPointsGroup: THREE.Group | null = null;
   private animationFrameId: number | null = null;
   isLoadingModel: boolean = false;
   modelLoadError: string | null = null;
@@ -416,6 +417,22 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.animationFrameId = null;
     }
 
+    // Cleanup grid points
+    if (this.gridPointsGroup) {
+      this.scene?.remove(this.gridPointsGroup);
+      this.gridPointsGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+      this.gridPointsGroup = null;
+    }
+
     if (this.currentModel) {
       this.scene?.remove(this.currentModel);
       this.currentModel.traverse((child) => {
@@ -604,6 +621,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.currentModel = model;
     this.scene.add(model);
 
+    // Create grid points on the model
+    this.createGridPoints(model);
+
     // Reset camera position
     this.camera.position.set(5, 5, 5);
     this.camera.lookAt(0, 0, 0);
@@ -612,6 +632,110 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     this.isLoadingModel = false;
     console.log('✅ [3D Planner] Model setup complete');
+  }
+
+  private createGridPoints(model: THREE.Group) {
+    console.log('🔵 [3D Planner] Creating grid points...');
+
+    // Remove existing grid points if any
+    if (this.gridPointsGroup) {
+      this.scene.remove(this.gridPointsGroup);
+      this.gridPointsGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+      this.gridPointsGroup = null;
+    }
+
+    // Get bounding box of the model
+    const box = new THREE.Box3().setFromObject(model);
+    const min = box.min;
+    const max = box.max;
+
+    // Grid spacing: 10 cm (0.1 meter) - 10 times more points per direction
+    const gridSpacing = 0.1;
+    
+    // Calculate grid bounds (rounded to nearest meter)
+    const minX = Math.floor(min.x / gridSpacing) * gridSpacing;
+    const maxX = Math.ceil(max.x / gridSpacing) * gridSpacing;
+    const minZ = Math.floor(min.z / gridSpacing) * gridSpacing;
+    const maxZ = Math.ceil(max.z / gridSpacing) * gridSpacing;
+
+    // Collect all meshes from the model for raycasting
+    const meshes: THREE.Mesh[] = [];
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        meshes.push(child);
+      }
+    });
+
+    console.log(`📊 [3D Planner] Found ${meshes.length} meshes in model`);
+
+    // Use Raycaster for accurate surface detection
+    const raycaster = new THREE.Raycaster();
+    raycaster.firstHitOnly = false;
+
+    // Create grid points group
+    this.gridPointsGroup = new THREE.Group();
+    
+    // Create point geometry and material (shared to save memory)
+    // Much smaller points - radius 0.01 (was 0.05)
+    const pointGeometry = new THREE.SphereGeometry(0.01, 6, 6);
+    const pointMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0xff0000,
+      transparent: true,
+      opacity: 0.8
+    });
+
+    // Create points for each grid cell - only if ray hits the model
+    let pointsCreated = 0;
+    let raysCast = 0;
+    
+    for (let x = minX; x <= maxX; x += gridSpacing) {
+      for (let z = minZ; z <= maxZ; z += gridSpacing) {
+        raysCast++;
+        
+        // Cast ray from above the model downward
+        const rayOrigin = new THREE.Vector3(x, max.y + 10, z);
+        const rayDirection = new THREE.Vector3(0, -1, 0);
+        raycaster.set(rayOrigin, rayDirection);
+        
+        // Intersect with all meshes
+        const allIntersects: THREE.Intersection[] = [];
+        meshes.forEach(mesh => {
+          const intersects = raycaster.intersectObject(mesh, false);
+          allIntersects.push(...intersects);
+        });
+        
+        // Only create a point if the ray actually hits the model
+        if (allIntersects.length > 0) {
+          // Use the highest intersection point (closest to ray origin, which is above)
+          const intersectionPoints = allIntersects.map(i => i.point.y);
+          const pointY = Math.max(...intersectionPoints);
+
+          // Create point at the highest Y position
+          const point = new THREE.Mesh(pointGeometry, pointMaterial);
+          point.position.set(x, pointY, z);
+          this.gridPointsGroup.add(point);
+          pointsCreated++;
+        }
+      }
+    }
+    
+    console.log(`📊 [3D Planner] Cast ${raysCast} rays, created ${pointsCreated} points`);
+
+    if (pointsCreated > 0) {
+      this.scene.add(this.gridPointsGroup);
+      console.log(`✅ [3D Planner] Created ${pointsCreated} grid points`);
+    } else {
+      console.warn('⚠️ [3D Planner] No grid points created');
+    }
   }
 }
 
