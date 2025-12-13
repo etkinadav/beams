@@ -323,7 +323,7 @@
                     (click)="onMachineSelected(machine); $event.stopPropagation()">
                   <label [for]="'machine-' + machine.id" class="mb-0 flex-grow-1" style="cursor: pointer;">
                     <div class="d-flex align-items-center gap-2">
-                      <mat-icon>precision_manufacturing</mat-icon>
+                      <mat-icon [style.color]="machine.color || '#888888'">precision_manufacturing</mat-icon>
                       <div class="d-flex flex-column">
                         <span class="fw-bold">מכונה #{{ machine.machineNumber }}</span>
                         <span class="text-muted small">{{ machine.name }}</span>
