@@ -9,7 +9,8 @@
         color="primary" 
         class="zx-mode-toggle-btn-floating rounded-pill"
         (click)="toggleMode()">
-        {{ isAdminMode ? 'מצב משתמש' : 'מצב מנהל' }}
+        <mat-icon>{{ isAdminMode ? 'person' : 'admin_panel_settings' }}</mat-icon>
+        <span>{{ isAdminMode ? 'מצב משתמש' : 'מצב מנהל' }}</span>
       </button>
       <!-- // ========================== MODE TOGGLE BUTTON ========================== -->
 
@@ -21,21 +22,10 @@
         color="primary" 
         class="zx-add-machine-btn-floating rounded-pill"
         (click)="toggleAddMachineMode()">
-        {{ isAddingMachine ? 'ביטול' : 'הוסף מכונה' }}
+        <mat-icon>{{ isAddingMachine ? 'close' : 'add' }}</mat-icon>
+        <span>{{ isAddingMachine ? 'ביטול' : 'הוסף מכונה' }}</span>
       </button>
       <!-- // ========================== ADD MACHINE TOGGLE BUTTON ========================== -->
-
-      <!-- ========================== REMOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
-      <button 
-        *ngIf="!isAdminMode && hasPlacedMachines"
-        type="button" 
-        mat-stroked-button 
-        color="primary" 
-        class="zx-remove-machine-btn-floating rounded-pill"
-        (click)="toggleRemoveMachineMode()">
-        {{ isRemovingMachine ? 'ביטול' : 'הסר מכונה' }}
-      </button>
-      <!-- // ========================== REMOVE MACHINE TOGGLE BUTTON ========================== -->
 
       <!-- ========================== EDIT MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
       <button 
@@ -45,9 +35,23 @@
         color="primary" 
         class="zx-edit-machine-btn-floating rounded-pill"
         (click)="toggleEditMachineMode()">
-        {{ isEditingMachine ? 'ביטול' : 'ערוך מכונה' }}
+        <mat-icon>{{ isEditingMachine ? 'close' : 'edit' }}</mat-icon>
+        <span>{{ isEditingMachine ? 'ביטול' : 'ערוך מכונה' }}</span>
       </button>
       <!-- // ========================== EDIT MACHINE TOGGLE BUTTON ========================== -->
+
+      <!-- ========================== REMOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
+      <button 
+        *ngIf="!isAdminMode && hasPlacedMachines"
+        type="button" 
+        mat-stroked-button 
+        color="primary" 
+        class="zx-remove-machine-btn-floating rounded-pill"
+        (click)="toggleRemoveMachineMode()">
+        <mat-icon>{{ isRemovingMachine ? 'close' : 'delete' }}</mat-icon>
+        <span>{{ isRemovingMachine ? 'ביטול' : 'הסר מכונה' }}</span>
+      </button>
+      <!-- // ========================== REMOVE MACHINE TOGGLE BUTTON ========================== -->
 
       <!-- ========================== CONTENT AREA ========================== -->
       
