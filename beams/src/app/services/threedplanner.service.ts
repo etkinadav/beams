@@ -23,15 +23,25 @@ export class ThreedPlannerService {
   constructor(private http: HttpClient) { }
 
   getBaseFile(): Observable<{ success: boolean; baseFile: BaseFile | null }> {
-    return this.http.get<{ success: boolean; baseFile: BaseFile | null }>(BACKEND_URL + "base-file");
+    const url = BACKEND_URL + "base-file";
+    console.log('🔵 [3D Planner Service] GET request:', url);
+    return this.http.get<{ success: boolean; baseFile: BaseFile | null }>(url);
   }
 
   uploadBaseFile(file: File): Observable<{ success: boolean; message: string; baseFile: BaseFile }> {
     const formData = new FormData();
     formData.append('file', file);
+    const url = BACKEND_URL + "base-file";
+    
+    console.log('🔵 [3D Planner Service] POST request:', url);
+    console.log('📤 [3D Planner Service] FormData file:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
     
     return this.http.post<{ success: boolean; message: string; baseFile: BaseFile }>(
-      BACKEND_URL + "base-file",
+      url,
       formData
     );
   }

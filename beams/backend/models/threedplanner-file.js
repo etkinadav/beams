@@ -18,7 +18,8 @@ const threedPlannerFileSchema = new Schema({
     },
     gridfsId: {
         type: Schema.Types.ObjectId,
-        required: true
+        required: true,
+        index: true
     },
     size: {
         type: Number,

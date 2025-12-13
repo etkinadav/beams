@@ -5,7 +5,11 @@ const ObjectId = require('mongoose').Types.ObjectId;
 
 // Get GridFS bucket
 const getGridFSBucket = () => {
+    if (!mongoose.connection.db) {
+        throw new Error('MongoDB connection not established');
+    }
     const db = mongoose.connection.db;
+    console.log('📦 Database name:', db.databaseName);
     return new GridFSBucket(db, { bucketName: 'threedplannerfiles' });
 };
 
@@ -47,101 +51,115 @@ exports.getBaseFile = async (req, res, next) => {
 // Upload/Update the base file
 exports.uploadBaseFile = async (req, res, next) => {
     try {
+        console.log('📤 Upload request received');
+        
         if (!req.file) {
+            console.error('❌ No file in request');
             return res.status(400).json({ 
                 success: false,
                 error: 'No file uploaded' 
             });
         }
 
+        console.log('✅ File received:', req.file.originalname, 'Size:', req.file.size);
+
         const gridFSBucket = getGridFSBucket();
+        console.log('✅ GridFS bucket created');
         
         // Delete old base file if exists
         const oldBaseFile = await ThreedPlannerFile.findOne({ fileType: 'base' });
         if (oldBaseFile) {
+            console.log('🗑️ Deleting old base file:', oldBaseFile._id);
             try {
                 const oldGridfsId = new mongoose.Types.ObjectId(oldBaseFile.gridfsId);
                 await gridFSBucket.delete(oldGridfsId);
                 await ThreedPlannerFile.findByIdAndDelete(oldBaseFile._id);
+                console.log('✅ Old file deleted');
             } catch (deleteError) {
-                console.error('Error deleting old file:', deleteError);
+                console.error('❌ Error deleting old file:', deleteError);
                 // Continue anyway
             }
         }
 
-        // Upload new file to GridFS
-        const uploadStream = gridFSBucket.openUploadStream(req.file.originalname, {
-            metadata: {
-                fileType: 'base',
-                originalName: req.file.originalname,
-                uploadedAt: new Date()
-            }
-        });
-
-        // Store the upload ID before writing
-        const gridfsFileId = uploadStream.id;
-
-        // Write buffer to GridFS
-        uploadStream.write(req.file.buffer);
-        uploadStream.end();
-
-        // Handle upload completion
-        uploadStream.on('finish', async () => {
-            try {
-                // Save file metadata
-                const fileMetadata = new ThreedPlannerFile({
-                    filename: req.file.originalname,
-                    originalName: req.file.originalname,
+        // Upload new file to GridFS using Promise
+        const uploadPromise = new Promise((resolve, reject) => {
+            const uploadStream = gridFSBucket.openUploadStream(req.file.originalname, {
+                metadata: {
                     fileType: 'base',
-                    gridfsId: gridfsFileId,
-                    size: req.file.size,
-                    mimeType: req.file.mimetype,
+                    originalName: req.file.originalname,
                     uploadedAt: new Date()
-                });
+                }
+            });
 
-                await fileMetadata.save();
+            console.log('📝 Upload stream created, ID:', uploadStream.id);
 
-                res.status(200).json({
-                    success: true,
-                    message: 'Base file uploaded successfully',
-                    baseFile: {
-                        id: fileMetadata._id,
-                        filename: fileMetadata.filename,
-                        originalName: fileMetadata.originalName,
-                        fileType: fileMetadata.fileType,
-                        size: fileMetadata.size,
-                        mimeType: fileMetadata.mimeType,
-                        uploadedAt: fileMetadata.uploadedAt,
-                        downloadUrl: `/api/threedplanner/files/${fileMetadata._id}`
-                    }
-                });
-            } catch (saveError) {
-                console.error('Error saving file metadata:', saveError);
-                // Try to delete the GridFS file if metadata save failed
+            // Store the upload ID before writing
+            const gridfsFileId = uploadStream.id;
+
+            uploadStream.on('finish', async () => {
+                console.log('✅ GridFS upload finished, ID:', gridfsFileId);
                 try {
-                    const gridfsObjectId = new mongoose.Types.ObjectId(gridfsFileId);
-                    await gridFSBucket.delete(gridfsObjectId);
-                } catch (deleteError) {
-                    console.error('Error cleaning up GridFS file:', deleteError);
-                }
-                if (!res.headersSent) {
-                    res.status(500).json({
-                        success: false,
-                        message: "Error saving file metadata",
-                        error: saveError.message
+                    // Save file metadata
+                    const fileMetadata = new ThreedPlannerFile({
+                        filename: req.file.originalname,
+                        originalName: req.file.originalname,
+                        fileType: 'base',
+                        gridfsId: gridfsFileId,
+                        size: req.file.size,
+                        mimeType: req.file.mimetype,
+                        uploadedAt: new Date()
                     });
+
+                    console.log('💾 Saving metadata to database...');
+                    console.log('Metadata object:', JSON.stringify(fileMetadata.toObject(), null, 2));
+                    const savedFile = await fileMetadata.save();
+                    console.log('✅ Metadata saved, ID:', savedFile._id);
+                    console.log('Saved file:', JSON.stringify(savedFile.toObject(), null, 2));
+
+                    resolve(savedFile);
+                } catch (saveError) {
+                    console.error('❌ Error saving file metadata:', saveError);
+                    console.error('Error message:', saveError.message);
+                    console.error('Error stack:', saveError.stack);
+                    // Try to delete the GridFS file if metadata save failed
+                    try {
+                        const gridfsObjectId = new mongoose.Types.ObjectId(gridfsFileId);
+                        await gridFSBucket.delete(gridfsObjectId);
+                        console.log('🗑️ GridFS file cleaned up');
+                    } catch (deleteError) {
+                        console.error('❌ Error cleaning up GridFS file:', deleteError);
+                    }
+                    reject(saveError);
                 }
-            }
+            });
+
+            uploadStream.on('error', (error) => {
+                console.error('❌ Error uploading to GridFS:', error);
+                console.error('Error stack:', error.stack);
+                reject(error);
+            });
+
+            // Write buffer to GridFS
+            console.log('📤 Writing buffer to GridFS, buffer size:', req.file.buffer.length);
+            uploadStream.end(req.file.buffer);
         });
 
-        uploadStream.on('error', (error) => {
-            console.error('Error uploading to GridFS:', error);
-            if (!res.headersSent) {
-                res.status(500).json({
-                    success: false,
-                    message: "Error uploading file to GridFS",
-                    error: error.message
-                });
+        // Wait for upload to complete
+        const savedFile = await uploadPromise;
+        
+        // Send response
+        res.status(200).json({
+            success: true,
+            message: 'Base file uploaded successfully',
+            baseFile: {
+                id: savedFile._id,
+                filename: savedFile.filename,
+                originalName: savedFile.originalName,
+                fileType: savedFile.fileType,
+                size: savedFile.size,
+                mimeType: savedFile.mimeType,
+                uploadedAt: savedFile.uploadedAt,
+                downloadUrl: `/api/threedplanner/files/${savedFile._id}`
             }
         });
 

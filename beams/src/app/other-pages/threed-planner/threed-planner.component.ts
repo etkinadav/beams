@@ -53,20 +53,40 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
 
   toggleMode() {
     this.isAdminMode = !this.isAdminMode;
+    console.log('🔄 [3D Planner] Mode toggled:', this.isAdminMode ? 'Admin Mode' : 'User Mode');
     if (this.isAdminMode) {
       this.loadBaseFile();
     }
   }
 
   loadBaseFile() {
+    console.log('🔵 [3D Planner] Loading base file...');
     this.threedPlannerService.getBaseFile().subscribe({
       next: (response) => {
+        console.log('✅ [3D Planner] Base file response:', response);
         if (response.success) {
           this.baseFile = response.baseFile;
+          if (this.baseFile) {
+            console.log('📄 [3D Planner] Base file loaded:', {
+              id: this.baseFile.id,
+              filename: this.baseFile.originalName,
+              size: this.baseFile.size,
+              fileType: this.baseFile.fileType
+            });
+          } else {
+            console.log('ℹ️ [3D Planner] No base file found');
+          }
+        } else {
+          console.warn('⚠️ [3D Planner] Response success is false:', response);
         }
       },
       error: (error) => {
-        console.error('Error loading base file:', error);
+        console.error('❌ [3D Planner] Error loading base file:', error);
+        console.error('❌ [3D Planner] Error details:', {
+          message: error.message,
+          status: error.status,
+          error: error.error
+        });
       }
     });
   }
@@ -101,34 +121,87 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy {
   uploadFile() {
     if (!this.selectedFile) {
       this.uploadError = 'אנא בחר קובץ להעלאה';
+      console.warn('⚠️ [3D Planner] No file selected for upload');
       return;
     }
+
+    console.log('🔵 [3D Planner] Starting file upload...');
+    console.log('📤 [3D Planner] File details:', {
+      name: this.selectedFile.name,
+      size: this.selectedFile.size,
+      type: this.selectedFile.type,
+      lastModified: new Date(this.selectedFile.lastModified)
+    });
 
     this.isUploading = true;
     this.uploadError = null;
     this.uploadSuccess = false;
     this.uploadProgress = 0;
 
+    const uploadStartTime = Date.now();
+
     this.threedPlannerService.uploadBaseFile(this.selectedFile).subscribe({
       next: (response) => {
+        const uploadDuration = Date.now() - uploadStartTime;
+        console.log('✅ [3D Planner] Upload response received:', response);
+        console.log(`⏱️ [3D Planner] Upload took ${uploadDuration}ms`);
+        
         if (response.success) {
+          console.log('✅ [3D Planner] Upload successful!');
+          console.log('📄 [3D Planner] Base file data:', {
+            id: response.baseFile.id,
+            filename: response.baseFile.originalName,
+            size: response.baseFile.size,
+            fileType: response.baseFile.fileType,
+            downloadUrl: response.baseFile.downloadUrl
+          });
+          
           this.baseFile = response.baseFile;
           this.uploadSuccess = true;
           this.selectedFile = null;
+          
           // Reset file input
           const fileInput = document.getElementById('baseFileInput') as HTMLInputElement;
           if (fileInput) {
             fileInput.value = '';
           }
+          
           setTimeout(() => {
             this.uploadSuccess = false;
           }, 3000);
+        } else {
+          console.warn('⚠️ [3D Planner] Response success is false:', response);
+          this.uploadError = response.message || 'שגיאה בהעלאת הקובץ';
         }
         this.isUploading = false;
       },
       error: (error) => {
-        console.error('Error uploading file:', error);
-        this.uploadError = error.error?.error || 'שגיאה בהעלאת הקובץ. אנא נסה שוב.';
+        const uploadDuration = Date.now() - uploadStartTime;
+        console.error('❌ [3D Planner] Upload error:', error);
+        console.error('❌ [3D Planner] Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          error: error.error,
+          url: error.url
+        });
+        console.error(`⏱️ [3D Planner] Upload failed after ${uploadDuration}ms`);
+        
+        // Extract error message
+        let errorMessage = 'שגיאה בהעלאת הקובץ. אנא נסה שוב.';
+        if (error.error) {
+          if (typeof error.error === 'string') {
+            errorMessage = error.error;
+          } else if (error.error.error) {
+            errorMessage = error.error.error;
+          } else if (error.error.message) {
+            errorMessage = error.error.message;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        this.uploadError = errorMessage;
         this.isUploading = false;
       }
     });
