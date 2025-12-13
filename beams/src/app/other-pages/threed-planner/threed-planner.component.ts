@@ -1176,6 +1176,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
             
             // Close dialog and reset
             this.closeMachineSelection();
+            
+            // Exit add machine mode and hide grid points
+            this.isAddingMachine = false;
+            this.updateGridPointsVisibility();
           }
         },
         error: (error) => {
