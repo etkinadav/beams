@@ -78,9 +78,14 @@ exports.uploadBaseFile = async (req, res, next) => {
             }
         });
 
-        // Write buffer to GridFS
-        uploadStream.end(req.file.buffer);
+        // Store the upload ID before writing
+        const gridfsFileId = uploadStream.id;
 
+        // Write buffer to GridFS
+        uploadStream.write(req.file.buffer);
+        uploadStream.end();
+
+        // Handle upload completion
         uploadStream.on('finish', async () => {
             try {
                 // Save file metadata
@@ -88,7 +93,7 @@ exports.uploadBaseFile = async (req, res, next) => {
                     filename: req.file.originalname,
                     originalName: req.file.originalname,
                     fileType: 'base',
-                    gridfsId: uploadStream.id,
+                    gridfsId: gridfsFileId,
                     size: req.file.size,
                     mimeType: req.file.mimetype,
                     uploadedAt: new Date()
@@ -114,25 +119,30 @@ exports.uploadBaseFile = async (req, res, next) => {
                 console.error('Error saving file metadata:', saveError);
                 // Try to delete the GridFS file if metadata save failed
                 try {
-                    await gridFSBucket.delete(uploadStream.id);
+                    const gridfsObjectId = new mongoose.Types.ObjectId(gridfsFileId);
+                    await gridFSBucket.delete(gridfsObjectId);
                 } catch (deleteError) {
                     console.error('Error cleaning up GridFS file:', deleteError);
                 }
-                res.status(500).json({
-                    success: false,
-                    message: "Error saving file metadata",
-                    error: saveError.message
-                });
+                if (!res.headersSent) {
+                    res.status(500).json({
+                        success: false,
+                        message: "Error saving file metadata",
+                        error: saveError.message
+                    });
+                }
             }
         });
 
         uploadStream.on('error', (error) => {
             console.error('Error uploading to GridFS:', error);
-            res.status(500).json({
-                success: false,
-                message: "Error uploading file to GridFS",
-                error: error.message
-            });
+            if (!res.headersSent) {
+                res.status(500).json({
+                    success: false,
+                    message: "Error uploading file to GridFS",
+                    error: error.message
+                });
+            }
         });
 
     } catch (error) {
