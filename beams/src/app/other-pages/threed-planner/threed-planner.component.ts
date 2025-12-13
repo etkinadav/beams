@@ -52,6 +52,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private currentModel: THREE.Group | null = null;
   private gridPointsGroup: THREE.Group | null = null;
   private placedMachines: Map<string, THREE.Group> = new Map(); // Map of config ID to machine model
+  hasPlacedMachines: boolean = false; // Track if there are any placed machines
   private baseModelScale: number = 1; // Store the scale applied to the base model
   private animationFrameId: number | null = null;
   isLoadingModel: boolean = false;
@@ -1214,6 +1215,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Add to scene
     this.scene.add(model);
     this.placedMachines.set(configId, model);
+    this.hasPlacedMachines = this.placedMachines.size > 0;
 
     console.log('✅ [3D Planner] Machine placed at:', { x: machineX, y: machineY, z: machineZ, corner });
   }
@@ -1237,6 +1239,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           // Remove from scene
           this.scene.remove(this.selectedMachineForRemoval!);
           this.placedMachines.delete(configId);
+          this.hasPlacedMachines = this.placedMachines.size > 0;
           
           // Clean up
           this.selectedMachineForRemoval!.traverse((child) => {
@@ -1284,6 +1287,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
               config.id
             );
           });
+          this.hasPlacedMachines = this.placedMachines.size > 0;
         }
       },
       error: (error) => {

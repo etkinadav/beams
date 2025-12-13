@@ -27,7 +27,7 @@
 
       <!-- ========================== REMOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
       <button 
-        *ngIf="!isAdminMode"
+        *ngIf="!isAdminMode && hasPlacedMachines"
         type="button" 
         mat-stroked-button 
         color="primary" 
