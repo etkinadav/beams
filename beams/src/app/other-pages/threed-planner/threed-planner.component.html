@@ -40,6 +40,19 @@
       </button>
       <!-- // ========================== EDIT MACHINE TOGGLE BUTTON ========================== -->
 
+      <!-- ========================== MOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
+      <button 
+        *ngIf="!isAdminMode && hasPlacedMachines"
+        type="button" 
+        mat-stroked-button 
+        color="primary" 
+        class="zx-move-machine-btn-floating rounded-pill"
+        (click)="toggleMoveMachineMode()">
+        <mat-icon>{{ isMovingMachine ? 'close' : 'open_with' }}</mat-icon>
+        <span>{{ isMovingMachine ? 'ביטול' : 'הזז מכונה' }}</span>
+      </button>
+      <!-- // ========================== MOVE MACHINE TOGGLE BUTTON ========================== -->
+
       <!-- ========================== REMOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
       <button 
         *ngIf="!isAdminMode && hasPlacedMachines"
@@ -292,6 +305,63 @@
 
         <!-- Three.js Canvas -->
         <canvas #threeCanvas class="three-canvas w-100 h-100"></canvas>
+
+        <!-- Move Distance Selection Dialog -->
+        <div *ngIf="showMoveDistanceSelection" class="machine-selection-dialog position-absolute" 
+             style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); max-width: 400px; max-height: 500px; overflow-y: auto;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">בחר מרחק להזזה</h5>
+            <button mat-icon-button (click)="closeMoveDistanceSelection()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="mb-3">
+            <p class="text-muted">כיוון: {{ getMoveDirectionLabel(selectedMoveDirection) }}</p>
+          </div>
+
+          <!-- Distance Selection -->
+          <div class="mb-4">
+            <h6 class="mb-2">מספר נקודות להזזה:</h6>
+            <div class="d-flex flex-column gap-2">
+              <div *ngFor="let distance of availableMoveDistances" class="machine-radio-item p-2 rounded-2" 
+                   [class.selected]="selectedMoveDistance === distance"
+                   (click)="selectedMoveDistance = distance"
+                   style="cursor: pointer; border: 2px solid #e0e0e0; transition: all 0.2s;">
+                <div class="d-flex align-items-center gap-2">
+                  <input 
+                    type="radio" 
+                    name="distanceSelection"
+                    [id]="'distance-' + distance"
+                    [checked]="selectedMoveDistance === distance"
+                    (click)="selectedMoveDistance = distance; $event.stopPropagation()">
+                  <label [for]="'distance-' + distance" class="mb-0 flex-grow-1" style="cursor: pointer;">
+                    <span>{{ distance }} נקודות ({{ (distance * 0.1).toFixed(1) }} מטר)</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="availableMoveDistances.length === 0" class="text-muted p-3 text-center">
+              לא ניתן להזיז את המכונה בכיוון זה
+            </div>
+          </div>
+
+          <!-- Move Machine Button -->
+          <div class="d-flex justify-content-end gap-2">
+            <button 
+              mat-stroked-button 
+              (click)="closeMoveDistanceSelection()">
+              ביטול
+            </button>
+            <button 
+              mat-raised-button 
+              color="primary"
+              [disabled]="!selectedMoveDistance"
+              (click)="moveMachine()">
+              הזז מכונה
+            </button>
+          </div>
+        </div>
 
         <!-- Machine Selection Dialog -->
         <div *ngIf="showMachineSelection" class="machine-selection-dialog position-absolute" 

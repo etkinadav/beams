@@ -27,9 +27,18 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   isAddingMachine: boolean = false; // Toggle for showing/hiding grid points and allowing machine placement
   isRemovingMachine: boolean = false; // Toggle for removing machines mode
   isEditingMachine: boolean = false; // Toggle for editing machines mode
+  isMovingMachine: boolean = false; // Toggle for moving machines mode
   selectedMachineForRemoval: THREE.Group | null = null; // Selected machine to remove
   selectedMachineForEdit: THREE.Group | null = null; // Selected machine to edit
   selectedConfigForEdit: any = null; // Configuration of machine being edited
+  selectedMachineForMove: THREE.Group | null = null; // Selected machine to move
+  selectedConfigForMove: any = null; // Configuration of machine being moved
+  moveArrowsGroup: THREE.Group | null = null; // Group containing move direction arrows
+  showMoveDistanceSelection: boolean = false; // Show distance selection dialog
+  selectedMoveDirection: string | null = null; // 'north', 'south', 'east', 'west'
+  selectedMoveDistance: number | null = null; // Number of grid points to move
+  availableMoveDistances: number[] = []; // Available distances based on model boundaries
+  private modelBounds: { minX: number; maxX: number; minZ: number; maxZ: number } | null = null; // Model boundaries for move validation
   private directionSubscription: Subscription;
 
   // File upload related
@@ -690,8 +699,17 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       }
     }
 
-    // Check for intersections with placed machines if in removal or edit mode
-    if ((this.isRemovingMachine || this.isEditingMachine) && this.placedMachines.size > 0) {
+    // Check for intersections with move arrows if in move mode
+    if (this.isMovingMachine && this.moveArrowsGroup) {
+      const arrowIntersects = this.raycaster.intersectObjects(this.moveArrowsGroup.children, false);
+      if (arrowIntersects.length > 0) {
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+    }
+
+    // Check for intersections with placed machines if in removal, edit, or move mode
+    if ((this.isRemovingMachine || this.isEditingMachine || this.isMovingMachine) && this.placedMachines.size > 0) {
       const machineMeshes: THREE.Mesh[] = [];
       this.placedMachines.forEach((machineGroup) => {
         machineGroup.traverse((child) => {
@@ -722,6 +740,12 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Handle machine edit mode
     if (this.isEditingMachine) {
       this.handleMachineEditClick();
+      return;
+    }
+    
+    // Handle machine move mode
+    if (this.isMovingMachine) {
+      this.handleMachineMoveClick(event);
       return;
     }
     
@@ -1037,6 +1061,17 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selectedCorner = corner;
   }
 
+  getMoveDirectionLabel(direction: string | null): string {
+    if (!direction) return '';
+    switch (direction) {
+      case 'north': return 'צפון';
+      case 'south': return 'דרום';
+      case 'east': return 'מזרח';
+      case 'west': return 'מערב';
+      default: return '';
+    }
+  }
+
   getCornerArrowColor(corner: number): string {
     // Map corner number to arrow color
     // Corner 1 → Blue arrow (-45°)
@@ -1236,6 +1271,14 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         this.selectedConfigForEdit = null;
         this.updateMachinesEditMode();
       }
+      if (this.isMovingMachine) {
+        this.isMovingMachine = false;
+        this.selectedMachineForMove = null;
+        this.selectedConfigForMove = null;
+        this.removeMoveArrows();
+        this.closeMoveDistanceSelection();
+        this.updateMachinesMoveMode();
+      }
       // Turn on add mode
       this.isAddingMachine = true;
       this.updateGridPointsVisibility();
@@ -1268,6 +1311,14 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         this.selectedMachineForEdit = null;
         this.selectedConfigForEdit = null;
         this.updateMachinesEditMode();
+      }
+      if (this.isMovingMachine) {
+        this.isMovingMachine = false;
+        this.selectedMachineForMove = null;
+        this.selectedConfigForMove = null;
+        this.removeMoveArrows();
+        this.closeMoveDistanceSelection();
+        this.updateMachinesMoveMode();
       }
       // Turn on remove mode
       this.isRemovingMachine = true;
@@ -1317,6 +1368,48 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     console.log('🔄 [3D Planner] Edit machine mode toggled:', this.isEditingMachine);
   }
 
+  toggleMoveMachineMode() {
+    // If already in move mode, toggle it off
+    if (this.isMovingMachine) {
+      this.isMovingMachine = false;
+      this.selectedMachineForMove = null;
+      this.selectedConfigForMove = null;
+      this.removeMoveArrows();
+      this.closeMoveDistanceSelection();
+      this.updateMachinesMoveMode();
+    } else {
+      // Turn off other modes if active
+      if (this.isAddingMachine) {
+        this.isAddingMachine = false;
+        this.closeMachineSelection();
+        this.updateGridPointsVisibility();
+      }
+      if (this.isRemovingMachine) {
+        this.isRemovingMachine = false;
+        this.selectedMachineForRemoval = null;
+        this.updateMachinesSelectionMode();
+      }
+      if (this.isEditingMachine) {
+        this.isEditingMachine = false;
+        this.selectedMachineForEdit = null;
+        this.selectedConfigForEdit = null;
+        this.closeMachineSelection();
+        this.updateMachinesEditMode();
+      }
+      // Turn on move mode
+      this.isMovingMachine = true;
+      this.updateMachinesMoveMode();
+      
+      // Show snackbar message
+      this.snackBar.open('יש לבחור מכונה להזזה', '', {
+        duration: 5000, // 5 seconds
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
+    }
+    console.log('🔄 [3D Planner] Move machine mode toggled:', this.isMovingMachine);
+  }
+
   private updateMachinesSelectionMode() {
     // Reset all machine selections
     if (this.selectedMachineForRemoval) {
@@ -1332,6 +1425,469 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedMachineForEdit = null;
       this.selectedConfigForEdit = null;
     }
+  }
+
+  private handleMachineMoveClick(event: MouseEvent) {
+    if (!this.raycaster) return;
+
+    // If move arrows are visible, check for arrow clicks first
+    if (this.moveArrowsGroup) {
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      const arrowIntersects = this.raycaster.intersectObjects(this.moveArrowsGroup.children, false);
+      
+      if (arrowIntersects.length > 0) {
+        const clickedObject = arrowIntersects[0].object;
+        const direction = (clickedObject as any).moveDirection;
+        
+        console.log('🔍 [3D Planner] Arrow clicked:', {
+          object: clickedObject,
+          direction: direction,
+          isMoveArrow: (clickedObject as any).isMoveArrow
+        });
+        
+        if (direction && (clickedObject as any).isMoveArrow) {
+          // Direction selected, calculate available distances and show selection dialog
+          this.selectedMoveDirection = direction;
+          this.calculateAvailableMoveDistances();
+          this.removeMoveArrows();
+          this.showMoveDistanceSelection = true;
+          
+          console.log('✅ [3D Planner] Move direction selected:', direction);
+          console.log('✅ [3D Planner] Showing distance selection dialog');
+          return;
+        } else {
+          console.warn('⚠️ [3D Planner] Clicked object does not have moveDirection or isMoveArrow flag');
+        }
+      } else {
+        console.log('🔍 [3D Planner] No arrow intersection found');
+      }
+    }
+
+    // Update raycaster
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    // Check for intersections with placed machines
+    const machineMeshes: THREE.Mesh[] = [];
+    this.placedMachines.forEach((machineGroup) => {
+      machineGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          machineMeshes.push(child);
+        }
+      });
+    });
+
+    const intersects = this.raycaster.intersectObjects(machineMeshes, false);
+    
+    if (intersects.length > 0) {
+      // Find which machine group this mesh belongs to
+      const clickedMesh = intersects[0].object as THREE.Mesh;
+      let clickedMachine: THREE.Group | null = null;
+      
+      this.placedMachines.forEach((machineGroup) => {
+        machineGroup.traverse((child) => {
+          if (child === clickedMesh) {
+            clickedMachine = machineGroup;
+          }
+        });
+      });
+
+      if (clickedMachine) {
+        const configId = (clickedMachine as any).configId;
+        
+        // Get the configuration for this machine
+        this.threedPlannerService.getMachineConfigs().subscribe({
+          next: (response) => {
+            if (response.success) {
+              const config = response.configs.find((c: any) => c.id === configId);
+              if (config) {
+                // Reset previous selection
+                if (this.selectedMachineForMove && this.selectedMachineForMove !== clickedMachine) {
+                  this.resetMachineSelectionForMove(this.selectedMachineForMove);
+                }
+                
+                // Reset previous selection
+                if (this.selectedMachineForMove && this.selectedMachineForMove !== clickedMachine) {
+                  this.resetMachineSelectionForMove(this.selectedMachineForMove);
+                  this.removeMoveArrows();
+                }
+                
+                // Select new machine for moving
+                this.selectedMachineForMove = clickedMachine;
+                this.selectedConfigForMove = config;
+                this.highlightMachineForMove(clickedMachine);
+                
+                // Show move arrows - use the point position from config, not machine position
+                const pointPosition = new THREE.Vector3(
+                  config.pointX,
+                  config.pointY,
+                  config.pointZ
+                );
+                this.showMoveArrows(pointPosition);
+                
+                console.log('✅ [3D Planner] Machine selected for moving:', configId, 'at position:', pointPosition);
+              }
+            }
+          },
+          error: (error) => {
+            console.error('❌ [3D Planner] Error loading machine configs for moving:', error);
+          }
+        });
+      }
+    }
+  }
+
+  private highlightMachineForMove(machine: THREE.Group) {
+    machine.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.material instanceof THREE.MeshStandardMaterial || 
+            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
+          const material = Array.isArray(child.material) ? child.material[0] : child.material;
+          (material as THREE.MeshStandardMaterial).emissive.setHex(0x0088ff); // Blue emissive
+          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
+        }
+      }
+    });
+  }
+
+  private resetMachineSelectionForMove(machine: THREE.Group) {
+    machine.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.material instanceof THREE.MeshStandardMaterial || 
+            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
+          const material = Array.isArray(child.material) ? child.material[0] : child.material;
+          (material as THREE.MeshStandardMaterial).emissive.setHex(0x000000); // Reset emissive
+          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
+        }
+      }
+    });
+  }
+
+  private showMoveArrows(pointPosition: THREE.Vector3) {
+    // Remove existing arrows if any
+    this.removeMoveArrows();
+    
+    if (!this.scene) {
+      console.warn('⚠️ [3D Planner] Cannot show move arrows - scene not available');
+      return;
+    }
+    
+    // Create arrows group
+    this.moveArrowsGroup = new THREE.Group();
+    
+    // Arrow parameters - make them visible but not too large
+    const arrowLength = 0.15; // Smaller arrows
+    const arrowHeight = pointPosition.y + 0.2; // Above the point
+    
+    // 4 directions: north, east, south, west
+    // In Three.js coordinate system:
+    // - X axis: right (positive) / left (negative)
+    // - Z axis: forward/up (positive) / back/down (negative)
+    // For arrows: we need to map angles correctly
+    // - North (positive Z): angle 90° → (0, 0, 1)
+    // - East (positive X): angle 0° → (1, 0, 0)
+    // - South (negative Z): angle 270° → (0, 0, -1)
+    // - West (negative X): angle 180° → (-1, 0, 0)
+    const directions = [
+      { direction: 'north', angle: 90, color: 0x0000ff, label: 'צפון' },    // Blue - North (positive Z)
+      { direction: 'east', angle: 0, color: 0x00ff00, label: 'מזרח' },      // Green - East (positive X)
+      { direction: 'south', angle: 270, color: 0xff0000, label: 'דרום' },  // Red - South (negative Z)
+      { direction: 'west', angle: 180, color: 0xffff00, label: 'מערב' }    // Yellow - West (negative X)
+    ];
+    
+    directions.forEach(dir => {
+      // Convert angle to radians
+      const angleRad = (dir.angle * Math.PI) / 180;
+      
+      // Calculate arrow direction vector
+      // For Three.js: X = cos(angle), Z = sin(angle)
+      const directionVector = new THREE.Vector3(
+        Math.cos(angleRad),
+        0,
+        Math.sin(angleRad)
+      );
+      
+      // Arrow starts from point position
+      const origin = new THREE.Vector3(
+        pointPosition.x,
+        arrowHeight,
+        pointPosition.z
+      );
+      
+      // Create arrow helper
+      const arrowHelper = new THREE.ArrowHelper(
+        directionVector,
+        origin,
+        arrowLength,
+        dir.color,
+        arrowLength * 0.3, // Head length
+        arrowLength * 0.15 // Head width
+      );
+      
+      // Store direction in userData for click detection
+      (arrowHelper as any).moveDirection = dir.direction;
+      (arrowHelper as any).isMoveArrow = true;
+      
+      // Create a larger hitbox sphere for easier clicking
+      const hitboxSize = arrowLength * 0.4; // Larger hitbox for easier clicking
+      const hitboxGeometry = new THREE.SphereGeometry(hitboxSize, 8, 8);
+      const hitboxMaterial = new THREE.MeshBasicMaterial({ 
+        transparent: true, 
+        opacity: 0, // Invisible
+        color: dir.color
+      });
+      const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+      
+      // Position hitbox at the middle of the arrow
+      const hitboxPosition = origin.clone();
+      const directionClone = directionVector.clone();
+      hitboxPosition.add(directionClone.multiplyScalar(arrowLength * 0.5));
+      hitbox.position.copy(hitboxPosition);
+      
+      // Store direction on both hitbox and arrow for easier detection
+      (hitbox as any).moveDirection = dir.direction;
+      (hitbox as any).isMoveArrow = true;
+      (arrowHelper as any).moveDirection = dir.direction;
+      (arrowHelper as any).isMoveArrow = true;
+      
+      this.moveArrowsGroup.add(arrowHelper);
+      this.moveArrowsGroup.add(hitbox);
+    });
+    
+    this.scene.add(this.moveArrowsGroup);
+    console.log('✅ [3D Planner] Move arrows displayed at position:', pointPosition, 'with', this.moveArrowsGroup.children.length, 'children');
+  }
+
+  private removeMoveArrows() {
+    if (this.moveArrowsGroup) {
+      this.scene.remove(this.moveArrowsGroup);
+      this.moveArrowsGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.ArrowHelper) {
+          if (child instanceof THREE.Mesh && child.geometry) {
+            child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(material => material.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          }
+        }
+      });
+      this.moveArrowsGroup = null;
+    }
+  }
+
+  private calculateAvailableMoveDistances() {
+    if (!this.selectedConfigForMove || !this.modelBounds) {
+      this.availableMoveDistances = [];
+      return;
+    }
+
+    const gridSpacing = 0.1; // 10 cm spacing
+    const currentX = this.selectedConfigForMove.pointX;
+    const currentZ = this.selectedConfigForMove.pointZ;
+    const distances: number[] = [];
+
+    // Calculate how many grid points we can move in each direction
+    let maxDistance = 0;
+    
+    switch (this.selectedMoveDirection) {
+      case 'north': // Positive Z
+        maxDistance = Math.floor((this.modelBounds.maxZ - currentZ) / gridSpacing);
+        break;
+      case 'south': // Negative Z
+        maxDistance = Math.floor((currentZ - this.modelBounds.minZ) / gridSpacing);
+        break;
+      case 'east': // Positive X
+        maxDistance = Math.floor((this.modelBounds.maxX - currentX) / gridSpacing);
+        break;
+      case 'west': // Negative X
+        maxDistance = Math.floor((currentX - this.modelBounds.minX) / gridSpacing);
+        break;
+    }
+
+    // Generate available distances (1, 2, 3, ... up to maxDistance)
+    for (let i = 1; i <= maxDistance && i <= 20; i++) { // Limit to 20 points max
+      distances.push(i);
+    }
+
+    this.availableMoveDistances = distances;
+    console.log(`📏 [3D Planner] Available move distances for ${this.selectedMoveDirection}:`, distances);
+  }
+
+  closeMoveDistanceSelection() {
+    this.showMoveDistanceSelection = false;
+    this.selectedMoveDirection = null;
+    this.selectedMoveDistance = null;
+    this.availableMoveDistances = [];
+    // Reset selected machine
+    if (this.selectedMachineForMove) {
+      this.resetMachineSelectionForMove(this.selectedMachineForMove);
+      this.selectedMachineForMove = null;
+      this.selectedConfigForMove = null;
+    }
+  }
+
+  moveMachine() {
+    if (!this.selectedConfigForMove || !this.selectedMoveDirection || !this.selectedMoveDistance) {
+      console.warn('⚠️ [3D Planner] Cannot move machine - missing parameters');
+      return;
+    }
+
+    const gridSpacing = 0.1; // 10 cm spacing
+    let newX = this.selectedConfigForMove.pointX;
+    let newZ = this.selectedConfigForMove.pointZ;
+    const moveDistance = this.selectedMoveDistance * gridSpacing;
+
+    // Calculate new position based on direction
+    switch (this.selectedMoveDirection) {
+      case 'north': // Positive Z
+        newZ += moveDistance;
+        break;
+      case 'south': // Negative Z
+        newZ -= moveDistance;
+        break;
+      case 'east': // Positive X
+        newX += moveDistance;
+        break;
+      case 'west': // Negative X
+        newX -= moveDistance;
+        break;
+    }
+
+    console.log('✅ [3D Planner] Moving machine:', {
+      configId: this.selectedConfigForMove.id,
+      direction: this.selectedMoveDirection,
+      distance: this.selectedMoveDistance,
+      oldPos: { x: this.selectedConfigForMove.pointX, z: this.selectedConfigForMove.pointZ },
+      newPos: { x: newX, z: newZ }
+    });
+
+    // Store reference to existing machine
+    const existingMachine = this.selectedMachineForMove;
+    const configId = this.selectedConfigForMove.id;
+    
+    if (!existingMachine || !this.scene) {
+      console.error('❌ [3D Planner] Cannot move machine - machine or scene not available');
+      return;
+    }
+    
+    // DELETE the machine from the scene FIRST
+    console.log('🗑️ [3D Planner] Removing machine from scene before moving, configId:', configId);
+    console.log('🗑️ [3D Planner] placedMachines before delete:', Array.from(this.placedMachines.keys()));
+    console.log('🗑️ [3D Planner] Machine in scene?', this.scene.children.includes(existingMachine));
+    
+    // Remove from placedMachines map FIRST
+    this.placedMachines.delete(configId);
+    console.log('🗑️ [3D Planner] placedMachines after delete:', Array.from(this.placedMachines.keys()));
+    
+    // Remove from scene
+    if (this.scene.children.includes(existingMachine)) {
+      this.scene.remove(existingMachine);
+      console.log('🗑️ [3D Planner] Machine removed from scene');
+    } else {
+      console.warn('⚠️ [3D Planner] Machine was not in scene!');
+    }
+    
+    // Clean up machine resources
+    existingMachine.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => {
+              if (material) material.dispose();
+            });
+          } else {
+            child.material.dispose();
+          }
+        }
+      }
+    });
+    
+    // Clear the machine reference
+    existingMachine.clear();
+    
+    // Verify deletion
+    console.log('✅ [3D Planner] Machine removed. Verification:');
+    console.log('  - Still in map?', this.placedMachines.has(configId));
+    console.log('  - Still in scene?', this.scene.children.includes(existingMachine));
+    console.log('  - placedMachines keys:', Array.from(this.placedMachines.keys()));
+    
+    // Update configuration in backend
+    this.threedPlannerService.updateMachineConfig(
+      this.selectedConfigForMove.id,
+      this.selectedConfigForMove.machine.id,
+      newX,
+      this.selectedConfigForMove.pointY, // Y stays the same
+      newZ,
+      this.selectedConfigForMove.corner,
+      this.selectedConfigForMove.rotation || 0
+    ).subscribe({
+      next: (response) => {
+        console.log('✅ [3D Planner] Machine position updated:', response);
+        if (response.success) {
+          // Double-check that machine is not in map before loading
+          if (this.placedMachines.has(configId)) {
+            console.error('❌ [3D Planner] ERROR: Machine still in map! Removing again...');
+            const stillThere = this.placedMachines.get(configId);
+            if (stillThere && this.scene) {
+              this.scene.remove(stillThere);
+              this.placedMachines.delete(configId);
+              stillThere.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                  if (child.geometry) child.geometry.dispose();
+                  if (child.material) {
+                    if (Array.isArray(child.material)) {
+                      child.material.forEach(m => m?.dispose());
+                    } else {
+                      child.material.dispose();
+                    }
+                  }
+                }
+              });
+              stillThere.clear();
+            }
+          }
+          
+          // Load and place the machine in new position
+          const machineColor = this.selectedConfigForMove.machine?.color || '#888888';
+          console.log('🔄 [3D Planner] Loading machine in new position, configId:', configId);
+          this.loadAndPlaceMachine(
+            this.selectedConfigForMove.machine,
+            newX,
+            this.selectedConfigForMove.pointY,
+            newZ,
+            this.selectedConfigForMove.corner,
+            configId,
+            machineColor,
+            this.selectedConfigForMove.rotation || 0
+          );
+          
+          // Close dialog and reset
+          this.closeMoveDistanceSelection();
+          this.isMovingMachine = false;
+          this.updateMachinesMoveMode();
+        }
+      },
+      error: (error) => {
+        console.error('❌ [3D Planner] Error updating machine position:', error);
+        alert('שגיאה בהזזת המכונה. אנא נסה שוב.');
+      }
+    });
+  }
+
+  private updateMachinesMoveMode() {
+    // Reset all machine move selections
+    if (this.selectedMachineForMove) {
+      this.resetMachineSelectionForMove(this.selectedMachineForMove);
+      this.selectedMachineForMove = null;
+      this.selectedConfigForMove = null;
+    }
+    this.removeMoveArrows();
   }
 
   private handleMachineEditClick() {
@@ -1470,11 +2026,48 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       return;
     }
 
-    // Check if machine is already placed
+    // Check if machine is already placed - if so, remove it first
     if (this.placedMachines.has(configId)) {
-      console.log('ℹ️ [3D Planner] Machine already placed, skipping:', configId);
-      if (onComplete) onComplete();
-      return;
+      console.error('❌ [3D Planner] ERROR: Machine already in map! Removing it now:', configId);
+      const existingMachine = this.placedMachines.get(configId);
+      if (existingMachine && this.scene) {
+        // Remove existing machine from scene
+        if (this.scene.children.includes(existingMachine)) {
+          this.scene.remove(existingMachine);
+          console.log('🗑️ [3D Planner] Removed from scene');
+        }
+        
+        // Remove from map
+        this.placedMachines.delete(configId);
+        console.log('🗑️ [3D Planner] Removed from map');
+        
+        // Clean up
+        existingMachine.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(m => m?.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          }
+        });
+        existingMachine.clear();
+        console.log('🗑️ [3D Planner] Cleaned up resources');
+        
+        // Wait a bit to ensure cleanup
+        setTimeout(() => {
+          console.log('✅ [3D Planner] Cleanup complete, continuing with placement');
+        }, 50);
+      } else {
+        console.error('❌ [3D Planner] Machine in map but not in scene or scene not available!');
+        // Still remove from map
+        this.placedMachines.delete(configId);
+      }
+    } else {
+      console.log('✅ [3D Planner] Machine not in map, safe to place');
     }
 
     console.log('🔵 [3D Planner] Loading machine model:', machine.originalName || machine.name);
@@ -1566,6 +2159,56 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         if (onComplete) onComplete();
       }
     );
+  }
+
+  private moveExistingMachine(machine: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, rotation: number = 0) {
+    // Reset machine to origin to recalculate position
+    machine.position.set(0, 0, 0);
+    machine.rotation.set(0, 0, 0);
+    machine.updateMatrixWorld(true);
+    
+    // Apply rotation if needed
+    if (rotation !== 0) {
+      const rotationRad = (rotation * Math.PI) / 180;
+      machine.rotateY(rotationRad);
+      machine.updateMatrixWorld(true);
+    }
+    
+    // Calculate bounding box
+    const box = new THREE.Box3().setFromObject(machine);
+    const min = box.min;
+    const max = box.max;
+    
+    // Calculate new position based on corner
+    let machineX = pointX;
+    let machineZ = pointZ;
+    
+    switch (corner) {
+      case 1: // Top-left
+        machineX = pointX - min.x;
+        machineZ = pointZ - max.z;
+        break;
+      case 2: // Top-right
+        machineX = pointX - max.x;
+        machineZ = pointZ - max.z;
+        break;
+      case 3: // Bottom-left
+        machineX = pointX - min.x;
+        machineZ = pointZ - min.z;
+        break;
+      case 4: // Bottom-right
+        machineX = pointX - max.x;
+        machineZ = pointZ - min.z;
+        break;
+    }
+    
+    const machineY = pointY - min.y;
+    
+    // Set new position
+    machine.position.set(machineX, machineY, machineZ);
+    machine.updateMatrixWorld(true);
+    
+    console.log('✅ [3D Planner] Machine moved to new position:', { x: machineX, y: machineY, z: machineZ });
   }
 
   private placeMachineModel(model: THREE.Group, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string = '#888888', rotation: number = 0) {
@@ -1675,12 +2318,36 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Store reference to config ID
     (model as any).configId = configId;
 
+    // CRITICAL: Check if machine already exists before adding
+    if (this.placedMachines.has(configId)) {
+      console.error('❌ [3D Planner] CRITICAL ERROR: Machine already exists in map! Removing it first:', configId);
+      const existing = this.placedMachines.get(configId);
+      if (existing && this.scene) {
+        this.scene.remove(existing);
+        this.placedMachines.delete(configId);
+        existing.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(m => m?.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          }
+        });
+        existing.clear();
+      }
+    }
+
     // Add to scene
     this.scene.add(model);
     this.placedMachines.set(configId, model);
     this.hasPlacedMachines = this.placedMachines.size > 0;
 
     console.log('✅ [3D Planner] Machine placed at:', { x: machineX, y: machineY, z: machineZ, corner });
+    console.log('✅ [3D Planner] Total machines in map:', this.placedMachines.size);
   }
 
   deleteSelectedMachine() {
@@ -2049,6 +2716,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     model.scale.multiplyScalar(scale);
     model.position.sub(center.multiplyScalar(scale));
+    
+    // Store model boundaries for move validation
+    const scaledBox = new THREE.Box3().setFromObject(model);
+    this.modelBounds = {
+      minX: scaledBox.min.x,
+      maxX: scaledBox.max.x,
+      minZ: scaledBox.min.z,
+      maxZ: scaledBox.max.z
+    };
+    console.log('📐 [3D Planner] Model bounds stored:', this.modelBounds);
 
     // Add material if needed
     model.traverse((child) => {
