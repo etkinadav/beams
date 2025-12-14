@@ -28,6 +28,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   isRemovingMachine: boolean = false; // Toggle for removing machines mode
   isEditingMachine: boolean = false; // Toggle for editing machines mode
   isMovingMachine: boolean = false; // Toggle for moving machines mode
+  showGridPoints: boolean = true; // Toggle for showing/hiding grid points (default: on)
   selectedMachineForRemoval: THREE.Group | null = null; // Selected machine to remove
   selectedMachineForEdit: THREE.Group | null = null; // Selected machine to edit
   selectedConfigForEdit: any = null; // Configuration of machine being edited
@@ -2008,11 +2009,32 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     });
   }
 
+  toggleShowGridPoints() {
+    this.showGridPoints = !this.showGridPoints;
+    this.updateGridPointsVisibility();
+    console.log('🔄 [3D Planner] Show grid points toggled:', this.showGridPoints);
+  }
+
   private updateGridPointsVisibility() {
     if (!this.gridPointsGroup) return;
     
-    // Show/hide grid points based on isAddingMachine mode
-    this.gridPointsGroup.visible = this.isAddingMachine;
+    // Show grid points if either showGridPoints is on OR isAddingMachine is on
+    const shouldShow = this.showGridPoints || this.isAddingMachine;
+    this.gridPointsGroup.visible = shouldShow;
+    
+    // Adjust point sizes: if showGridPoints is on but not adding machine, make points 2x smaller
+    if (shouldShow) {
+      const sizeMultiplier = (this.showGridPoints && !this.isAddingMachine) ? 0.5 : 1.0;
+      this.gridPointsGroup.children.forEach((child) => {
+        if (child instanceof THREE.Mesh && child.geometry instanceof THREE.SphereGeometry) {
+          // Store original scale if not already stored
+          if (!(child as any).originalScale) {
+            (child as any).originalScale = 1.0;
+          }
+          child.scale.setScalar((child as any).originalScale * sizeMultiplier);
+        }
+      });
+    }
   }
 
   private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, machineColor?: string, rotation: number = 0) {
@@ -2859,8 +2881,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           // Create large point at the highest Y position
           const point = new THREE.Mesh(largePointGeometry, largePointMaterial.clone());
           point.position.set(x, pointY, z);
-          // Store original color for this point
+          // Store original color and scale for this point
           (point as any).originalColor = 0x0000ff; // Blue
+          (point as any).originalScale = 1.0; // Store original scale
           
           // Create invisible larger hitbox for easier selection
           const hitboxGeometry = new THREE.SphereGeometry(0.02, 8, 8); // 3x larger than point
@@ -2925,8 +2948,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           // Create small point at the highest Y position
           const smallPoint = new THREE.Mesh(smallPointGeometry, smallPointMaterial.clone());
           smallPoint.position.set(x, pointY, z);
-          // Store original color for this point
+          // Store original color and scale for this point
           (smallPoint as any).originalColor = 0x800080; // Purple
+          (smallPoint as any).originalScale = 1.0; // Store original scale
           
           // Create invisible larger hitbox for easier selection
           const hitboxGeometry = new THREE.SphereGeometry(0.02, 8, 8); // 3x larger than point
@@ -2950,8 +2974,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     if (largePointsCreated > 0 || smallPointsCreated > 0) {
       this.scene.add(this.gridPointsGroup);
-      // Initially hide grid points
-      this.gridPointsGroup.visible = this.isAddingMachine;
+      // Update visibility and size based on current state
+      this.updateGridPointsVisibility();
       console.log(`✅ [3D Planner] Created ${largePointsCreated} large points and ${smallPointsCreated} small points`);
     } else {
       console.warn('⚠️ [3D Planner] No grid points created');

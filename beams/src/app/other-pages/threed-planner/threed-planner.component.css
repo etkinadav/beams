@@ -76,6 +76,22 @@
     min-width: 150px;
     background-color: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zx-show-grid-btn-floating {
+    position: fixed;
+    top: 210px;
+    right: 10px;
+    z-index: 1000;
+    min-width: 150px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .alert-warning {

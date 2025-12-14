@@ -66,6 +66,19 @@
       </button>
       <!-- // ========================== REMOVE MACHINE TOGGLE BUTTON ========================== -->
 
+      <!-- ========================== SHOW GRID POINTS TOGGLE BUTTON (FLOATING) ========================== -->
+      <button 
+        *ngIf="!isAdminMode"
+        type="button" 
+        mat-stroked-button 
+        color="primary" 
+        class="zx-show-grid-btn-floating rounded-pill"
+        (click)="toggleShowGridPoints()">
+        <mat-icon>{{ showGridPoints ? 'grid_on' : 'grid_off' }}</mat-icon>
+        <span>{{ showGridPoints ? 'הסתר גריד נקודות' : 'הצג גריד נקודות' }}</span>
+      </button>
+      <!-- // ========================== SHOW GRID POINTS TOGGLE BUTTON ========================== -->
+
       <!-- ========================== CONTENT AREA ========================== -->
       
       <!-- Admin Mode Content -->
