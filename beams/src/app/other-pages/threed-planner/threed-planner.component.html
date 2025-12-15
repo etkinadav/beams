@@ -5,6 +5,7 @@
 
       <!-- ========================== ACTIONS MENU (FLOATING) ========================== -->
       <div *ngIf="!isAdminMode" class="zx-actions-menu-container">
+        <span *ngIf="activeModeText" class="zx-active-mode-text">{{ activeModeText }}</span>
         <button 
           type="button"
           mat-mini-fab
@@ -14,7 +15,6 @@
           aria-label="אפשרויות תכנון">
           <mat-icon>more_horiz</mat-icon>
         </button>
-        <span *ngIf="activeModeText" class="zx-active-mode-text">{{ activeModeText }}</span>
       </div>
 
       <mat-menu #actionsMenu="matMenu" xPosition="before" panelClass="threed-planner-menu">
