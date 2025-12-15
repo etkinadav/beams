@@ -35,6 +35,14 @@
     gap: 8px;
 }
 
+.zx-actions-menu-btn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 .zx-add-machine-btn-floating {
     position: fixed;
     top: 10px;

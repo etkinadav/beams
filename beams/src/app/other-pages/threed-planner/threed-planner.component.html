@@ -3,70 +3,45 @@
     <div class="d-flex flex-column position-absolute w-100 h-100 overflow-hidden">
 
 
-      <!-- ========================== ADD MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
+      <!-- ========================== ACTIONS MENU (FLOATING) ========================== -->
       <button 
         *ngIf="!isAdminMode"
-        type="button" 
-        mat-stroked-button 
-        color="primary" 
-        class="zx-add-machine-btn-floating rounded-pill"
-        (click)="toggleAddMachineMode()">
-        <mat-icon>{{ isAddingMachine ? 'close' : 'add' }}</mat-icon>
-        <span>{{ isAddingMachine ? 'ביטול' : 'הוסף מכונה' }}</span>
+        type="button"
+        mat-fab
+        color="primary"
+        class="zx-actions-menu-btn"
+        [matMenuTriggerFor]="actionsMenu"
+        aria-label="אפשרויות תכנון">
+        <mat-icon>more_horiz</mat-icon>
       </button>
-      <!-- // ========================== ADD MACHINE TOGGLE BUTTON ========================== -->
 
-      <!-- ========================== EDIT MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
-      <button 
-        *ngIf="!isAdminMode && hasPlacedMachines"
-        type="button" 
-        mat-stroked-button 
-        color="primary" 
-        class="zx-edit-machine-btn-floating rounded-pill"
-        (click)="toggleEditMachineMode()">
-        <mat-icon>{{ isEditingMachine ? 'close' : 'edit' }}</mat-icon>
-        <span>{{ isEditingMachine ? 'ביטול' : 'ערוך מכונה' }}</span>
-      </button>
-      <!-- // ========================== EDIT MACHINE TOGGLE BUTTON ========================== -->
+      <mat-menu #actionsMenu="matMenu" xPosition="before">
+        <button mat-menu-item (click)="toggleAddMachineMode()" *ngIf="!isAdminMode">
+          <mat-icon>{{ isAddingMachine ? 'close' : 'add' }}</mat-icon>
+          <span>{{ isAddingMachine ? 'ביטול הוספה' : 'הוסף מכונה' }}</span>
+        </button>
 
-      <!-- ========================== MOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
-      <button 
-        *ngIf="!isAdminMode && hasPlacedMachines"
-        type="button" 
-        mat-stroked-button 
-        color="primary" 
-        class="zx-move-machine-btn-floating rounded-pill"
-        (click)="toggleMoveMachineMode()">
-        <mat-icon>{{ isMovingMachine ? 'close' : 'open_with' }}</mat-icon>
-        <span>{{ isMovingMachine ? 'ביטול' : 'הזז מכונה' }}</span>
-      </button>
-      <!-- // ========================== MOVE MACHINE TOGGLE BUTTON ========================== -->
+        <button mat-menu-item (click)="toggleEditMachineMode()" *ngIf="!isAdminMode && hasPlacedMachines">
+          <mat-icon>{{ isEditingMachine ? 'close' : 'edit' }}</mat-icon>
+          <span>{{ isEditingMachine ? 'ביטול עריכה' : 'ערוך מכונה' }}</span>
+        </button>
 
-      <!-- ========================== REMOVE MACHINE TOGGLE BUTTON (FLOATING) ========================== -->
-      <button 
-        *ngIf="!isAdminMode && hasPlacedMachines"
-        type="button" 
-        mat-stroked-button 
-        color="primary" 
-        class="zx-remove-machine-btn-floating rounded-pill"
-        (click)="toggleRemoveMachineMode()">
-        <mat-icon>{{ isRemovingMachine ? 'close' : 'delete' }}</mat-icon>
-        <span>{{ isRemovingMachine ? 'ביטול' : 'הסר מכונה' }}</span>
-      </button>
-      <!-- // ========================== REMOVE MACHINE TOGGLE BUTTON ========================== -->
+        <button mat-menu-item (click)="toggleMoveMachineMode()" *ngIf="!isAdminMode && hasPlacedMachines">
+          <mat-icon>{{ isMovingMachine ? 'close' : 'open_with' }}</mat-icon>
+          <span>{{ isMovingMachine ? 'ביטול הזזה' : 'הזז מכונה' }}</span>
+        </button>
 
-      <!-- ========================== SHOW GRID POINTS TOGGLE BUTTON (FLOATING) ========================== -->
-      <button 
-        *ngIf="!isAdminMode"
-        type="button" 
-        mat-stroked-button 
-        color="primary" 
-        class="zx-show-grid-btn-floating rounded-pill"
-        (click)="toggleShowGridPoints()">
-        <mat-icon>{{ showGridPoints ? 'grid_on' : 'grid_off' }}</mat-icon>
-        <span>{{ showGridPoints ? 'הסתר גריד נקודות' : 'הצג גריד נקודות' }}</span>
-      </button>
-      <!-- // ========================== SHOW GRID POINTS TOGGLE BUTTON ========================== -->
+        <button mat-menu-item (click)="toggleRemoveMachineMode()" *ngIf="!isAdminMode && hasPlacedMachines">
+          <mat-icon>{{ isRemovingMachine ? 'close' : 'delete' }}</mat-icon>
+          <span>{{ isRemovingMachine ? 'ביטול הסרה' : 'הסר מכונה' }}</span>
+        </button>
+
+        <button mat-menu-item (click)="toggleShowGridPoints()" *ngIf="!isAdminMode">
+          <mat-icon>{{ showGridPoints ? 'grid_on' : 'grid_off' }}</mat-icon>
+          <span>{{ showGridPoints ? 'הסתר גריד נקודות' : 'הצג גריד נקודות' }}</span>
+        </button>
+      </mat-menu>
+      <!-- // ========================== ACTIONS MENU (FLOATING) ========================== -->
 
       <!-- ========================== CONTENT AREA ========================== -->
       
