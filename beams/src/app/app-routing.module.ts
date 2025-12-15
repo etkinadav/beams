@@ -1,6 +1,6 @@
 import { ModifyProductComponent } from './main-section/modify-product/modify-product.component';
 import { NgModule } from "@angular/core";
-import { RouterModule, Routes } from "@angular/router";
+import { RouterModule, Routes, UrlMatchResult, UrlSegment } from "@angular/router";
 import { ChooseProductComponent } from "./main-section/choose-product/choose-product.component"
 
 import { SocialComponent } from "./auth/social/social.component";
@@ -19,12 +19,28 @@ import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-plan
 
 
 
+// Temporary: redirect everything to /threedplanner while keeping the route available.
+const redirectAllButThreedplanner = (segments: UrlSegment[]): UrlMatchResult | null => {
+    if (segments.length === 0) {
+        return { consumed: [] };
+    }
+
+    if (segments[0].path === 'threedplanner') {
+        return null;
+    }
+
+    return { consumed: segments };
+};
+
 const routes: Routes = [
+    { path: "threedplanner", component: ThreedPlannerComponent },
+    { matcher: redirectAllButThreedplanner, redirectTo: '/threedplanner' },
+
+    // Existing routes remain below for when the temporary redirect is removed
     { path: "", component: ChooseProductComponent },
 
     { path: "beams", component: ModifyProductComponent },
     { path: "shopping-cart", component: ShoppingCartComponent },
-    { path: "threedplanner", component: ThreedPlannerComponent },
 
     { path: "myorders/:userId", component: MyOrdersComponent },
     { path: "myprofile/:userId", component: MyProfileComponent },
@@ -35,9 +51,8 @@ const routes: Routes = [
 
     { path: "social", component: SocialComponent },
 
-
     // errors:
-    { path: '**', redirectTo: '/' },
+    { path: '**', redirectTo: '/threedplanner' },
 ];
 
 @NgModule({
