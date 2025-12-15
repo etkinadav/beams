@@ -1272,7 +1272,6 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.resetMachineSelectionForMove(this.selectedMachineForMove);
       this.selectedMachineForMove = null;
       this.selectedConfigForMove = null;
-      this.removeMoveArrows();
     }
     if (this.isRemovingMachine && this.selectedMachineForRemoval) {
       this.resetMachineSelectionForRemoval(this.selectedMachineForRemoval);
@@ -1462,10 +1461,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedMachineForEdit = null;
       this.selectedConfigForEdit = null;
     }
-    // Remove wireframe, corner indicator, and move arrows
+    // Remove wireframe (which also removes corner indicator and move arrows)
     this.removeSelectedMachineWireframe();
-    this.removeCornerIndicator();
-    this.removeMoveArrows();
   }
 
   clearActiveMode() {
@@ -1798,6 +1795,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.scene.remove(this.selectedMachineWireframe);
       this.selectedMachineWireframe = null;
     }
+    
+    // Also remove corner indicator and move arrows when wireframe is removed
+    this.removeCornerIndicator();
+    this.removeMoveArrows();
   }
 
   private removeMoveArrows() {
@@ -1909,10 +1910,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selectedMoveDirection = null;
     this.selectedMoveDistance = null;
     this.availableMoveDistances = [];
-    // Remove any selection wireframe, corner indicator, and move arrows
+    // Remove any selection wireframe (which also removes corner indicator and move arrows)
     this.removeSelectedMachineWireframe();
-    this.removeCornerIndicator();
-    this.removeMoveArrows();
     // Reset selected machine
     if (this.selectedMachineForMove) {
       this.resetMachineSelectionForMove(this.selectedMachineForMove);
@@ -2080,10 +2079,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedMachineForMove = null;
       this.selectedConfigForMove = null;
     }
-    // Remove wireframe, corner indicator, and move arrows
+    // Remove wireframe (which also removes corner indicator and move arrows)
     this.removeSelectedMachineWireframe();
-    this.removeCornerIndicator();
-    this.removeMoveArrows();
   }
 
   private handleMachineEditClick() {
