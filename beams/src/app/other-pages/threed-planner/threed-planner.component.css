@@ -56,16 +56,23 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #1976d2;
     background-color: rgba(25, 118, 210, 0.1);
     padding: 6px 12px;
     border-radius: 16px;
     white-space: nowrap;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    border: none;
     cursor: pointer;
+}
+
+.zx-active-mode-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1976d2;
+    background: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
 .zx-clear-mode-btn {
