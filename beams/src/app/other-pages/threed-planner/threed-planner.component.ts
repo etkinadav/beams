@@ -77,6 +77,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private hoveredPoint: THREE.Mesh | null = null;
   private mouseMoveHandler: ((event: MouseEvent) => void) | null = null;
   private mouseClickHandler: ((event: MouseEvent) => void) | null = null;
+  private selectedMachineWireframe: THREE.Group | null = null; // Wireframe for selected machine
   
   // Point selection and machine selection
   selectedPoint: THREE.Mesh | null = null;
@@ -129,6 +130,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     if (this.directionSubscription) {
       this.directionSubscription.unsubscribe();
     }
+    // Remove wireframe if exists
+    this.removeSelectedMachineWireframe();
     this.cleanupThreeJS();
   }
 
@@ -1007,29 +1010,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private highlightMachineForRemoval(machine: THREE.Group) {
-    machine.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (child.material instanceof THREE.MeshStandardMaterial || 
-            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
-          const material = Array.isArray(child.material) ? child.material[0] : child.material;
-          (material as THREE.MeshStandardMaterial).emissive.setHex(0xff0000); // Red emissive
-          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
-        }
-      }
-    });
+    // Remove any existing wireframe
+    this.removeSelectedMachineWireframe();
+    
+    // Add yellow wireframe overlay
+    this.addSelectedMachineWireframe(machine);
   }
 
   private resetMachineSelectionForRemoval(machine: THREE.Group) {
-    machine.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (child.material instanceof THREE.MeshStandardMaterial || 
-            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
-          const material = Array.isArray(child.material) ? child.material[0] : child.material;
-          (material as THREE.MeshStandardMaterial).emissive.setHex(0x000000); // Reset emissive
-          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
-        }
-      }
-    });
+    // Remove wireframe
+    this.removeSelectedMachineWireframe();
   }
 
   private resetPointToOriginal(point: THREE.Mesh) {
@@ -1555,29 +1545,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private highlightMachineForMove(machine: THREE.Group) {
-    machine.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (child.material instanceof THREE.MeshStandardMaterial || 
-            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
-          const material = Array.isArray(child.material) ? child.material[0] : child.material;
-          (material as THREE.MeshStandardMaterial).emissive.setHex(0x0088ff); // Blue emissive
-          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
-        }
-      }
-    });
+    // Remove any existing wireframe
+    this.removeSelectedMachineWireframe();
+    
+    // Add yellow wireframe overlay
+    this.addSelectedMachineWireframe(machine);
   }
 
   private resetMachineSelectionForMove(machine: THREE.Group) {
-    machine.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (child.material instanceof THREE.MeshStandardMaterial || 
-            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
-          const material = Array.isArray(child.material) ? child.material[0] : child.material;
-          (material as THREE.MeshStandardMaterial).emissive.setHex(0x000000); // Reset emissive
-          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
-        }
-      }
-    });
+    // Remove wireframe
+    this.removeSelectedMachineWireframe();
   }
 
   private showMoveArrows(pointPosition: THREE.Vector3) {
@@ -1673,6 +1650,72 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     
     this.scene.add(this.moveArrowsGroup);
     console.log('✅ [3D Planner] Move arrows displayed at position:', pointPosition, 'with', this.moveArrowsGroup.children.length, 'children');
+  }
+
+  private addSelectedMachineWireframe(machine: THREE.Group) {
+    if (!this.scene) return;
+    
+    // Remove any existing wireframe first
+    this.removeSelectedMachineWireframe();
+    
+    // Create wireframe group
+    this.selectedMachineWireframe = new THREE.Group();
+    
+    // Traverse machine and create wireframe for each mesh
+    machine.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.geometry) {
+        // Create edges geometry from the mesh geometry
+        const edgesGeometry = new THREE.EdgesGeometry(child.geometry);
+        
+        // Create yellow wireframe material
+        const wireframeMaterial = new THREE.LineBasicMaterial({
+          color: 0xffff00, // Yellow
+          linewidth: 2
+        });
+        
+        // Create line segments for wireframe
+        const wireframe = new THREE.LineSegments(edgesGeometry, wireframeMaterial);
+        
+        // Match the position, rotation, and scale of the original mesh
+        wireframe.position.copy(child.position);
+        wireframe.rotation.copy(child.rotation);
+        wireframe.scale.copy(child.scale);
+        
+        // Add to wireframe group
+        this.selectedMachineWireframe.add(wireframe);
+      }
+    });
+    
+    // Add wireframe group to the scene at the same position as the machine
+    if (this.selectedMachineWireframe.children.length > 0) {
+      this.selectedMachineWireframe.position.copy(machine.position);
+      this.selectedMachineWireframe.rotation.copy(machine.rotation);
+      this.selectedMachineWireframe.scale.copy(machine.scale);
+      this.scene.add(this.selectedMachineWireframe);
+    }
+  }
+
+  private removeSelectedMachineWireframe() {
+    if (this.selectedMachineWireframe && this.scene) {
+      // Dispose of geometries and materials
+      this.selectedMachineWireframe.traverse((child) => {
+        if (child instanceof THREE.LineSegments) {
+          if (child.geometry) {
+            child.geometry.dispose();
+          }
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(material => material.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        }
+      });
+      
+      this.scene.remove(this.selectedMachineWireframe);
+      this.selectedMachineWireframe = null;
+    }
   }
 
   private removeMoveArrows() {
@@ -2006,29 +2049,16 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private highlightMachineForEdit(machine: THREE.Group) {
-    machine.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (child.material instanceof THREE.MeshStandardMaterial || 
-            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
-          const material = Array.isArray(child.material) ? child.material[0] : child.material;
-          (material as THREE.MeshStandardMaterial).emissive.setHex(0x00ff00); // Green emissive
-          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
-        }
-      }
-    });
+    // Remove any existing wireframe
+    this.removeSelectedMachineWireframe();
+    
+    // Add yellow wireframe overlay
+    this.addSelectedMachineWireframe(machine);
   }
 
   private resetMachineSelectionForEdit(machine: THREE.Group) {
-    machine.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (child.material instanceof THREE.MeshStandardMaterial || 
-            (Array.isArray(child.material) && child.material[0] instanceof THREE.MeshStandardMaterial)) {
-          const material = Array.isArray(child.material) ? child.material[0] : child.material;
-          (material as THREE.MeshStandardMaterial).emissive.setHex(0x000000); // Reset emissive
-          (material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
-        }
-      }
-    });
+    // Remove wireframe
+    this.removeSelectedMachineWireframe();
   }
 
   toggleShowGridPoints() {
@@ -2060,6 +2090,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       });
     }
   }
+
 
   private loadAndPlaceMachine(machine: Machine | any, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, machineColor?: string, rotation: number = 0) {
     this.loadAndPlaceMachineWithCallback(machine, pointX, pointY, pointZ, corner, configId, machineColor, rotation, () => {});
