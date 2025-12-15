@@ -78,6 +78,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private mouseMoveHandler: ((event: MouseEvent) => void) | null = null;
   private mouseClickHandler: ((event: MouseEvent) => void) | null = null;
   private selectedMachineWireframe: THREE.Group | null = null; // Wireframe for selected machine
+  private cornerIndicator: THREE.Mesh | null = null; // Yellow sphere indicating machine corner position
   
   // Point selection and machine selection
   selectedPoint: THREE.Mesh | null = null;
@@ -1461,8 +1462,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedMachineForEdit = null;
       this.selectedConfigForEdit = null;
     }
-    // Remove wireframe
+    // Remove wireframe, corner indicator, and move arrows
     this.removeSelectedMachineWireframe();
+    this.removeCornerIndicator();
+    this.removeMoveArrows();
   }
 
   clearActiveMode() {
@@ -1595,7 +1598,9 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
                   config.pointY,
                   config.pointZ
                 );
-                this.showMoveArrows(pointPosition);
+                // Show corner indicator and interactive move arrows
+                this.showCornerIndicator(pointPosition);
+                this.showMoveArrows(pointPosition, true); // Interactive arrows for moving
                 
                 console.log('✅ [3D Planner] Machine selected for moving:', configId, 'at position:', pointPosition);
               }
@@ -1615,6 +1620,17 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     
     // Add yellow wireframe overlay
     this.addSelectedMachineWireframe(machine);
+    
+    // Show corner indicator and move arrows (non-interactive) if config is available
+    if (this.selectedConfigForMove) {
+      const pointPosition = new THREE.Vector3(
+        this.selectedConfigForMove.pointX,
+        this.selectedConfigForMove.pointY,
+        this.selectedConfigForMove.pointZ
+      );
+      this.showCornerIndicator(pointPosition);
+      this.showMoveArrows(pointPosition, false); // Non-interactive arrows for display
+    }
   }
 
   private resetMachineSelectionForMove(machine: THREE.Group) {
@@ -1622,7 +1638,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.removeSelectedMachineWireframe();
   }
 
-  private showMoveArrows(pointPosition: THREE.Vector3) {
+  private showMoveArrows(pointPosition: THREE.Vector3, interactive: boolean = true) {
     // Remove existing arrows if any
     this.removeMoveArrows();
     
@@ -1683,38 +1699,39 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
         arrowLength * 0.15 // Head width
       );
       
-      // Store direction in userData for click detection
-      (arrowHelper as any).moveDirection = dir.direction;
-      (arrowHelper as any).isMoveArrow = true;
-      
-      // Create a larger hitbox sphere for easier clicking
-      const hitboxSize = arrowLength * 0.4; // Larger hitbox for easier clicking
-      const hitboxGeometry = new THREE.SphereGeometry(hitboxSize, 8, 8);
-      const hitboxMaterial = new THREE.MeshBasicMaterial({ 
-        transparent: true, 
-        opacity: 0, // Invisible
-        color: dir.color
-      });
-      const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
-      
-      // Position hitbox at the middle of the arrow
-      const hitboxPosition = origin.clone();
-      const directionClone = directionVector.clone();
-      hitboxPosition.add(directionClone.multiplyScalar(arrowLength * 0.5));
-      hitbox.position.copy(hitboxPosition);
-      
-      // Store direction on both hitbox and arrow for easier detection
-      (hitbox as any).moveDirection = dir.direction;
-      (hitbox as any).isMoveArrow = true;
-      (arrowHelper as any).moveDirection = dir.direction;
-      (arrowHelper as any).isMoveArrow = true;
+      // Store direction in userData for click detection (only if interactive)
+      if (interactive) {
+        (arrowHelper as any).moveDirection = dir.direction;
+        (arrowHelper as any).isMoveArrow = true;
+        
+        // Create a larger hitbox sphere for easier clicking
+        const hitboxSize = arrowLength * 0.4; // Larger hitbox for easier clicking
+        const hitboxGeometry = new THREE.SphereGeometry(hitboxSize, 8, 8);
+        const hitboxMaterial = new THREE.MeshBasicMaterial({ 
+          transparent: true, 
+          opacity: 0, // Invisible
+          color: dir.color
+        });
+        const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+        
+        // Position hitbox at the middle of the arrow
+        const hitboxPosition = origin.clone();
+        const directionClone = directionVector.clone();
+        hitboxPosition.add(directionClone.multiplyScalar(arrowLength * 0.5));
+        hitbox.position.copy(hitboxPosition);
+        
+        // Store direction on both hitbox and arrow for easier detection
+        (hitbox as any).moveDirection = dir.direction;
+        (hitbox as any).isMoveArrow = true;
+        
+        this.moveArrowsGroup.add(hitbox);
+      }
       
       this.moveArrowsGroup.add(arrowHelper);
-      this.moveArrowsGroup.add(hitbox);
     });
     
     this.scene.add(this.moveArrowsGroup);
-    console.log('✅ [3D Planner] Move arrows displayed at position:', pointPosition, 'with', this.moveArrowsGroup.children.length, 'children');
+    console.log('✅ [3D Planner] Move arrows displayed at position:', pointPosition, 'interactive:', interactive);
   }
 
   private addSelectedMachineWireframe(machine: THREE.Group) {
@@ -1804,6 +1821,47 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     }
   }
 
+  private showCornerIndicator(pointPosition: THREE.Vector3) {
+    // Remove existing corner indicator if any
+    this.removeCornerIndicator();
+    
+    if (!this.scene) {
+      console.warn('⚠️ [3D Planner] Cannot show corner indicator - scene not available');
+      return;
+    }
+    
+    // Create yellow sphere - 3x larger than grid points (0.006 * 3 = 0.018)
+    const indicatorGeometry = new THREE.SphereGeometry(0.018, 12, 12);
+    const indicatorMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0xffff00, // Yellow
+      transparent: true,
+      opacity: 0.9
+    });
+    
+    this.cornerIndicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial);
+    this.cornerIndicator.position.copy(pointPosition);
+    
+    this.scene.add(this.cornerIndicator);
+    console.log('✅ [3D Planner] Corner indicator displayed at position:', pointPosition);
+  }
+
+  private removeCornerIndicator() {
+    if (this.cornerIndicator && this.scene) {
+      this.scene.remove(this.cornerIndicator);
+      if (this.cornerIndicator.geometry) {
+        this.cornerIndicator.geometry.dispose();
+      }
+      if (this.cornerIndicator.material) {
+        if (Array.isArray(this.cornerIndicator.material)) {
+          this.cornerIndicator.material.forEach(material => material.dispose());
+        } else {
+          this.cornerIndicator.material.dispose();
+        }
+      }
+      this.cornerIndicator = null;
+    }
+  }
+
   private calculateAvailableMoveDistances() {
     if (!this.selectedConfigForMove || !this.modelBounds) {
       this.availableMoveDistances = [];
@@ -1851,8 +1909,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selectedMoveDirection = null;
     this.selectedMoveDistance = null;
     this.availableMoveDistances = [];
-    // Remove any selection wireframe
+    // Remove any selection wireframe, corner indicator, and move arrows
     this.removeSelectedMachineWireframe();
+    this.removeCornerIndicator();
+    this.removeMoveArrows();
     // Reset selected machine
     if (this.selectedMachineForMove) {
       this.resetMachineSelectionForMove(this.selectedMachineForMove);
@@ -2020,9 +2080,10 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedMachineForMove = null;
       this.selectedConfigForMove = null;
     }
-    this.removeMoveArrows();
-    // Remove wireframe
+    // Remove wireframe, corner indicator, and move arrows
     this.removeSelectedMachineWireframe();
+    this.removeCornerIndicator();
+    this.removeMoveArrows();
   }
 
   private handleMachineEditClick() {
@@ -2123,6 +2184,17 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     
     // Add yellow wireframe overlay
     this.addSelectedMachineWireframe(machine);
+    
+    // Show corner indicator and move arrows (non-interactive) if config is available
+    if (this.selectedConfigForEdit) {
+      const pointPosition = new THREE.Vector3(
+        this.selectedConfigForEdit.pointX,
+        this.selectedConfigForEdit.pointY,
+        this.selectedConfigForEdit.pointZ
+      );
+      this.showCornerIndicator(pointPosition);
+      this.showMoveArrows(pointPosition, false); // Non-interactive arrows
+    }
   }
 
   private resetMachineSelectionForEdit(machine: THREE.Group) {
