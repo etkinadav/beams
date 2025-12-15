@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DirectionService } from '../../direction.service';
@@ -130,6 +130,15 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.directionSubscription.unsubscribe();
     }
     this.cleanupThreeJS();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    // Shift + M to toggle admin mode
+    if (event.shiftKey && event.key === 'M') {
+      event.preventDefault();
+      this.toggleMode();
+    }
   }
 
   toggleMode() {
