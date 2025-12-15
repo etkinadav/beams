@@ -588,9 +588,10 @@ exports.getMachineConfigs = async (req, res, next) => {
             .populate('machineId')
             .sort({ createdAt: -1 });
         
-        res.status(200).json({
-            success: true,
-            configs: configs.map(config => ({
+        // Filter out configs where machine doesn't exist and map valid ones
+        const validConfigs = configs
+            .filter(config => config.machineId && config.machineId.fileType === 'machine')
+            .map(config => ({
                 id: config._id,
                 machineId: config.machineId._id,
                 machine: {
@@ -607,7 +608,17 @@ exports.getMachineConfigs = async (req, res, next) => {
                 corner: config.corner,
                 rotation: config.rotation || 0,
                 createdAt: config.createdAt
-            }))
+            }));
+        
+        // Log if any configs were filtered out
+        const filteredCount = configs.length - validConfigs.length;
+        if (filteredCount > 0) {
+            console.warn(`⚠️ [Machine Configs] Filtered out ${filteredCount} config(s) with missing or invalid machines`);
+        }
+        
+        res.status(200).json({
+            success: true,
+            configs: validConfigs
         });
     } catch (error) {
         console.error('Error getting machine configurations:', error);

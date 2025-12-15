@@ -2248,20 +2248,46 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0, onComplete?: () => void) {
-    const loader = new OBJLoader();
-    loader.load(
-      url,
-      (object) => {
-        console.log('✅ [3D Planner] Machine OBJ model loaded');
-        this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId, color, rotation);
+    // Fetch and pre-process OBJ file to filter out unsupported NURBS curve lines
+    fetch(url)
+      .then(response => response.text())
+      .then(text => {
+        // Filter out unsupported lines (NURBS curves, surfaces, etc.)
+        const unsupportedKeywords = ['cstype', 'deg', 'curv', 'curv2', 'surf', 'parm', 'trim', 'hole', 'scrv', 'sp', 'end'];
+        const lines = text.split('\n');
+        const filteredLines = lines.filter(line => {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) return true; // Keep empty lines and comments
+          const firstWord = trimmed.split(/\s+/)[0].toLowerCase();
+          return !unsupportedKeywords.includes(firstWord);
+        });
+        const filteredText = filteredLines.join('\n');
+        
+        // Create a blob URL from the filtered content
+        const blob = new Blob([filteredText], { type: 'text/plain' });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const loader = new OBJLoader();
+        loader.load(
+          blobUrl,
+          (object) => {
+            console.log('✅ [3D Planner] Machine OBJ model loaded');
+            URL.revokeObjectURL(blobUrl); // Clean up blob URL
+            this.placeMachineModel(object, pointX, pointY, pointZ, corner, configId, color, rotation);
+            if (onComplete) onComplete();
+          },
+          undefined,
+          (error) => {
+            console.error('❌ [3D Planner] Error loading machine OBJ:', error);
+            URL.revokeObjectURL(blobUrl); // Clean up blob URL on error
+            if (onComplete) onComplete();
+          }
+        );
+      })
+      .catch(error => {
+        console.error('❌ [3D Planner] Error fetching machine OBJ file:', error);
         if (onComplete) onComplete();
-      },
-      undefined,
-      (error) => {
-        console.error('❌ [3D Planner] Error loading machine OBJ:', error);
-        if (onComplete) onComplete();
-      }
-    );
+      });
   }
 
   private loadMachineGLTF(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0, onComplete?: () => void) {
@@ -2776,25 +2802,52 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private loadOBJModel(url: string) {
-    const loader = new OBJLoader();
-    loader.load(
-      url,
-      (object) => {
-        console.log('✅ [3D Planner] OBJ model loaded');
-        this.setupModel(object);
-      },
-      (progress) => {
-        if (progress.total > 0) {
-          const percent = (progress.loaded / progress.total) * 100;
-          console.log('📊 [3D Planner] Loading progress:', percent.toFixed(2) + '%');
-        }
-      },
-      (error) => {
-        console.error('❌ [3D Planner] Error loading OBJ:', error);
+    // Fetch and pre-process OBJ file to filter out unsupported NURBS curve lines
+    fetch(url)
+      .then(response => response.text())
+      .then(text => {
+        // Filter out unsupported lines (NURBS curves, surfaces, etc.)
+        const unsupportedKeywords = ['cstype', 'deg', 'curv', 'curv2', 'surf', 'parm', 'trim', 'hole', 'scrv', 'sp', 'end'];
+        const lines = text.split('\n');
+        const filteredLines = lines.filter(line => {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) return true; // Keep empty lines and comments
+          const firstWord = trimmed.split(/\s+/)[0].toLowerCase();
+          return !unsupportedKeywords.includes(firstWord);
+        });
+        const filteredText = filteredLines.join('\n');
+        
+        // Create a blob URL from the filtered content
+        const blob = new Blob([filteredText], { type: 'text/plain' });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const loader = new OBJLoader();
+        loader.load(
+          blobUrl,
+          (object) => {
+            console.log('✅ [3D Planner] OBJ model loaded');
+            URL.revokeObjectURL(blobUrl); // Clean up blob URL
+            this.setupModel(object);
+          },
+          (progress) => {
+            if (progress.total > 0) {
+              const percent = (progress.loaded / progress.total) * 100;
+              console.log('📊 [3D Planner] Loading progress:', percent.toFixed(2) + '%');
+            }
+          },
+          (error) => {
+            console.error('❌ [3D Planner] Error loading OBJ:', error);
+            URL.revokeObjectURL(blobUrl); // Clean up blob URL on error
+            this.modelLoadError = 'שגיאה בטעינת המודל. אנא נסה שוב.';
+            this.isLoadingModel = false;
+          }
+        );
+      })
+      .catch(error => {
+        console.error('❌ [3D Planner] Error fetching OBJ file:', error);
         this.modelLoadError = 'שגיאה בטעינת המודל. אנא נסה שוב.';
         this.isLoadingModel = false;
-      }
-    );
+      });
   }
 
   private loadGLTFModel(url: string) {
