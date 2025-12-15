@@ -141,6 +141,14 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     }
   }
 
+  get activeModeText(): string | null {
+    if (this.isAddingMachine) return 'הוסף מכונה';
+    if (this.isEditingMachine) return 'ערוך מכונה';
+    if (this.isMovingMachine) return 'הזז מכונה';
+    if (this.isRemovingMachine) return 'הסר מכונה';
+    return null;
+  }
+
   toggleMode() {
     this.isAdminMode = !this.isAdminMode;
     console.log('🔄 [3D Planner] Mode toggled:', this.isAdminMode ? 'Admin Mode' : 'User Mode');

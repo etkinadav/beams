@@ -4,39 +4,55 @@
 
 
       <!-- ========================== ACTIONS MENU (FLOATING) ========================== -->
-      <button 
-        *ngIf="!isAdminMode"
-        type="button"
-        mat-fab
-        color="primary"
-        class="zx-actions-menu-btn"
-        [matMenuTriggerFor]="actionsMenu"
-        aria-label="אפשרויות תכנון">
-        <mat-icon>more_horiz</mat-icon>
-      </button>
+      <div *ngIf="!isAdminMode" class="zx-actions-menu-container">
+        <span *ngIf="activeModeText" class="zx-active-mode-text">{{ activeModeText }}</span>
+        <button 
+          type="button"
+          mat-mini-fab
+          color="primary"
+          class="zx-actions-menu-btn"
+          [matMenuTriggerFor]="actionsMenu"
+          aria-label="אפשרויות תכנון">
+          <mat-icon>more_horiz</mat-icon>
+        </button>
+      </div>
 
-      <mat-menu #actionsMenu="matMenu" xPosition="before">
-        <button mat-menu-item (click)="toggleAddMachineMode()" *ngIf="!isAdminMode">
+      <mat-menu #actionsMenu="matMenu" xPosition="before" panelClass="threed-planner-menu">
+        <button mat-menu-item 
+                (click)="toggleAddMachineMode()" 
+                *ngIf="!isAdminMode"
+                [class.zx-menu-item-active]="isAddingMachine">
           <mat-icon>{{ isAddingMachine ? 'close' : 'add' }}</mat-icon>
           <span>{{ isAddingMachine ? 'ביטול הוספה' : 'הוסף מכונה' }}</span>
         </button>
 
-        <button mat-menu-item (click)="toggleEditMachineMode()" *ngIf="!isAdminMode && hasPlacedMachines">
+        <button mat-menu-item 
+                (click)="toggleEditMachineMode()" 
+                *ngIf="!isAdminMode && hasPlacedMachines"
+                [class.zx-menu-item-active]="isEditingMachine">
           <mat-icon>{{ isEditingMachine ? 'close' : 'edit' }}</mat-icon>
           <span>{{ isEditingMachine ? 'ביטול עריכה' : 'ערוך מכונה' }}</span>
         </button>
 
-        <button mat-menu-item (click)="toggleMoveMachineMode()" *ngIf="!isAdminMode && hasPlacedMachines">
+        <button mat-menu-item 
+                (click)="toggleMoveMachineMode()" 
+                *ngIf="!isAdminMode && hasPlacedMachines"
+                [class.zx-menu-item-active]="isMovingMachine">
           <mat-icon>{{ isMovingMachine ? 'close' : 'open_with' }}</mat-icon>
           <span>{{ isMovingMachine ? 'ביטול הזזה' : 'הזז מכונה' }}</span>
         </button>
 
-        <button mat-menu-item (click)="toggleRemoveMachineMode()" *ngIf="!isAdminMode && hasPlacedMachines">
+        <button mat-menu-item 
+                (click)="toggleRemoveMachineMode()" 
+                *ngIf="!isAdminMode && hasPlacedMachines"
+                [class.zx-menu-item-active]="isRemovingMachine">
           <mat-icon>{{ isRemovingMachine ? 'close' : 'delete' }}</mat-icon>
           <span>{{ isRemovingMachine ? 'ביטול הסרה' : 'הסר מכונה' }}</span>
         </button>
 
-        <button mat-menu-item (click)="toggleShowGridPoints()" *ngIf="!isAdminMode">
+        <button mat-menu-item 
+                (click)="toggleShowGridPoints()" 
+                *ngIf="!isAdminMode">
           <mat-icon>{{ showGridPoints ? 'grid_on' : 'grid_off' }}</mat-icon>
           <span>{{ showGridPoints ? 'הסתר גריד נקודות' : 'הצג גריד נקודות' }}</span>
         </button>

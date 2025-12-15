@@ -35,12 +35,47 @@
     gap: 8px;
 }
 
-.zx-actions-menu-btn {
+.zx-actions-menu-container {
     position: fixed;
-    top: 10px;
+    top: 15px;
     right: 10px;
     z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.zx-actions-menu-btn {
+    width: 44px;
+    height: 44px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.zx-active-mode-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1976d2;
+    background-color: rgba(25, 118, 210, 0.1);
+    padding: 6px 12px;
+    border-radius: 16px;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* Active menu item styling */
+::ng-deep .zx-menu-item-active {
+    background-color: rgba(25, 118, 210, 0.12) !important;
+    font-weight: 600 !important;
+    color: #1976d2 !important;
+}
+
+::ng-deep .zx-menu-item-active .mat-icon {
+    color: #1976d2 !important;
+}
+
+/* Menu positioning - add gap below button (specific to this menu) */
+::ng-deep .threed-planner-menu {
+    margin-top: 5px !important;
 }
 
 .zx-add-machine-btn-floating {
