@@ -329,7 +329,7 @@
                     [checked]="selectedMoveDistance === distance"
                     (click)="selectedMoveDistance = distance; $event.stopPropagation()">
                   <label [for]="'distance-' + distance" class="mb-0 flex-grow-1" style="cursor: pointer;">
-                    <span>{{ distance }} נקודות ({{ (distance * 0.1).toFixed(1) }} מטר)</span>
+                    <span>{{ distance }} נקודות ({{ (distance * 0.5).toFixed(1) }} מטר)</span>
                   </label>
                 </div>
               </div>

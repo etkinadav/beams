@@ -1702,31 +1702,35 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       return;
     }
 
-    const gridSpacing = 0.1; // 10 cm spacing
+    const gridSpacing = 0.1; // 10 cm spacing (for grid points)
+    const moveSpacing = 0.5; // 0.5 meter per point for moving
     const currentX = this.selectedConfigForMove.pointX;
     const currentZ = this.selectedConfigForMove.pointZ;
     const distances: number[] = [];
 
-    // Calculate how many grid points we can move in each direction
-    let maxDistance = 0;
+    // Calculate how many meters we can move in each direction
+    let maxDistanceMeters = 0;
     
     switch (this.selectedMoveDirection) {
       case 'north': // Positive Z
-        maxDistance = Math.floor((this.modelBounds.maxZ - currentZ) / gridSpacing);
+        maxDistanceMeters = this.modelBounds.maxZ - currentZ;
         break;
       case 'south': // Negative Z
-        maxDistance = Math.floor((currentZ - this.modelBounds.minZ) / gridSpacing);
+        maxDistanceMeters = currentZ - this.modelBounds.minZ;
         break;
       case 'east': // Positive X
-        maxDistance = Math.floor((this.modelBounds.maxX - currentX) / gridSpacing);
+        maxDistanceMeters = this.modelBounds.maxX - currentX;
         break;
       case 'west': // Negative X
-        maxDistance = Math.floor((currentX - this.modelBounds.minX) / gridSpacing);
+        maxDistanceMeters = currentX - this.modelBounds.minX;
         break;
     }
 
-    // Generate available distances (1, 2, 3, ... up to maxDistance)
-    for (let i = 1; i <= maxDistance && i <= 20; i++) { // Limit to 20 points max
+    // Calculate how many 0.5-meter steps we can move
+    const maxSteps = Math.floor(maxDistanceMeters / moveSpacing);
+
+    // Generate available distances (1, 2, 3, ... up to maxSteps)
+    for (let i = 1; i <= maxSteps && i <= 20; i++) { // Limit to 20 points max
       distances.push(i);
     }
 
@@ -1753,10 +1757,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       return;
     }
 
-    const gridSpacing = 0.1; // 10 cm spacing
+    const gridSpacing = 0.1; // 10 cm spacing (for grid points)
+    const moveSpacing = 0.5; // 0.5 meter per point for moving
     let newX = this.selectedConfigForMove.pointX;
     let newZ = this.selectedConfigForMove.pointZ;
-    const moveDistance = this.selectedMoveDistance * gridSpacing;
+    const moveDistance = this.selectedMoveDistance * moveSpacing;
 
     // Calculate new position based on direction
     switch (this.selectedMoveDirection) {
@@ -2039,9 +2044,11 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     const shouldShow = this.showGridPoints || this.isAddingMachine;
     this.gridPointsGroup.visible = shouldShow;
     
-    // Adjust point sizes: if showGridPoints is on but not adding machine, make points 2x smaller
+    // Adjust point sizes:
+    // - If adding machine: full size (1.0)
+    // - If showGridPoints only: medium size (0.75) - larger than before but smaller than adding machine
     if (shouldShow) {
-      const sizeMultiplier = (this.showGridPoints && !this.isAddingMachine) ? 0.5 : 1.0;
+      const sizeMultiplier = this.isAddingMachine ? 1.0 : (this.showGridPoints ? 0.75 : 1.0);
       this.gridPointsGroup.children.forEach((child) => {
         if (child instanceof THREE.Mesh && child.geometry instanceof THREE.SphereGeometry) {
           // Store original scale if not already stored
