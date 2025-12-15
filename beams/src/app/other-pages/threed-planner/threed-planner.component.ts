@@ -840,6 +840,13 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       // Show direction arrows for corner selection
       this.showDirectionArrows(clickedObject.position);
       
+      // Show snackbar to guide user to select arrow
+      this.snackBar.open('אנא בחר חץ לכיוון הצבת המכונה', '', {
+        duration: 5000, // 5 seconds
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
+      
       console.log('✅ [3D Planner] Point selected at:', clickedObject.position);
     }
   }
