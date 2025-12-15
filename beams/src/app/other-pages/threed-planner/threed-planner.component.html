@@ -5,7 +5,16 @@
 
       <!-- ========================== ACTIONS MENU (FLOATING) ========================== -->
       <div *ngIf="!isAdminMode" class="zx-actions-menu-container">
-        <span *ngIf="activeModeText" class="zx-active-mode-text">{{ activeModeText }}</span>
+        <span *ngIf="activeModeText" class="zx-active-mode-pill" (click)="clearActiveMode()">
+          <span class="zx-active-mode-text">{{ activeModeText }}</span>
+          <button 
+            type="button"
+            class="zx-clear-mode-btn"
+            (click)="clearActiveMode(); $event.stopPropagation()"
+            aria-label="ביטול פעולה">
+            ✕
+          </button>
+        </span>
         <button 
           type="button"
           mat-mini-fab

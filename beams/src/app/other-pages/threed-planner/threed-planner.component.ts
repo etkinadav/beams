@@ -130,7 +130,6 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     if (this.directionSubscription) {
       this.directionSubscription.unsubscribe();
     }
-    // Remove wireframe if exists
     this.removeSelectedMachineWireframe();
     this.cleanupThreeJS();
   }
@@ -1556,6 +1555,42 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
   private resetMachineSelectionForMove(machine: THREE.Group) {
     // Remove wireframe
+    this.removeSelectedMachineWireframe();
+  }
+
+  clearActiveMode() {
+    // Turn off add mode
+    if (this.isAddingMachine) {
+      this.isAddingMachine = false;
+      this.closeMachineSelection();
+      this.updateGridPointsVisibility();
+    }
+
+    // Turn off remove mode
+    if (this.isRemovingMachine) {
+      this.isRemovingMachine = false;
+      this.selectedMachineForRemoval = null;
+      this.updateMachinesSelectionMode();
+    }
+
+    // Turn off edit mode
+    if (this.isEditingMachine) {
+      this.isEditingMachine = false;
+      this.selectedMachineForEdit = null;
+      this.selectedConfigForEdit = null;
+      this.closeMachineSelection();
+      this.updateMachinesEditMode();
+    }
+
+    // Turn off move mode
+    if (this.isMovingMachine) {
+      this.isMovingMachine = false;
+      this.closeMoveDistanceSelection();
+      this.removeMoveArrows();
+      this.updateMachinesMoveMode();
+    }
+
+    // Remove wireframe highlight
     this.removeSelectedMachineWireframe();
   }
 
