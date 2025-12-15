@@ -2609,7 +2609,6 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
     // Ensure baseModelScale is set before loading machines
     if (!this.baseModelScale || this.baseModelScale === 1) {
-      console.warn('⚠️ [3D Planner] baseModelScale not set, waiting for model setup...');
       // Wait a bit for model setup to complete
       setTimeout(() => {
         this.loadMachineConfigs();
