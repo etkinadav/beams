@@ -1031,3 +1031,44 @@ mat-toolbar.transparent-toolbar {
 .guess-tree-btn:active {
   transform: scale(0.9);
 }
+
+/* Floating branding */
+.rapiddd-branding {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1200;
+  pointer-events: none; // avoid blocking UI
+  margin: 0;
+  padding: 0;
+}
+
+.rapiddd-powered {
+  font-size: 10px;
+  line-height: 1.1;
+  color: #4a5568;
+  letter-spacing: 0.4px;
+  font-weight: normal;
+  text-transform: uppercase;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+@media (min-width: 576px) {
+  .rapiddd-branding {
+    left: 10px;
+    bottom: 10px;
+  }
+}
+
+@media (min-width: 992px) {
+  .rapiddd-branding {
+    left: 12px;
+    bottom: 12px;
+  }
+
+  .rapiddd-powered {
+    font-size: 10.5px;
+  }
+}
