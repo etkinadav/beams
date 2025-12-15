@@ -2250,17 +2250,46 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private loadMachineOBJ(url: string, pointX: number, pointY: number, pointZ: number, corner: number, configId: string, color: string, rotation: number = 0, onComplete?: () => void) {
     // Fetch and pre-process OBJ file to filter out unsupported NURBS curve lines
     fetch(url)
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+      })
       .then(text => {
-        // Filter out unsupported lines (NURBS curves, surfaces, etc.)
-        const unsupportedKeywords = ['cstype', 'deg', 'curv', 'curv2', 'surf', 'parm', 'trim', 'hole', 'scrv', 'sp', 'end'];
+        // Optimized filtering: use a single pass with string building instead of array operations
+        const unsupportedKeywords = new Set(['cstype', 'deg', 'curv', 'curv2', 'surf', 'parm', 'trim', 'hole', 'scrv', 'sp', 'end']);
         const lines = text.split('\n');
-        const filteredLines = lines.filter(line => {
+        const filteredLines: string[] = [];
+        
+        // Pre-allocate array size estimate
+        filteredLines.length = lines.length;
+        let filteredIndex = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
           const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith('#')) return true; // Keep empty lines and comments
-          const firstWord = trimmed.split(/\s+/)[0].toLowerCase();
-          return !unsupportedKeywords.includes(firstWord);
-        });
+          
+          // Keep empty lines and comments
+          if (!trimmed || trimmed.startsWith('#')) {
+            filteredLines[filteredIndex++] = line;
+            continue;
+          }
+          
+          // Check first word efficiently
+          const firstSpace = trimmed.indexOf(' ');
+          const firstWord = firstSpace > 0 
+            ? trimmed.substring(0, firstSpace).toLowerCase()
+            : trimmed.toLowerCase();
+          
+          // Only add line if it's not an unsupported keyword
+          if (!unsupportedKeywords.has(firstWord)) {
+            filteredLines[filteredIndex++] = line;
+          }
+        }
+        
+        // Trim array to actual size
+        filteredLines.length = filteredIndex;
         const filteredText = filteredLines.join('\n');
         
         // Create a blob URL from the filtered content
@@ -2804,17 +2833,46 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   private loadOBJModel(url: string) {
     // Fetch and pre-process OBJ file to filter out unsupported NURBS curve lines
     fetch(url)
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+      })
       .then(text => {
-        // Filter out unsupported lines (NURBS curves, surfaces, etc.)
-        const unsupportedKeywords = ['cstype', 'deg', 'curv', 'curv2', 'surf', 'parm', 'trim', 'hole', 'scrv', 'sp', 'end'];
+        // Optimized filtering: use a single pass with string building instead of array operations
+        const unsupportedKeywords = new Set(['cstype', 'deg', 'curv', 'curv2', 'surf', 'parm', 'trim', 'hole', 'scrv', 'sp', 'end']);
         const lines = text.split('\n');
-        const filteredLines = lines.filter(line => {
+        const filteredLines: string[] = [];
+        
+        // Pre-allocate array size estimate (most lines will be kept)
+        filteredLines.length = lines.length;
+        let filteredIndex = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
           const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith('#')) return true; // Keep empty lines and comments
-          const firstWord = trimmed.split(/\s+/)[0].toLowerCase();
-          return !unsupportedKeywords.includes(firstWord);
-        });
+          
+          // Keep empty lines and comments
+          if (!trimmed || trimmed.startsWith('#')) {
+            filteredLines[filteredIndex++] = line;
+            continue;
+          }
+          
+          // Check first word efficiently
+          const firstSpace = trimmed.indexOf(' ');
+          const firstWord = firstSpace > 0 
+            ? trimmed.substring(0, firstSpace).toLowerCase()
+            : trimmed.toLowerCase();
+          
+          // Only add line if it's not an unsupported keyword
+          if (!unsupportedKeywords.has(firstWord)) {
+            filteredLines[filteredIndex++] = line;
+          }
+        }
+        
+        // Trim array to actual size
+        filteredLines.length = filteredIndex;
         const filteredText = filteredLines.join('\n');
         
         // Create a blob URL from the filtered content
@@ -2903,6 +2961,29 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   private setupModel(model: THREE.Group) {
+    // Single traverse to collect meshes and set materials/shadow properties
+    const meshes: THREE.Mesh[] = [];
+    const defaultMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x888888,
+      metalness: 0.3,
+      roughness: 0.7
+    });
+
+    model.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        meshes.push(child);
+        
+        // Set material if needed
+        if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
+          child.material = defaultMaterial;
+        }
+        
+        // Set shadow properties
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
     // Center and scale model
     const box = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
@@ -2916,7 +2997,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     model.scale.multiplyScalar(scale);
     model.position.sub(center.multiplyScalar(scale));
     
-    // Store model boundaries for move validation
+    // Store model boundaries for move validation (reuse box calculation)
     const scaledBox = new THREE.Box3().setFromObject(model);
     this.modelBounds = {
       minX: scaledBox.min.x,
@@ -2926,26 +3007,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     };
     console.log('📐 [3D Planner] Model bounds stored:', this.modelBounds);
 
-    // Add material if needed
-    model.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        if (!child.material || (Array.isArray(child.material) && child.material.length === 0)) {
-          child.material = new THREE.MeshStandardMaterial({ 
-            color: 0x888888,
-            metalness: 0.3,
-            roughness: 0.7
-          });
-        }
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-
     this.currentModel = model;
     this.scene.add(model);
-
-    // Create grid points on the model
-    this.createGridPoints(model);
 
     // Reset camera position
     this.camera.position.set(5, 5, 5);
@@ -2953,15 +3016,21 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.controls.target.set(0, 0, 0);
     this.controls.update();
 
-    // Don't set isLoadingModel = false here - wait for all machines to load
     console.log('✅ [3D Planner] Model setup complete');
+    
+    // Create grid points on the model asynchronously (non-blocking)
+    this.createGridPoints(model).then(() => {
+      console.log('✅ [3D Planner] Grid points creation complete');
+    }).catch(error => {
+      console.error('❌ [3D Planner] Error creating grid points:', error);
+    });
     
     // Load machine configurations after model is set up
     // isLoadingModel will be set to false in loadMachineConfigs after all machines are loaded
     this.loadMachineConfigs();
   }
 
-  private createGridPoints(model: THREE.Group) {
+  private async createGridPoints(model: THREE.Group) {
     console.log('🔵 [3D Planner] Creating grid points...');
 
     // Remove existing grid points if any
@@ -3011,8 +3080,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     // Create grid points group
     this.gridPointsGroup = new THREE.Group();
     
-    // Create point geometry and material for large points (blue)
-    // Large points - radius 0.006
+    // Create point geometry and material for large points (blue) - reuse geometry
     const largePointGeometry = new THREE.SphereGeometry(0.006, 6, 6);
     const largePointMaterial = new THREE.MeshBasicMaterial({ 
       color: 0x0000ff, // Blue
@@ -3020,8 +3088,7 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       opacity: 0.8
     });
 
-    // Create point geometry and material for small points (purple)
-    // Small points - same size as large points
+    // Create point geometry and material for small points (purple) - reuse geometry
     const smallPointGeometry = new THREE.SphereGeometry(0.006, 6, 6);
     const smallPointMaterial = new THREE.MeshBasicMaterial({ 
       color: 0x800080, // Purple
@@ -3029,80 +3096,54 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       opacity: 0.8
     });
 
-    // Create large points for each grid cell - only if ray hits the model
-    let largePointsCreated = 0;
-    let raysCast = 0;
-    
+    // Reusable hitbox geometry
+    const hitboxGeometry = new THREE.SphereGeometry(0.02, 8, 8);
+    const hitboxMaterial = new THREE.MeshBasicMaterial({ 
+      visible: false,
+      transparent: true,
+      opacity: 0
+    });
+
+    // Generate all grid positions first
+    const largeGridPositions: { x: number; z: number }[] = [];
     for (let x = minX; x <= maxX; x += gridSpacing) {
       for (let z = minZ; z <= maxZ; z += gridSpacing) {
-        raysCast++;
-        
-        // Cast ray from above the model downward
-        const rayOrigin = new THREE.Vector3(x, max.y + 10, z);
-        const rayDirection = new THREE.Vector3(0, -1, 0);
-        raycaster.set(rayOrigin, rayDirection);
-        
-        // Intersect with all meshes
-        const allIntersects: THREE.Intersection[] = [];
-        meshes.forEach(mesh => {
-          const intersects = raycaster.intersectObject(mesh, false);
-          allIntersects.push(...intersects);
-        });
-        
-        // Only create a point if the ray actually hits the model
-        if (allIntersects.length > 0) {
-          // Use the highest intersection point (closest to ray origin, which is above)
-          const intersectionPoints = allIntersects.map(i => i.point.y);
-          const pointY = Math.max(...intersectionPoints);
-
-          // Create large point at the highest Y position
-          const point = new THREE.Mesh(largePointGeometry, largePointMaterial.clone());
-          point.position.set(x, pointY, z);
-          // Store original color and scale for this point
-          (point as any).originalColor = 0x0000ff; // Blue
-          (point as any).originalScale = 1.0; // Store original scale
-          
-          // Create invisible larger hitbox for easier selection
-          const hitboxGeometry = new THREE.SphereGeometry(0.02, 8, 8); // 3x larger than point
-          const hitboxMaterial = new THREE.MeshBasicMaterial({ 
-            visible: false, // Invisible
-            transparent: true,
-            opacity: 0
-          });
-          const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
-          hitbox.position.set(x, pointY, z);
-          // Store reference to the actual point in the hitbox
-          (hitbox as any).pointMesh = point;
-          this.gridPointsGroup.add(hitbox);
-          this.gridPointsGroup.add(point);
-          largePointsCreated++;
-        }
+        largeGridPositions.push({ x, z });
       }
     }
-    
-    console.log(`📊 [3D Planner] Cast ${raysCast} rays, created ${largePointsCreated} large points`);
 
-    // Create fine grid points - small points between large points
-    const fineGridSpacing = gridSpacing / 2; // 0.05 (50 cm) - one point between each two large points
-    let smallPointsCreated = 0;
-    let fineRaysCast = 0;
-    
-    // Create fine grid between the large grid points
+    const fineGridSpacing = gridSpacing / 2;
+    const fineGridPositions: { x: number; z: number }[] = [];
     for (let x = minX; x <= maxX; x += fineGridSpacing) {
       for (let z = minZ; z <= maxZ; z += fineGridSpacing) {
-        // Skip positions that already have large points (at gridSpacing intervals)
-        // Check if this position aligns with the large grid
         const xOffset = Math.abs((x - minX) % gridSpacing);
         const zOffset = Math.abs((z - minZ) % gridSpacing);
         const isLargePointPosition = 
           (xOffset < 0.0001 || xOffset > gridSpacing - 0.0001) && 
           (zOffset < 0.0001 || zOffset > gridSpacing - 0.0001);
         
-        if (isLargePointPosition) {
-          continue; // Skip this position, it already has a large point
+        if (!isLargePointPosition) {
+          fineGridPositions.push({ x, z });
         }
-        
-        fineRaysCast++;
+      }
+    }
+
+    // Process grid points in batches to avoid blocking UI
+    const BATCH_SIZE = 50; // Process 50 points per frame
+    let largePointsCreated = 0;
+    let smallPointsCreated = 0;
+
+    // Helper function to process a batch of positions
+    const processBatch = async (
+      positions: { x: number; z: number }[],
+      startIndex: number,
+      isLarge: boolean
+    ): Promise<number> => {
+      const endIndex = Math.min(startIndex + BATCH_SIZE, positions.length);
+      let pointsCreated = 0;
+
+      for (let i = startIndex; i < endIndex; i++) {
+        const { x, z } = positions[i];
         
         // Cast ray from above the model downward
         const rayOrigin = new THREE.Vector3(x, max.y + 10, z);
@@ -3116,42 +3157,64 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
           allIntersects.push(...intersects);
         });
         
-        // Only create a point if the ray actually hits the model
         if (allIntersects.length > 0) {
-          // Use the highest intersection point
           const intersectionPoints = allIntersects.map(i => i.point.y);
           const pointY = Math.max(...intersectionPoints);
 
-          // Create small point at the highest Y position
-          const smallPoint = new THREE.Mesh(smallPointGeometry, smallPointMaterial.clone());
-          smallPoint.position.set(x, pointY, z);
-          // Store original color and scale for this point
-          (smallPoint as any).originalColor = 0x800080; // Purple
-          (smallPoint as any).originalScale = 1.0; // Store original scale
+          const pointGeometry = isLarge ? largePointGeometry : smallPointGeometry;
+          const pointMaterial = isLarge ? largePointMaterial : smallPointMaterial;
+          const pointColor = isLarge ? 0x0000ff : 0x800080;
+
+          const point = new THREE.Mesh(pointGeometry, pointMaterial.clone());
+          point.position.set(x, pointY, z);
+          (point as any).originalColor = pointColor;
+          (point as any).originalScale = 1.0;
           
-          // Create invisible larger hitbox for easier selection
-          const hitboxGeometry = new THREE.SphereGeometry(0.02, 8, 8); // 3x larger than point
-          const hitboxMaterial = new THREE.MeshBasicMaterial({ 
-            visible: false, // Invisible
-            transparent: true,
-            opacity: 0
-          });
-          const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+          const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial.clone());
           hitbox.position.set(x, pointY, z);
-          // Store reference to the actual point in the hitbox
-          (hitbox as any).pointMesh = smallPoint;
+          (hitbox as any).pointMesh = point;
+          
           this.gridPointsGroup.add(hitbox);
-          this.gridPointsGroup.add(smallPoint);
-          smallPointsCreated++;
+          this.gridPointsGroup.add(point);
+          pointsCreated++;
         }
       }
+
+      return pointsCreated;
+    };
+
+    // Process large grid points in batches
+    console.log(`📊 [3D Planner] Processing ${largeGridPositions.length} large grid positions...`);
+    for (let i = 0; i < largeGridPositions.length; i += BATCH_SIZE) {
+      const batchPoints = await processBatch(largeGridPositions, i, true);
+      largePointsCreated += batchPoints;
+      
+      // Yield to browser to prevent UI blocking
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      
+      // Update progress every 10 batches
+      if (i % (BATCH_SIZE * 10) === 0) {
+        console.log(`📊 [3D Planner] Progress: ${Math.min(i + BATCH_SIZE, largeGridPositions.length)}/${largeGridPositions.length} large points processed`);
+      }
     }
-    
-    console.log(`📊 [3D Planner] Cast ${fineRaysCast} fine rays, created ${smallPointsCreated} small points`);
+
+    // Process fine grid points in batches
+    console.log(`📊 [3D Planner] Processing ${fineGridPositions.length} fine grid positions...`);
+    for (let i = 0; i < fineGridPositions.length; i += BATCH_SIZE) {
+      const batchPoints = await processBatch(fineGridPositions, i, false);
+      smallPointsCreated += batchPoints;
+      
+      // Yield to browser to prevent UI blocking
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      
+      // Update progress every 10 batches
+      if (i % (BATCH_SIZE * 10) === 0) {
+        console.log(`📊 [3D Planner] Progress: ${Math.min(i + BATCH_SIZE, fineGridPositions.length)}/${fineGridPositions.length} fine points processed`);
+      }
+    }
 
     if (largePointsCreated > 0 || smallPointsCreated > 0) {
       this.scene.add(this.gridPointsGroup);
-      // Update visibility and size based on current state
       this.updateGridPointsVisibility();
       console.log(`✅ [3D Planner] Created ${largePointsCreated} large points and ${smallPointsCreated} small points`);
     } else {
