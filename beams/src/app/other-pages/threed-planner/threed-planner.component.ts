@@ -1252,6 +1252,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selectedMachine = null;
     // Don't reset selectedCorner - keep it so user can change it in the dialog
     this.selectedRotation = 0; // Reset rotation
+    // Remove any selection wireframe
+    this.removeSelectedMachineWireframe();
     // Remove direction arrows and reset selected point
     if (this.selectedPoint) {
       this.resetPointToOriginal(this.selectedPoint);
@@ -1786,6 +1788,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selectedMoveDirection = null;
     this.selectedMoveDistance = null;
     this.availableMoveDistances = [];
+    // Remove any selection wireframe
+    this.removeSelectedMachineWireframe();
     // Reset selected machine
     if (this.selectedMachineForMove) {
       this.resetMachineSelectionForMove(this.selectedMachineForMove);
