@@ -1253,6 +1253,24 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
     this.selectedRotation = 0; // Reset rotation
     // Remove any selection wireframe
     this.removeSelectedMachineWireframe();
+    
+    // Reset machine selections if in edit or move mode
+    if (this.isEditingMachine && this.selectedMachineForEdit) {
+      this.resetMachineSelectionForEdit(this.selectedMachineForEdit);
+      this.selectedMachineForEdit = null;
+      this.selectedConfigForEdit = null;
+    }
+    if (this.isMovingMachine && this.selectedMachineForMove) {
+      this.resetMachineSelectionForMove(this.selectedMachineForMove);
+      this.selectedMachineForMove = null;
+      this.selectedConfigForMove = null;
+      this.removeMoveArrows();
+    }
+    if (this.isRemovingMachine && this.selectedMachineForRemoval) {
+      this.resetMachineSelectionForRemoval(this.selectedMachineForRemoval);
+      this.selectedMachineForRemoval = null;
+    }
+    
     // Remove direction arrows and reset selected point
     if (this.selectedPoint) {
       this.resetPointToOriginal(this.selectedPoint);
@@ -1425,6 +1443,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.resetMachineSelectionForRemoval(this.selectedMachineForRemoval);
       this.selectedMachineForRemoval = null;
     }
+    // Remove wireframe
+    this.removeSelectedMachineWireframe();
   }
 
   private updateMachinesEditMode() {
@@ -1433,6 +1453,43 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.resetMachineSelectionForEdit(this.selectedMachineForEdit);
       this.selectedMachineForEdit = null;
       this.selectedConfigForEdit = null;
+    }
+    // Remove wireframe
+    this.removeSelectedMachineWireframe();
+  }
+
+  clearActiveMode() {
+    // Cancel adding machine mode
+    if (this.isAddingMachine) {
+      this.isAddingMachine = false;
+      this.closeMachineSelection();
+      this.updateGridPointsVisibility();
+    }
+    
+    // Cancel removing machine mode
+    if (this.isRemovingMachine) {
+      this.isRemovingMachine = false;
+      this.selectedMachineForRemoval = null;
+      this.updateMachinesSelectionMode();
+    }
+    
+    // Cancel editing machine mode
+    if (this.isEditingMachine) {
+      this.isEditingMachine = false;
+      this.selectedMachineForEdit = null;
+      this.selectedConfigForEdit = null;
+      this.closeMachineSelection();
+      this.updateMachinesEditMode();
+    }
+    
+    // Cancel moving machine mode
+    if (this.isMovingMachine) {
+      this.isMovingMachine = false;
+      this.selectedMachineForMove = null;
+      this.selectedConfigForMove = null;
+      this.removeMoveArrows();
+      this.closeMoveDistanceSelection();
+      this.updateMachinesMoveMode();
     }
   }
 
@@ -1555,42 +1612,6 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
 
   private resetMachineSelectionForMove(machine: THREE.Group) {
     // Remove wireframe
-    this.removeSelectedMachineWireframe();
-  }
-
-  clearActiveMode() {
-    // Turn off add mode
-    if (this.isAddingMachine) {
-      this.isAddingMachine = false;
-      this.closeMachineSelection();
-      this.updateGridPointsVisibility();
-    }
-
-    // Turn off remove mode
-    if (this.isRemovingMachine) {
-      this.isRemovingMachine = false;
-      this.selectedMachineForRemoval = null;
-      this.updateMachinesSelectionMode();
-    }
-
-    // Turn off edit mode
-    if (this.isEditingMachine) {
-      this.isEditingMachine = false;
-      this.selectedMachineForEdit = null;
-      this.selectedConfigForEdit = null;
-      this.closeMachineSelection();
-      this.updateMachinesEditMode();
-    }
-
-    // Turn off move mode
-    if (this.isMovingMachine) {
-      this.isMovingMachine = false;
-      this.closeMoveDistanceSelection();
-      this.removeMoveArrows();
-      this.updateMachinesMoveMode();
-    }
-
-    // Remove wireframe highlight
     this.removeSelectedMachineWireframe();
   }
 
@@ -1993,6 +2014,8 @@ export class ThreedPlannerComponent implements OnInit, OnDestroy, AfterViewInit 
       this.selectedConfigForMove = null;
     }
     this.removeMoveArrows();
+    // Remove wireframe
+    this.removeSelectedMachineWireframe();
   }
 
   private handleMachineEditClick() {
