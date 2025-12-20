@@ -81,9 +81,29 @@ export class LandbotComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('❌ Error sending message:', error);
+        console.error('❌ [Landbot Component] Error sending message:', error);
+        console.error('❌ [Landbot Component] Error status:', error.status);
+        console.error('❌ [Landbot Component] Error body:', error.error);
         this.isSending = false;
-        this.errorMessage = error.error?.error || error.message || 'An error occurred while sending the message';
+        
+        // Extract error message from various possible formats
+        let errorMsg = 'An error occurred while sending the message';
+        if (error.error) {
+          if (typeof error.error === 'string') {
+            errorMsg = error.error;
+          } else if (error.error.error) {
+            errorMsg = error.error.error;
+            if (error.error.details) {
+              errorMsg += `: ${JSON.stringify(error.error.details)}`;
+            }
+          } else if (error.error.message) {
+            errorMsg = error.error.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+        
+        this.errorMessage = errorMsg;
       }
     });
   }
