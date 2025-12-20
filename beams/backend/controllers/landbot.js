@@ -7,7 +7,10 @@ const axios = require('axios');
  */
 exports.sendMessage = async (req, res, next) => {
     try {
+        console.log('🔵 [Landbot] ========== CONTROLLER ENTERED ==========');
         console.log('🔵 [Landbot] POST /api/landbot/send - Controller entered');
+        console.log('🔵 [Landbot] req.userData exists:', !!req.userData);
+        console.log('🔵 [Landbot] req.authBypassed:', !!req.authBypassed);
         
         // Log authentication status
         if (req.userData) {

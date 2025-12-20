@@ -8,22 +8,39 @@ const jwt = require("jsonwebtoken");
  *   - Else -> return 401 with helpful message
  */
 module.exports = (req, res, next) => {
-    console.log('🔵 [LandbotAuth] POST /api/landbot/send - Auth middleware entered');
+    // Calculate bypass condition EXACTLY as specified
+    const nodeEnv = process.env.NODE_ENV;
+    const bypassEnv = process.env.LAND_BOT_TEST_BYPASS;
+    const isNonProduction = nodeEnv !== 'production';
+    const bypassEnabled = bypassEnv === 'true';
+    const allowBypass = bypassEnabled && isNonProduction;
+    
+    console.log('🔵 [LandbotAuth] ========== AUTH MIDDLEWARE ENTERED ==========');
+    console.log('🔵 [LandbotAuth] Request path:', req.path);
+    console.log('🔵 [LandbotAuth] Request originalUrl:', req.originalUrl);
+    console.log('🔵 [LandbotAuth] NODE_ENV:', nodeEnv || '(undefined)');
+    console.log('🔵 [LandbotAuth] LAND_BOT_TEST_BYPASS:', bypassEnv || '(undefined)');
+    console.log('🔵 [LandbotAuth] isNonProduction:', isNonProduction);
+    console.log('🔵 [LandbotAuth] bypassEnabled:', bypassEnabled);
+    console.log('🔵 [LandbotAuth] allowBypass:', allowBypass);
     
     // Try to authenticate first
     const authHeader = req.headers.authorization;
+    let isAuthenticated = false;
+    let userData = null;
     
     if (authHeader) {
         try {
             const token = authHeader.split(" ")[1];
             if (token) {
                 const decodedToken = jwt.verify(token, process.env.JWT_KEY);
-                req.userData = {
+                userData = {
                     email: decodedToken.email,
                     userId: decodedToken.userId,
                 };
-                console.log('✅ [LandbotAuth] User authenticated via JWT token');
-                return next();
+                req.userData = userData;
+                isAuthenticated = true;
+                console.log('✅ [LandbotAuth] User authenticated via JWT token, userId:', userData.userId);
             }
         } catch (error) {
             // Token exists but is invalid - will check for bypass below
@@ -32,27 +49,25 @@ module.exports = (req, res, next) => {
     } else {
         console.log('⚠️ [LandbotAuth] No Authorization header present');
     }
-
-    // User is not authenticated - check if bypass is enabled
-    const isNonProduction = process.env.NODE_ENV !== 'production';
-    const bypassEnabled = process.env.LAND_BOT_TEST_BYPASS === 'true';
     
-    console.log('🔵 [LandbotAuth] Auth bypass check:', {
-        isNonProduction,
-        bypassEnabled,
-        NODE_ENV: process.env.NODE_ENV,
-        LAND_BOT_TEST_BYPASS: process.env.LAND_BOT_TEST_BYPASS
-    });
+    console.log('🔵 [LandbotAuth] isAuthenticated:', isAuthenticated);
+    console.log('🔵 [LandbotAuth] req.userData exists:', !!req.userData);
 
-    if (isNonProduction && bypassEnabled) {
-        console.log('✅ [LandbotAuth] TEST MODE bypass enabled - allowing request without authentication');
-        // Set a flag to indicate bypass was used (for logging in controller)
+    // Decision logic
+    if (isAuthenticated) {
+        console.log('✅ [LandbotAuth] DECISION: auth ok - proceeding');
+        return next();
+    }
+    
+    if (allowBypass) {
+        console.log('✅ [LandbotAuth] DECISION: bypass ok - proceeding without auth');
         req.authBypassed = true;
         return next();
     }
-
-    // No bypass - return 401
-    console.log('❌ [LandbotAuth] Authentication required - returning 401');
+    
+    // No auth and no bypass - reject
+    console.log('❌ [LandbotAuth] DECISION: reject 401 - authentication required');
+    console.log('❌ [LandbotAuth] ========== END AUTH MIDDLEWARE (401) ==========');
     res.status(401).json({
         error: "Unauthorized",
         hint: "Login required or enable LAND_BOT_TEST_BYPASS in non-production"
