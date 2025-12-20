@@ -7,20 +7,9 @@ const axios = require('axios');
  */
 exports.sendMessage = async (req, res, next) => {
     try {
-        console.log('🔵 [Landbot] ========== CONTROLLER ENTERED ==========');
+        console.log("LAND BOT SEND – NO AUTH TEST MODE");
+        console.log('🔵 [Landbot] ========== CONTROLLER ENTERED (NO AUTH) ==========');
         console.log('🔵 [Landbot] POST /api/landbot/send - Controller entered');
-        console.log('🔵 [Landbot] req.userData exists:', !!req.userData);
-        console.log('🔵 [Landbot] req.authBypassed:', !!req.authBypassed);
-        
-        // Log authentication status
-        if (req.userData) {
-            console.log('✅ [Landbot] Request authenticated as user:', req.userData.userId);
-        } else if (req.authBypassed) {
-            console.log('⚠️ [Landbot] Request allowed via TEST MODE bypass (not authenticated)');
-        } else {
-            console.log('⚠️ [Landbot] Request not authenticated (should not reach here)');
-        }
-        
         console.log('🔵 [Landbot] Request body keys:', Object.keys(req.body || {}));
 
         const { userId, staticField, message } = req.body;

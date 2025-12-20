@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const landbotController = require("../controllers/landbot");
-const checkAuthOptional = require("../middleware/check-auth-optional");
 
 // GET /api/landbot/debug - Debug endpoint to check env vars and bypass status
 router.get("/debug", (req, res) => {
@@ -22,8 +21,8 @@ router.get("/debug", (req, res) => {
 });
 
 // POST /api/landbot/send - Send message to Landbot API
-// Using optional auth middleware: requires auth in production, allows bypass in dev
-router.post("/send", checkAuthOptional, landbotController.sendMessage);
+// TESTING MODE: NO AUTHENTICATION REQUIRED - Will be secured later
+router.post("/send", landbotController.sendMessage);
 
 module.exports = router;
 
