@@ -42,24 +42,29 @@ exports.sendMessage = async (req, res, next) => {
         console.log("LAND BOT SEND – customerId:", customerId);
 
         // Determine token source
+        const testMode = process.env.ALLOW_LANDBOT_TEST_MODE === "true";
         let token = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
-        let tokenSource = 'env';
+        let tokenSource = token ? 'env' : null;
         
-        // In non-production, allow using staticField as token for testing
-        if (!token && process.env.NODE_ENV !== 'production' && staticField) {
+        // In test mode, allow using staticField as token if env token is not available
+        if (!token && testMode && staticField) {
             token = staticField;
-            tokenSource = 'body (dev mode)';
-            console.log('🔵 [Landbot] Using token from request body (dev mode)');
+            tokenSource = 'body (test mode)';
+            console.log('🔵 [Landbot] Using token from request body (test mode)');
         } else if (token) {
             console.log('🔵 [Landbot] Using token from environment');
-        } else {
-            console.error('❌ [Landbot] Missing Landbot token in env and no token in body');
-            return res.status(500).json({
-                error: 'Missing Landbot token in env'
+        }
+        
+        console.log("Landbot send – testMode:", testMode, "tokenPresent:", !!token);
+        console.log('🔵 [Landbot] Token source:', tokenSource);
+        
+        // Validate token exists
+        if (!token) {
+            console.error('❌ [Landbot] Missing Landbot token');
+            return res.status(400).json({
+                error: "Missing Landbot token"
             });
         }
-
-        console.log('🔵 [Landbot] Token source:', tokenSource);
 
         // Prepare request to Landbot API
         // Based on Landbot API: POST /v1/customers/{customer_id}/send_text/
