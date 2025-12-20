@@ -13,7 +13,64 @@
 
         <!-- ========================== CONTENT AREA ========================== -->
         <div class="w-100 flex-grow-1 d-flex">
-          <!-- Add your landbot content here -->
+          <div class="d-flex flex-column w-100 gap-3" style="max-width: 600px;">
+            
+            <!-- User ID Input -->
+            <div>
+              <label for="userIdInput" class="d-block mb-2 fw-bold">User ID</label>
+              <input 
+                type="text" 
+                id="userIdInput"
+                class="form-control"
+                [(ngModel)]="userId"
+                placeholder="Enter User ID"
+                required>
+            </div>
+
+            <!-- Static Field Input -->
+            <div>
+              <label for="staticFieldInput" class="d-block mb-2 fw-bold">Static Field (Optional)</label>
+              <input 
+                type="text" 
+                id="staticFieldInput"
+                class="form-control"
+                [(ngModel)]="staticField"
+                placeholder="Enter static value">
+            </div>
+
+            <!-- Message Input -->
+            <div>
+              <label for="messageInput" class="d-block mb-2 fw-bold">Message</label>
+              <textarea 
+                id="messageInput"
+                class="form-control"
+                [(ngModel)]="message"
+                placeholder="Enter your message"
+                rows="4"
+                required></textarea>
+            </div>
+
+            <!-- Send Button -->
+            <button 
+              type="button"
+              mat-raised-button 
+              color="primary" 
+              (click)="sendMessage()"
+              [disabled]="isSending || !userId || !message"
+              class="w-100">
+              <span *ngIf="!isSending">Send Message</span>
+              <span *ngIf="isSending">Sending...</span>
+            </button>
+
+            <!-- Success/Error Messages -->
+            <div *ngIf="successMessage" class="alert alert-success mt-3" role="alert">
+              {{ successMessage }}
+            </div>
+            <div *ngIf="errorMessage" class="alert alert-danger mt-3" role="alert">
+              {{ errorMessage }}
+            </div>
+
+          </div>
         </div>
         <!-- // ========================== CONTENT AREA ========================== -->
 

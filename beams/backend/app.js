@@ -12,6 +12,7 @@ const screwsRoutes = require("./routes/screws");
 const ordersRoutes = require("./routes/orders");
 const woodsRoutes = require("./routes/woods");
 const threedplannerRoutes = require("./routes/threedplanner");
+const landbotRoutes = require("./routes/landbot");
 
 require('dotenv').config();
 
@@ -52,6 +53,7 @@ app.use("/api/screws", screwsRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/woods", woodsRoutes);
 app.use("/api/threedplanner", threedplannerRoutes);
+app.use("/api/landbot", landbotRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
