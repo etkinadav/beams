@@ -37,15 +37,9 @@ exports.sendMessage = async (req, res, next) => {
             });
         }
 
-        // Get customerId from environment
-        const customerId = process.env.LANDBOT_CUSTOMER_ID;
-        if (!customerId) {
-            console.error('❌ [Landbot] Missing LANDBOT_CUSTOMER_ID in environment');
-            return res.status(500).json({
-                error: 'Missing Landbot customer ID in env'
-            });
-        }
-        console.log('🔵 [Landbot] Resolved customerId:', customerId);
+        // Use userId from request body as customerId (TEST MODE - no env var)
+        const customerId = userId;
+        console.log("LAND BOT SEND – customerId:", customerId);
 
         // Determine token source
         let token = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
