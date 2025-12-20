@@ -1,0 +1,19 @@
+.fill-height {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.px-lg-big-landbot {
+    padding: 10px 10px 2px 10px;
+}
+
+@media only screen and (min-width: 992px) {
+    .px-lg-big-landbot {
+        padding-left: 100px;
+        padding-right: 100px;
+    }
+}
+

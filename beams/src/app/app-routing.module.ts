@@ -16,6 +16,7 @@ import { MyProfileComponent } from "./other-pages/my-profile/my-profile.componen
 import { QAndAComponent } from "./other-pages/q-and-a/q-and-a.component";
 import { ShoppingCartComponent } from "./main-nav/shopping-cart/shopping-cart.component";
 import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-planner.component";
+import { LandbotComponent } from "./other-pages/landbot/landbot.component";
 
 
 
@@ -25,7 +26,7 @@ const redirectAllButThreedplanner = (segments: UrlSegment[]): UrlMatchResult | n
         return { consumed: [] };
     }
 
-    if (segments[0].path === 'threedplanner') {
+    if (segments[0].path === 'threedplanner' || segments[0].path === 'landbot') {
         return null;
     }
 
@@ -34,6 +35,7 @@ const redirectAllButThreedplanner = (segments: UrlSegment[]): UrlMatchResult | n
 
 const routes: Routes = [
     { path: "threedplanner", component: ThreedPlannerComponent },
+    { path: "landbot", component: LandbotComponent },
     { matcher: redirectAllButThreedplanner, redirectTo: '/threedplanner' },
 
     // Existing routes remain below for when the temporary redirect is removed
