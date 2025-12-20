@@ -1,54 +1,60 @@
 const jwt = require("jsonwebtoken");
 
 /**
- * Optional auth middleware that allows bypassing auth in non-production mode
- * for specific routes (like /api/landbot/send for testing)
+ * Optional auth middleware with TEST MODE bypass for Landbot route
+ * - If user is authenticated -> allow as usual
+ * - If not authenticated:
+ *   - If bypass conditions match (NODE_ENV !== "production" AND LAND_BOT_TEST_BYPASS === "true") -> allow
+ *   - Else -> return 401 with helpful message
  */
 module.exports = (req, res, next) => {
-    // In non-production, allow bypassing auth
-    if (process.env.NODE_ENV !== 'production') {
-        console.log('🔵 [OptionalAuth] Non-production mode - checking for optional auth');
-        
-        // Check if Authorization header exists
-        const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            console.log('🔵 [OptionalAuth] No auth header - proceeding without auth (dev mode)');
-            return next();
-        }
-
-        // If auth header exists, try to validate it
+    console.log('🔵 [LandbotAuth] POST /api/landbot/send - Auth middleware entered');
+    
+    // Try to authenticate first
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader) {
         try {
             const token = authHeader.split(" ")[1];
-            const decodedToken = jwt.verify(token, process.env.JWT_KEY);
-            req.userData = {
-                email: decodedToken.email,
-                userId: decodedToken.userId,
-            };
-            console.log('🔵 [OptionalAuth] Token validated successfully');
-            next();
+            if (token) {
+                const decodedToken = jwt.verify(token, process.env.JWT_KEY);
+                req.userData = {
+                    email: decodedToken.email,
+                    userId: decodedToken.userId,
+                };
+                console.log('✅ [LandbotAuth] User authenticated via JWT token');
+                return next();
+            }
         } catch (error) {
-            console.log('🔵 [OptionalAuth] Token validation failed - proceeding without auth (dev mode)');
-            console.log('🔵 [OptionalAuth] Error:', error.message);
-            // In dev mode, allow to proceed without valid token
-            next();
+            // Token exists but is invalid - will check for bypass below
+            console.log('⚠️ [LandbotAuth] Invalid or expired token:', error.message);
         }
     } else {
-        // In production, require valid auth
-        try {
-            const token = req.headers.authorization.split(" ")[1];
-            const decodedToken = jwt.verify(token, process.env.JWT_KEY);
-            req.userData = {
-                email: decodedToken.email,
-                userId: decodedToken.userId,
-            };
-            next();
-        } catch (error) {
-            console.log("❌ [OptionalAuth] Auth failed in production mode");
-            console.log("❌ [OptionalAuth] Error:", error.message);
-            res.status(401).json({ 
-                error: "Check_auth-Auth-Failed-token-incorrect" 
-            });
-        }
+        console.log('⚠️ [LandbotAuth] No Authorization header present');
     }
-};
 
+    // User is not authenticated - check if bypass is enabled
+    const isNonProduction = process.env.NODE_ENV !== 'production';
+    const bypassEnabled = process.env.LAND_BOT_TEST_BYPASS === 'true';
+    
+    console.log('🔵 [LandbotAuth] Auth bypass check:', {
+        isNonProduction,
+        bypassEnabled,
+        NODE_ENV: process.env.NODE_ENV,
+        LAND_BOT_TEST_BYPASS: process.env.LAND_BOT_TEST_BYPASS
+    });
+
+    if (isNonProduction && bypassEnabled) {
+        console.log('✅ [LandbotAuth] TEST MODE bypass enabled - allowing request without authentication');
+        // Set a flag to indicate bypass was used (for logging in controller)
+        req.authBypassed = true;
+        return next();
+    }
+
+    // No bypass - return 401
+    console.log('❌ [LandbotAuth] Authentication required - returning 401');
+    res.status(401).json({
+        error: "Unauthorized",
+        hint: "Login required or enable LAND_BOT_TEST_BYPASS in non-production"
+    });
+};

@@ -35,6 +35,8 @@ export class LandbotService {
       message: request.message
     });
     
+    // Note: withCredentials is NOT needed because backend uses JWT tokens via Authorization header,
+    // not cookie-based sessions. If backend switches to cookies, add: { withCredentials: true }
     return this.http.post<LandbotMessageResponse>(url, request).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('❌ [Landbot Service] HTTP Error:', {
