@@ -81,9 +81,6 @@ export class LandbotComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('❌ [Landbot Component] Error sending message:', error);
-        console.error('❌ [Landbot Component] Error status:', error.status);
-        console.error('❌ [Landbot Component] Error body:', error.error);
         this.isSending = false;
         
         // Extract error message from various possible formats
@@ -93,8 +90,16 @@ export class LandbotComponent implements OnInit, OnDestroy {
             errorMsg = error.error;
           } else if (error.error.error) {
             errorMsg = error.error.error;
-            if (error.error.details) {
-              errorMsg += `: ${JSON.stringify(error.error.details)}`;
+            if (error.error.hint) {
+              errorMsg += ` (${error.error.hint})`;
+            } else if (error.error.details) {
+              const detailsStr = typeof error.error.details === 'string' 
+                ? error.error.details 
+                : JSON.stringify(error.error.details);
+              errorMsg += `: ${detailsStr}`;
+            }
+            if (error.error.requestId) {
+              errorMsg += ` [Request ID: ${error.error.requestId}]`;
             }
           } else if (error.error.message) {
             errorMsg = error.error.message;
