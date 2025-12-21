@@ -7,16 +7,20 @@ const axios = require('axios');
  */
 exports.sendMessage = async (req, res, next) => {
     try {
+        const { userId, staticField, message } = req.body;
+        
         // Determine token source
         const testMode = process.env.ALLOW_LANDBOT_TEST_MODE === "true";
         const envToken = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
-        const { userId, staticField, message } = req.body;
         let token = null;
+        let tokenSource = null;
         
         if (testMode && staticField) {
             token = staticField;
+            tokenSource = 'body (test mode)';
         } else if (envToken) {
             token = envToken;
+            tokenSource = 'env';
         }
         
         console.log(JSON.stringify({
@@ -35,8 +39,8 @@ exports.sendMessage = async (req, res, next) => {
         console.log('🔵 [Landbot] ========== CONTROLLER ENTERED (NO AUTH) ==========');
         console.log('🔵 [Landbot] POST /api/landbot/send - Controller entered');
         console.log('🔵 [Landbot] Request body keys:', Object.keys(req.body || {}));
-
-        const { userId, staticField, message } = req.body;
+        console.log("testMode:", testMode, "envToken:", !!envToken, "bodyStaticField:", !!staticField);
+        console.log('🔵 [Landbot] Token source:', tokenSource);
 
         // Sanitize body for logging (do NOT log token values)
         const sanitizedBody = {
@@ -64,31 +68,6 @@ exports.sendMessage = async (req, res, next) => {
         // Use userId from request body as customerId (TEST MODE - no env var)
         const customerId = userId;
         console.log("LAND BOT SEND – customerId:", customerId);
-
-        // Determine token source
-        const testMode = process.env.ALLOW_LANDBOT_TEST_MODE === "true";
-        const envToken = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
-        
-        // Debug log
-        console.log("testMode:", testMode, "envToken:", !!envToken, "bodyStaticField:", !!staticField);
-        
-        let token = null;
-        let tokenSource = null;
-        
-        // In test mode, prioritize staticField from body if available
-        if (testMode && staticField) {
-            token = staticField;
-            tokenSource = 'body (test mode)';
-            console.log('🔵 [Landbot] Using token from request body (test mode)');
-        } else if (envToken) {
-            // Use env token if available (production or test mode without body token)
-            token = envToken;
-            tokenSource = 'env';
-            console.log('🔵 [Landbot] Using token from environment');
-        }
-        
-        console.log("Landbot send – testMode:", testMode, "tokenPresent:", !!token);
-        console.log('🔵 [Landbot] Token source:', tokenSource);
         
         // Validate token exists
         if (!token) {
