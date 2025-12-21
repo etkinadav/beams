@@ -64,7 +64,7 @@ export class LandbotService {
           requestId: error.error?.requestId || null
         };
         
-        console.log("[LANDBOT_SEND_ERROR]", JSON.stringify(debugObject, null, 2));
+        console.log("FULL-LOG", JSON.stringify(debugObject, null, 2));
         return throwError(() => error);
       })
     );
