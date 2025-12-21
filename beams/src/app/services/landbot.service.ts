@@ -8,7 +8,6 @@ const BACKEND_URL = environment.apiUrl + "/landbot/";
 
 export interface LandbotMessageRequest {
   userId: string;
-  staticField?: string;
   message: string;
 }
 
@@ -64,7 +63,7 @@ export class LandbotService {
           requestId: error.error?.requestId || null
         };
         
-        console.log("FULL-LOG", JSON.stringify(debugObject, null, 2));
+        console.error("FULL-LOG " + JSON.stringify(debugObject, null, 2));
         return throwError(() => error);
       })
     );

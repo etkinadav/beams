@@ -1,92 +1,139 @@
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
+
+/**
+ * Token metadata (initialized at startup)
+ */
+let tokenMetadata = {
+    configured: false,
+    len: 0,
+    first4: null,
+    last4: null,
+    sha256: null
+};
+
+/**
+ * Initialize token metadata at startup
+ */
+function initializeTokenMetadata() {
+    const token = process.env.LANDBOT_TOKEN;
+    if (token && token.trim()) {
+        tokenMetadata.configured = true;
+        tokenMetadata.len = token.length;
+        tokenMetadata.first4 = token.substring(0, 4);
+        tokenMetadata.last4 = token.substring(token.length - 4);
+        tokenMetadata.sha256 = crypto.createHash('sha256').update(token).digest('hex');
+        console.log('✅ [Landbot] Token configured: len=' + tokenMetadata.len + ', sha256=' + tokenMetadata.sha256.substring(0, 16) + '...');
+    } else {
+        console.warn('⚠️ [Landbot] LANDBOT_TOKEN not configured or empty');
+    }
+}
+
+// Initialize on module load
+initializeTokenMetadata();
+
+/**
+ * Log full error with structured data (no secrets)
+ */
+function logFullError({ requestId, route, method, req, upstream, error }) {
+    const logObj = {
+        timestamp: new Date().toISOString(),
+        requestId,
+        route,
+        req: {
+            method,
+            url: req.originalUrl || req.url,
+            origin: req.headers.origin || null,
+            ip: req.ip || req.connection?.remoteAddress || null,
+            userAgent: req.headers['user-agent'] || null,
+            bodyKeys: Object.keys(req.body || {}),
+            bodySize: req.body ? JSON.stringify(req.body).length : 0
+        },
+        config: {
+            landbotToken: {
+                source: 'env:LANDBOT_TOKEN',
+                len: tokenMetadata.len,
+                first4: tokenMetadata.first4,
+                last4: tokenMetadata.last4,
+                sha256: tokenMetadata.sha256
+            }
+        },
+        upstream: upstream || null,
+        error: error ? {
+            message: error.message,
+            name: error.name,
+            code: error.code || null,
+            stackTop: error.stack ? error.stack.split('\n').slice(0, 5) : null
+        } : null
+    };
+    
+    console.error("FULL-LOG " + JSON.stringify(logObj, null, 2));
+}
 
 /**
  * Send message to Landbot API
  * POST /api/landbot/send
- * Body: { userId, staticField, message }
+ * Body: { userId, message }
  */
 exports.sendMessage = async (req, res, next) => {
     // Generate correlation ID for this request
     const requestId = uuidv4();
     
-    // Declare tokenSource in outer scope for error logging
-    let tokenSource = null;
-    
     try {
-        const { userId, staticField, message } = req.body;
+        const { userId, message } = req.body;
         
-        // Determine token source - Priority: (a) env var, (b) Authorization header, (c) body (test mode only)
-        const envToken = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
-        const testModeEnabled = process.env.ALLOW_LANDBOT_TEST_MODE === "true";
-        
-        let token = null;
-        const attemptedSources = [];
-        
-        // Priority (a): Environment variable (preferred for production)
-        if (envToken) {
-            token = envToken;
-            tokenSource = 'env';
-        } else {
-            attemptedSources.push('env');
-            
-            // Priority (b): Authorization header (fallback for dev/testing)
-            const authHeader = req.headers['authorization'];
-            if (authHeader && authHeader.startsWith('Bearer ')) {
-                token = authHeader.substring(7).trim();
-                tokenSource = 'auth_header';
-            } else {
-                attemptedSources.push('auth_header');
-                
-                // Priority (c): Body field (only if test mode is explicitly enabled)
-                if (testModeEnabled && req.body.landbotToken) {
-                    token = req.body.landbotToken;
-                    tokenSource = 'body_test_mode';
-                } else if (testModeEnabled) {
-                    attemptedSources.push('body_test_mode');
-                }
-            }
-        }
-
         // Validate required fields
-        if (!userId) {
+        if (!userId || !userId.trim()) {
             const errorResponse = {
                 requestId,
-                error: 'userId is required'
+                error: 'userId is required and cannot be empty'
             };
-            return res.status(400).json(errorResponse);
-        }
-
-        if (!message) {
-            const errorResponse = {
+            logFullError({
                 requestId,
-                error: 'message is required'
-            };
-            return res.status(400).json(errorResponse);
-        }
-        
-        // Validate token exists
-        if (!token) {
-            const errorResponse = {
-                requestId,
-                error: "Missing Landbot token",
-                hint: `Token not found in: ${attemptedSources.join(', ')}. ${testModeEnabled ? 'Test mode is enabled but landbotToken not provided in body.' : 'Set LANDBOT_TOKEN env var or provide Authorization header.'}`
-            };
-            
-            console.log("[LANDBOT_SEND_ERROR]", JSON.stringify({
-                timestamp: new Date().toISOString(),
                 route: '/api/landbot/send',
                 method: req.method,
-                requestId,
-                bodyKeys: Object.keys(req.body || {}),
-                userId: userId || null,
-                tokenSource: 'missing',
-                attemptedSources,
-                error: "Missing Landbot token",
-                nodeEnv: process.env.NODE_ENV
-            }, null, 2));
-            
+                req,
+                error: new Error('userId is required and cannot be empty')
+            });
             return res.status(400).json(errorResponse);
+        }
+
+        if (!message || !message.trim()) {
+            const errorResponse = {
+                requestId,
+                error: 'message is required and cannot be empty'
+            };
+            logFullError({
+                requestId,
+                route: '/api/landbot/send',
+                method: req.method,
+                req,
+                error: new Error('message is required and cannot be empty')
+            });
+            return res.status(400).json(errorResponse);
+        }
+        
+        // Get token from environment variable ONLY
+        const token = process.env.LANDBOT_TOKEN;
+        
+        // Validate token exists
+        if (!token || !token.trim()) {
+            const errorResponse = {
+                requestId,
+                error: 'LANDBOT_TOKEN_MISSING',
+                hint: 'LANDBOT_TOKEN environment variable is not configured'
+            };
+            
+            logFullError({
+                requestId,
+                route: '/api/landbot/send',
+                method: req.method,
+                req,
+                error: new Error('LANDBOT_TOKEN_MISSING')
+            });
+            
+            return res.status(500).json(errorResponse);
         }
 
         // Use userId from request body as customerId
@@ -115,6 +162,7 @@ exports.sendMessage = async (req, res, next) => {
         res.status(200).json({
             requestId,
             success: true,
+            ok: true,
             message: 'Message sent successfully to Landbot',
             data: landbotResponse.data
         });
@@ -130,22 +178,34 @@ exports.sendMessage = async (req, res, next) => {
                 ? errorData.substring(0, 500) + (errorData.length > 500 ? '...' : '')
                 : (typeof errorData === 'object' ? JSON.stringify(errorData).substring(0, 500) : String(errorData));
             
-            console.log("[LANDBOT_SEND_ERROR]", JSON.stringify({
-                timestamp: new Date().toISOString(),
+            const upstreamInfo = {
+                name: 'Landbot',
+                url: `https://api.landbot.io/v1/customers/${req.body?.userId || 'unknown'}/send_text/`,
+                status: status,
+                statusText: error.response.statusText,
+                responseBodySafe: sanitizedErrorData
+            };
+            
+            logFullError({
+                requestId,
                 route: '/api/landbot/send',
                 method: req.method,
-                requestId,
-                bodyKeys: Object.keys(req.body || {}),
-                userId: req.body?.userId || null,
-                tokenSource: tokenSource || 'missing',
-                upstreamStatus: status,
-                upstreamStatusText: error.response.statusText,
-                upstreamResponseBody: sanitizedErrorData,
-                error: error.message,
-                errorStack: error.stack ? error.stack.substring(0, 1000) : null
-            }, null, 2));
+                req,
+                upstream: upstreamInfo,
+                error: error
+            });
 
-            // Forward Landbot's status and error to frontend
+            // If Landbot returns 401, it means token is invalid - return 502 Bad Gateway
+            if (status === 401) {
+                return res.status(502).json({
+                    requestId,
+                    error: 'LANDBOT_AUTH_FAILED',
+                    hint: 'Landbot API rejected the authentication token',
+                    details: errorData
+                });
+            }
+
+            // Forward Landbot's status and error to frontend for other errors
             return res.status(status).json({
                 requestId,
                 error: 'Failed to send message to Landbot API',
@@ -154,17 +214,13 @@ exports.sendMessage = async (req, res, next) => {
         }
 
         // Handle other errors (network, etc.)
-        console.log("[LANDBOT_SEND_ERROR]", JSON.stringify({
-            timestamp: new Date().toISOString(),
+        logFullError({
+            requestId,
             route: '/api/landbot/send',
             method: req.method,
-            requestId,
-            bodyKeys: Object.keys(req.body || {}),
-            userId: req.body?.userId || null,
-            tokenSource: tokenSource || 'missing',
-            error: error.message,
-            errorStack: error.stack ? error.stack.substring(0, 1000) : null
-        }, null, 2));
+            req,
+            error: error
+        });
 
         res.status(500).json({
             requestId,
@@ -172,4 +228,17 @@ exports.sendMessage = async (req, res, next) => {
             details: error.message
         });
     }
+};
+
+/**
+ * Get token metadata (safe, no secrets)
+ */
+exports.getTokenMetadata = () => {
+    return {
+        configured: tokenMetadata.configured,
+        len: tokenMetadata.len,
+        first4: tokenMetadata.first4,
+        last4: tokenMetadata.last4,
+        sha256: tokenMetadata.sha256
+    };
 };

@@ -19,7 +19,6 @@ export class LandbotComponent implements OnInit, OnDestroy {
 
   // Form fields
   userId: string = '';
-  staticField: string = '';
   message: string = '';
 
   // UI state
@@ -63,7 +62,6 @@ export class LandbotComponent implements OnInit, OnDestroy {
     // Call the service
     this.landbotService.sendMessage({
       userId: this.userId,
-      staticField: this.staticField,
       message: this.message
     }).subscribe({
       next: (response) => {
@@ -74,7 +72,6 @@ export class LandbotComponent implements OnInit, OnDestroy {
           this.successMessage = response.message || 'Message sent successfully!';
           // Clear form on success
           this.userId = '';
-          this.staticField = '';
           this.message = '';
         } else {
           this.errorMessage = response.error || 'Failed to send message';
