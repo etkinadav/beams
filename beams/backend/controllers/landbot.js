@@ -43,15 +43,23 @@ exports.sendMessage = async (req, res, next) => {
 
         // Determine token source
         const testMode = process.env.ALLOW_LANDBOT_TEST_MODE === "true";
-        let token = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
-        let tokenSource = token ? 'env' : null;
+        const envToken = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
         
-        // In test mode, allow using staticField as token if env token is not available
-        if (!token && testMode && staticField) {
+        // Debug log
+        console.log("testMode:", testMode, "envToken:", !!envToken, "bodyStaticField:", !!staticField);
+        
+        let token = null;
+        let tokenSource = null;
+        
+        // In test mode, prioritize staticField from body if available
+        if (testMode && staticField) {
             token = staticField;
             tokenSource = 'body (test mode)';
             console.log('🔵 [Landbot] Using token from request body (test mode)');
-        } else if (token) {
+        } else if (envToken) {
+            // Use env token if available (production or test mode without body token)
+            token = envToken;
+            tokenSource = 'env';
             console.log('🔵 [Landbot] Using token from environment');
         }
         
