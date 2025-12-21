@@ -7,6 +7,30 @@ const axios = require('axios');
  */
 exports.sendMessage = async (req, res, next) => {
     try {
+        // Determine token source
+        const testMode = process.env.ALLOW_LANDBOT_TEST_MODE === "true";
+        const envToken = process.env.LANDBOT_TOKEN || process.env.LANDBOT_API_TOKEN;
+        const { userId, staticField, message } = req.body;
+        let token = null;
+        
+        if (testMode && staticField) {
+            token = staticField;
+        } else if (envToken) {
+            token = envToken;
+        }
+        
+        console.log(JSON.stringify({
+            tag: "LANDBOT_DEBUG",
+            time: new Date().toISOString(),
+            method: req.method,
+            url: req.originalUrl,
+            headers: req.headers,
+            body: req.body,
+            extractedToken: token || null,
+            nodeEnv: process.env.NODE_ENV,
+            landbotEnvKeys: Object.keys(process.env).filter(k => k.includes("LANDBOT"))
+        }));
+        
         console.log("LAND BOT SEND – NO AUTH TEST MODE");
         console.log('🔵 [Landbot] ========== CONTROLLER ENTERED (NO AUTH) ==========');
         console.log('🔵 [Landbot] POST /api/landbot/send - Controller entered');
