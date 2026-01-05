@@ -34,6 +34,7 @@ import { MyProfileComponent } from "./other-pages/my-profile/my-profile.componen
 import { QAndAComponent } from "./other-pages/q-and-a/q-and-a.component";
 import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-planner.component";
 import { LandbotComponent } from "./other-pages/landbot/landbot.component";
+import { LaundryComponent } from "./other-pages/laundry/laundry.component";
 import { PhoneComponent } from "./dialog/phone/phone.component";
 import { CopyScanComponent } from "./dialog/scan-copy/scan-copy.component";
 import { PropertyExplainComponent } from "./dialog/property-explain/property-explain.component";
@@ -59,6 +60,7 @@ import { ShoppingCartComponent } from './main-nav/shopping-cart/shopping-cart.co
     QAndAComponent,
     ThreedPlannerComponent,
     LandbotComponent,
+    LaundryComponent,
     PreloginComponent,
     SocialComponent,
     TAndCComponent,

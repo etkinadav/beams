@@ -24,13 +24,13 @@
 
     <div (click)="goToHome()"
       class="d-flex align-items-center justify-content-center">
-      <img *ngIf="userName !== ''" src="assets/images/logo/ondi-logo-small.png" alt="OnDi Logo"
+      <img *ngIf="userName !== '' && !isLaundryPage" src="assets/images/logo/ondi-logo-small.png" alt="OnDi Logo"
         class="ondi-logo-small-mobile c-pointer">
-      <img *ngIf="userName !== ''" src="assets/images/logo/ondi-logo.png" alt="OnDi Logo"
+      <img *ngIf="userName !== '' && !isLaundryPage" src="assets/images/logo/ondi-logo.png" alt="OnDi Logo"
         class="ondi-logo-desktop c-pointer">
-      <img *ngIf="userName === ''" src="assets/images/logo/ondi-logo-small.png" alt="OnDi Logo"
+      <img *ngIf="userName === '' && !isLaundryPage" src="assets/images/logo/ondi-logo-small.png" alt="OnDi Logo"
         class="ondi-logo-small-mobile c-pointer">
-      <img *ngIf="userName === ''" src="assets/images/logo/ondi-logo.png" alt="OnDi Logo"
+      <img *ngIf="userName === '' && !isLaundryPage" src="assets/images/logo/ondi-logo.png" alt="OnDi Logo"
         class="ondi-logo-desktop c-pointer">
     </div>
 
