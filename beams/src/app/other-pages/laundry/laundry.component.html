@@ -1,27 +1,27 @@
 <div class="laundry-container">
   <div class="laundry-content">
     <img src="assets/images/logo/laundry-logo.png" alt="Laundry Logo" class="laundry-logo">
-    <h1 class="laundry-title">Welcome to Our Laundry for a Cause!</h1>
+    <h1 class="laundry-title">{{ "laundry.title" | translate }}</h1>
     
     <p class="laundry-intro">
-      This service helps people in need by letting them handle your laundry at a lower cost for you and providing them with meaningful income.
+      {{ "laundry.intro" | translate }}
     </p>
     
     <button class="laundry-button" (click)="onGetStartedClick()">
-      Get Started – Weigh Your Laundry Here!
+      {{ "laundry.button-text" | translate }}
     </button>
     
     <div class="laundry-process-section">
-      <h2 class="process-title">How It Works</h2>
+      <h2 class="process-title">{{ "laundry.process-title" | translate }}</h2>
       <p class="process-text">
-        You can weigh your laundry, get a clear price, pay in cash, and receive updates through the app when your laundry is ready.
+        {{ "laundry.process-text" | translate }}
       </p>
     </div>
     
     <div class="laundry-service-section">
-      <h2 class="service-title">About Our Service</h2>
+      <h2 class="service-title">{{ "laundry.service-title" | translate }}</h2>
       <p class="service-text">
-        This service is provided by youth in need over the age of 18, who receive most of the profit.
+        {{ "laundry.service-text" | translate }}
       </p>
     </div>
   </div>

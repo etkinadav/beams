@@ -1038,5 +1038,12 @@
 	"modify-product.preliminary-drills-required": "Drill preliminary holes in {{beamName}}",
 	"modify-product.no-preliminary-drilling-needed": "No preliminary drilling needed!",
 	"modify-product.understood-continue-next": "Understood, continue to next step",
-	"modify-product.drilling-completed": "Drilling completed"
+	"modify-product.drilling-completed": "Drilling completed",
+	"laundry.title": "Welcome to Our Laundry for a Cause!",
+	"laundry.intro": "This service helps people in need by letting them handle your laundry at a lower cost for you and providing them with meaningful income.",
+	"laundry.button-text": "Get Started – Weigh Your Laundry Here!",
+	"laundry.process-title": "How It Works",
+	"laundry.process-text": "You can weigh your laundry, get a clear price, pay in cash, and receive updates through the app when your laundry is ready.",
+	"laundry.service-title": "About Our Service",
+	"laundry.service-text": "This service is provided by youth in need over the age of 18, who receive most of the profit."
 }

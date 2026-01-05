@@ -88,6 +88,11 @@ export class MainNavComponent implements OnInit, OnDestroy {
         this.isRootScreen = event.urlAfterRedirects.startsWith('/screen');
         this.isThreeDPlannerPage = event.urlAfterRedirects === '/threedplanner';
         this.isLaundryPage = event.urlAfterRedirects === '/laundry';
+        
+        // Set language to English when on laundry page
+        if (this.isLaundryPage) {
+          this.directionService.toLanguageDirection('en');
+        }
       }
     });
   }
@@ -303,6 +308,11 @@ export class MainNavComponent implements OnInit, OnDestroy {
   }
 
   goToLanguage(lang) {
+    // Don't allow language change on laundry page
+    if (this.isLaundryPage) {
+      return;
+    }
+    
     if (lang !== this.selectedLanguage) {
       this.directionService.toLanguageDirection(lang);
       if (this.userIsAuthenticated) {
