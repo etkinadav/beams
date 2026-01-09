@@ -53,6 +53,7 @@ export class MainNavComponent implements OnInit, OnDestroy {
   isRootScreen = false;
   isThreeDPlannerPage = false;
   isLaundryPage = false;
+  isRushHourPage = false;
   private defaultProfileUrl = "../../assets/images/profile-default.png";
   isLoggedOutLoading: boolean = false;
   
@@ -88,6 +89,7 @@ export class MainNavComponent implements OnInit, OnDestroy {
         this.isRootScreen = event.urlAfterRedirects.startsWith('/screen');
         this.isThreeDPlannerPage = event.urlAfterRedirects === '/threedplanner';
         this.isLaundryPage = event.urlAfterRedirects === '/laundry';
+        this.isRushHourPage = event.urlAfterRedirects === '/rush-hour';
         
         // Set language to English when on laundry page
         if (this.isLaundryPage) {

@@ -1,5 +1,5 @@
 <!-- NavBar קבוע מעל הכל -->
-<mat-toolbar *ngIf="!isThreeDPlannerPage" [ngClass]="{'transparent-toolbar': isHomePage()}" 
+<mat-toolbar *ngIf="!isThreeDPlannerPage && !isRushHourPage" [ngClass]="{'transparent-toolbar': isHomePage()}" 
              style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 1000 !important;"
              [class.zx-100-opp]="isRootScreen">
 
@@ -125,7 +125,7 @@
     </div>
 </mat-toolbar>
 
-<mat-sidenav-container [class.threed-planner-fullscreen]="isThreeDPlannerPage">
+<mat-sidenav-container [class.threed-planner-fullscreen]="isThreeDPlannerPage" [class.rush-hour-fullscreen]="isRushHourPage">
   <mat-sidenav #drawer class="sidenav" mode="over" [(opened)]="isDrawerOpen" (closed)="onDrawerClosed()">
 
     <mat-nav-list class="d-flex flex-column vh-100 pb-5">
@@ -371,7 +371,7 @@
 
     </mat-nav-list>
   </mat-sidenav>
-  <mat-sidenav-content [class.zx-no-scroller]="isHomePage()" [style.padding-top.px]="isThreeDPlannerPage ? 0 : 45" style="overflow-x: hidden;">
+  <mat-sidenav-content [class.zx-no-scroller]="isHomePage()" [style.padding-top.px]="(isThreeDPlannerPage || isRushHourPage) ? 0 : 45" style="overflow-x: hidden;">
     <router-outlet></router-outlet>
   </mat-sidenav-content>
 </mat-sidenav-container>

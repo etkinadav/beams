@@ -39,8 +39,9 @@
     padding-top: 52px !important;
   }
   
-  // הסרת padding-top לעמוד 3D planner גם ב-media query
-  mat-sidenav-container.threed-planner-fullscreen mat-sidenav-content {
+  // הסרת padding-top לעמוד 3D planner ו-Rush Hour גם ב-media query
+  mat-sidenav-container.threed-planner-fullscreen mat-sidenav-content,
+  mat-sidenav-container.rush-hour-fullscreen mat-sidenav-content {
     padding-top: 0 !important;
   }
 }
@@ -418,7 +419,8 @@ mat-sidenav-container {
   z-index: 1 !important;
 }
 
-mat-sidenav-container.threed-planner-fullscreen {
+mat-sidenav-container.threed-planner-fullscreen,
+mat-sidenav-container.rush-hour-fullscreen {
   height: 100vh !important;
   
   mat-sidenav-content {
@@ -436,8 +438,9 @@ mat-sidenav-container.threed-planner-fullscreen {
   margin: 0 !important;
 }
 
-// הסרת padding-top לעמוד 3D planner
-::ng-deep mat-sidenav-container.threed-planner-fullscreen mat-sidenav-content {
+// הסרת padding-top לעמוד 3D planner ו-Rush Hour
+::ng-deep mat-sidenav-container.threed-planner-fullscreen mat-sidenav-content,
+::ng-deep mat-sidenav-container.rush-hour-fullscreen mat-sidenav-content {
   padding-top: 0 !important;
 }
 
