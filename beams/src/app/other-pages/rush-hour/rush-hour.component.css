@@ -175,6 +175,44 @@
   animation: pulse 2s infinite;
 }
 
+.gift-message-container {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1011;
+  text-align: center;
+  width: 90%;
+  max-width: 800px;
+}
+
+.gift-message {
+  font-size: 64px;
+  font-weight: bold;
+  margin: 0;
+  white-space: nowrap;
+  animation: colorCycle 3s infinite, bounceText 2s infinite;
+  text-shadow: 
+    4px 4px 0px rgba(255, 255, 255, 0.9),
+    6px 6px 15px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(255, 23, 68, 0.9);
+}
+
+@keyframes colorCycle {
+  0% { color: #ff1744; }
+  16.66% { color: #ff6f00; }
+  33.33% { color: #ffc107; }
+  50% { color: #4caf50; }
+  66.66% { color: #2196f3; }
+  83.33% { color: #9c27b0; }
+  100% { color: #ff1744; }
+}
+
+@keyframes bounceText {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.05); }
+}
+
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
@@ -254,18 +292,19 @@
   }
 }
 
-/* Confetti - positioned within celebration-overlay */
+/* Confetti - positioned within celebration-overlay - MORE CONFETTI! */
 .celebration-overlay > .confetti {
   position: absolute;
   width: 10px;
   height: 10px;
   background: #ff1744;
   top: -10px;
-  left: calc(var(--delay, 0) * 5%);
-  animation: confetti-fall 3s linear infinite;
+  left: calc(var(--delay, 0) * 2.5%);
+  animation: confetti-fall 4s linear infinite;
   animation-delay: var(--delay, 0s);
-  opacity: 0.8;
+  opacity: 0.9;
   z-index: 1005;
+  border-radius: 2px;
 }
 
 .celebration-overlay > .confetti:nth-of-type(odd) { 
@@ -287,6 +326,16 @@
   background: #2196f3; 
   width: 9px; 
   height: 11px; 
+}
+.celebration-overlay > .confetti:nth-of-type(6n) { 
+  background: #e91e63; 
+  width: 11px; 
+  height: 9px; 
+}
+.celebration-overlay > .confetti:nth-of-type(7n) { 
+  background: #9c27b0; 
+  width: 7px; 
+  height: 13px; 
 }
 
 @keyframes confetti-fall {
@@ -341,15 +390,18 @@
   }
 }
 
-/* Balloons - positioned within celebration-overlay */
+/* Balloons - positioned within celebration-overlay - MANY BALLOONS! */
 .celebration-overlay > .balloon {
   position: absolute;
   width: 60px;
   height: 80px;
   border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
   animation: float 4s ease-in-out infinite;
+  animation-delay: var(--balloon-delay, 0s);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1007;
+  left: var(--balloon-left, 10%);
+  top: var(--balloon-top, 20%);
 }
 
 .balloon::before {
@@ -365,59 +417,117 @@
 
 .celebration-overlay > .balloon-1 {
   background: linear-gradient(135deg, #ff1744, #ff6f00);
-  left: 10%;
-  top: 20%;
-  animation-delay: 0s;
 }
 
 .celebration-overlay > .balloon-2 {
   background: linear-gradient(135deg, #4caf50, #8bc34a);
-  left: 25%;
-  top: 10%;
-  animation-delay: 0.5s;
 }
 
 .celebration-overlay > .balloon-3 {
   background: linear-gradient(135deg, #2196f3, #03a9f4);
-  left: 70%;
-  top: 15%;
-  animation-delay: 1s;
 }
 
 .celebration-overlay > .balloon-4 {
   background: linear-gradient(135deg, #ffc107, #ffeb3b);
-  left: 85%;
-  top: 25%;
-  animation-delay: 1.5s;
 }
 
 .celebration-overlay > .balloon-5 {
   background: linear-gradient(135deg, #9c27b0, #e91e63);
-  left: 45%;
-  top: 5%;
-  animation-delay: 2s;
 }
 
 .celebration-overlay > .balloon-6 {
   background: linear-gradient(135deg, #ff6f00, #ff9800);
-  left: 60%;
-  top: 12%;
-  animation-delay: 2.5s;
 }
 
 @keyframes float {
   0%, 100% {
-    transform: translateY(0) rotate(-2deg);
+    transform: translateY(0) translateX(0) rotate(-2deg) scale(1);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) rotate(2deg) scale(1.05);
   }
   50% {
-    transform: translateY(-30px) rotate(2deg);
+    transform: translateY(-40px) translateX(-5px) rotate(-3deg) scale(1.1);
+  }
+  75% {
+    transform: translateY(-20px) translateX(5px) rotate(1deg) scale(1.05);
   }
 }
 
-/* Vehicle flying animation */
+/* Vehicle flying animation - vehicles fly off screen completely */
 .vehicle.flying {
   pointer-events: none;
-  transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 2s ease-out !important;
+  transition: transform 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 2.5s ease-out !important;
+}
+
+/* Flying Headphones */
+.flying-headphone {
+  position: absolute;
+  font-size: 40px;
+  z-index: 1008;
+  animation: headphoneFly 6s ease-in-out infinite;
+  animation-delay: var(--headphone-delay, 0s);
+  opacity: 0.9;
+}
+
+.flying-headphone:nth-of-type(n) {
+  left: calc((var(--headphone-index, 0) * 6.25) % 100%);
+  top: calc((var(--headphone-index, 0) * 10) % 100%);
+}
+
+@keyframes headphoneFly {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(calc(var(--headphone-index, 0) * 50px), calc(var(--headphone-index, 0) * -80px)) rotate(360deg) scale(1.2);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--headphone-index, 0) * 100px), calc(var(--headphone-index, 0) * -160px)) rotate(720deg) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Music Notes */
+.music-note {
+  position: absolute;
+  font-size: 35px;
+  z-index: 1009;
+  animation: musicNoteFloat 5s ease-in-out infinite;
+  animation-delay: var(--note-delay, 0s);
+  opacity: 0.85;
+}
+
+.music-note:nth-of-type(n) {
+  left: calc((var(--note-index, 0) * 5) % 100%);
+  top: calc((var(--note-index, 0) * 7) % 100%);
+}
+
+@keyframes musicNoteFloat {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-100px) rotate(180deg) scale(1.3);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-200px) rotate(360deg) scale(0.7);
+    opacity: 0;
+  }
 }
 
 .exit-indicator {

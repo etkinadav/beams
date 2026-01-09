@@ -77,29 +77,47 @@
       <!-- Fireworks -->
       <div class="firework" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9]"></div>
       
-      <!-- Confetti -->
-      <div class="confetti" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]" [style.--delay]="i * 0.1 + 's'"></div>
+      <!-- Confetti - More confetti! -->
+      <div class="confetti" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]" [style.--delay]="(i * 0.05) + 's'"></div>
       
       <!-- Sparkles -->
       <div class="sparkle" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]" [style.--delay]="i * 0.2 + 's'"></div>
       
-      <!-- Balloons -->
-      <div class="balloon balloon-1"></div>
-      <div class="balloon balloon-2"></div>
-      <div class="balloon balloon-3"></div>
-      <div class="balloon balloon-4"></div>
-      <div class="balloon balloon-5"></div>
-      <div class="balloon balloon-6"></div>
+      <!-- Headphones flying around -->
+      <div class="flying-headphone" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]" [style.--headphone-delay]="(i * 0.2) + 's'" [style.--headphone-index]="i">
+        🎧
+      </div>
+      
+      <!-- Music notes -->
+      <div class="music-note" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]" [style.--note-delay]="(i * 0.15) + 's'" [style.--note-index]="i">
+        <span *ngIf="i % 3 === 0">🎵</span>
+        <span *ngIf="i % 3 === 1">🎶</span>
+        <span *ngIf="i % 3 === 2">🎼</span>
+      </div>
+      
+      <!-- Many Balloons (30 balloons!) -->
+      <div class="balloon" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]" 
+           [ngClass]="'balloon-' + (i % 6 + 1)"
+           [style.--balloon-delay]="(i * 0.1) + 's'"
+           [style.--balloon-left]="((i * 3.33) % 100) + '%'"
+           [style.--balloon-top]="((i * 7) % 90) + '%'"></div>
+      
+      <!-- Gift Message -->
+      <div class="gift-message-container" *ngIf="showGiftMessage">
+        <h1 class="gift-message">
+          המתנה שלך היא... אזניות!!!
+        </h1>
+      </div>
       
       <!-- Celebration Text -->
-      <div class="celebration-text-container">
+      <div class="celebration-text-container" *ngIf="!showGiftMessage">
         <h1 class="celebration-text" [@textAnimation]="celebrationTextIndex">
           {{ getCelebrationText() }}
         </h1>
       </div>
       
-      <!-- Return to menu button (appears after 5 seconds) -->
-      <button class="return-btn" (click)="goToHome()" *ngIf="celebrationTextIndex >= celebrationTexts.length - 1">
+      <!-- Return to menu button (appears after showing gift message) -->
+      <button class="return-btn" (click)="goToHome()" *ngIf="showGiftMessage">
         חזרה לתפריט
       </button>
     </div>

@@ -43,6 +43,7 @@ export class RushHourComponent implements OnInit {
   celebrationTexts: string[] = ["אבא, אני אוהב אותך!", "יום הולדת שמח אבא!", "🎉 מזל טוב! 🎉"];
   vehiclesFlying: boolean = false;
   vehicleFlyOffsets: Map<string, {x: number, y: number, rotation: number}> = new Map();
+  showGiftMessage: boolean = false;
 
   constructor() { }
 
@@ -91,6 +92,7 @@ export class RushHourComponent implements OnInit {
     this.celebrationStarted = false;
     this.vehiclesFlying = false;
     this.celebrationTextIndex = 0;
+    this.showGiftMessage = false;
     this.vehicleFlyOffsets.clear();
     this.updateBackgroundOpacity(); // Reset opacity when resetting game
   }
@@ -99,12 +101,16 @@ export class RushHourComponent implements OnInit {
     this.celebrationStarted = true;
     
     // Pre-calculate fly offsets for each vehicle (consistent per vehicle)
+    // Vehicles should fly far enough to disappear from screen
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const flyDistance = Math.max(screenWidth, screenHeight) * 1.5; // Fly far enough to disappear
+    
     this.vehicles.forEach((vehicle, index) => {
       const angle = (index * 360 / this.vehicles.length) + (index % 3) * 15;
-      const distance = 300 + (index % 3) * 100;
       const radians = (angle * Math.PI) / 180;
-      const x = Math.cos(radians) * distance;
-      const y = Math.sin(radians) * distance;
+      const x = Math.cos(radians) * flyDistance;
+      const y = Math.sin(radians) * flyDistance;
       const rotation = angle + (index % 5) * 20;
       this.vehicleFlyOffsets.set(vehicle.id, { x, y, rotation });
     });
@@ -113,6 +119,11 @@ export class RushHourComponent implements OnInit {
     setTimeout(() => {
       this.vehiclesFlying = true;
     }, 100);
+    
+    // Show gift message after vehicles start flying
+    setTimeout(() => {
+      this.showGiftMessage = true;
+    }, 500);
     
     // Rotate celebration texts every 2 seconds
     let textIndex = 0;
@@ -143,12 +154,14 @@ export class RushHourComponent implements OnInit {
     // Get pre-calculated offset or calculate if not exists
     let offset = this.vehicleFlyOffsets.get(vehicle.id);
     if (!offset) {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const flyDistance = Math.max(screenWidth, screenHeight) * 1.5;
       const angle = (index * 360 / this.vehicles.length) + (index % 3) * 15;
-      const distance = 300 + (index % 3) * 100;
       const radians = (angle * Math.PI) / 180;
       offset = {
-        x: Math.cos(radians) * distance,
-        y: Math.sin(radians) * distance,
+        x: Math.cos(radians) * flyDistance,
+        y: Math.sin(radians) * flyDistance,
         rotation: angle + (index % 5) * 20
       };
       this.vehicleFlyOffsets.set(vehicle.id, offset);
@@ -159,8 +172,8 @@ export class RushHourComponent implements OnInit {
     return {
       ...baseStyle,
       transform: `translate(${offset.x}px, ${offset.y}px) rotate(${offset.rotation}deg)`,
-      transition: 'transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 2s ease-out',
-      opacity: 0.8,
+      transition: 'transform 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 2.5s ease-out',
+      opacity: 0,
       zIndex: 100
     };
   }
