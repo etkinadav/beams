@@ -428,6 +428,12 @@ export class MainNavComponent implements OnInit, OnDestroy {
     this.router.navigate(["/qanda"]);
   }
 
+  goToRushHour() {
+    this.closeDrawer();
+    this.closeProfileManu();
+    this.router.navigate(["/rush-hour"]);
+  }
+
 
   updateGreeting() {
     const currentHour = new Date().getHours();

@@ -1039,11 +1039,12 @@
 	"modify-product.no-preliminary-drilling-needed": "No preliminary drilling needed!",
 	"modify-product.understood-continue-next": "Understood, continue to next step",
 	"modify-product.drilling-completed": "Drilling completed",
-	"laundry.title": "Welcome to Our Laundry for a Cause!",
-	"laundry.intro": "This service helps people in need by letting them handle your laundry at a lower cost for you and providing them with meaningful income.",
+	"laundry.title": "Laundry with a Purpose – Clean clothes, Brighter futures.",
+	"laundry.intro": "By choosing us, you enjoy affordable laundry while supporting young adults from vulnerable backgrounds who gain fair pay and valuable experience.",
 	"laundry.button-text": "Get Started – Weigh Your Laundry Here!",
 	"laundry.process-title": "How It Works",
-	"laundry.process-text": "You can weigh your laundry, get a clear price, pay in cash, and receive updates through the app when your laundry is ready.",
+	"laundry.process-text": "Weigh your laundry, get a clear price, pay easily, and know that each wash supports a social cause. You'll get updates through the app when it's ready.",
 	"laundry.service-title": "About Our Service",
-	"laundry.service-text": "This service is provided by youth in need over the age of 18, who receive most of the profit."
+	"laundry.service-text": "This service is run by young adults (18+) from disadvantaged communities who receive most of the profit, helping them build a better future for themselves.",
+	"laundry.footer-message": "When you wash with us, you help change lives and create real opportunities."
 }

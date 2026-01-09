@@ -68,7 +68,8 @@
 }
 
 .laundry-process-section,
-.laundry-service-section {
+.laundry-service-section,
+.laundry-footer-section {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -87,7 +88,8 @@
 }
 
 .process-text,
-.service-text {
+.service-text,
+.footer-text {
   font-size: 16px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: #333333;

@@ -18,6 +18,7 @@ import { ShoppingCartComponent } from "./main-nav/shopping-cart/shopping-cart.co
 import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-planner.component";
 import { LandbotComponent } from "./other-pages/landbot/landbot.component";
 import { LaundryComponent } from "./other-pages/laundry/laundry.component";
+import { RushHourComponent } from "./other-pages/rush-hour/rush-hour.component";
 
 
 
@@ -25,6 +26,7 @@ const routes: Routes = [
     { path: "threedplanner", component: ThreedPlannerComponent },
     { path: "landbot", component: LandbotComponent },
     { path: "laundry", component: LaundryComponent },
+    { path: "rush-hour", component: RushHourComponent },
 
     { path: "", component: ChooseProductComponent },
 

@@ -156,6 +156,17 @@
 
       <div class="w-100 zx-border-gray-top-v-v-light my-1" [class.zx-low-opp]="isDarkMode"></div>
 
+      <a mat-list-item (click)="goToRushHour(); closeDrawer()">
+        <div class="w-100 h-100 d-flex align-items-center gap-2">
+          <mat-icon style="color: var(--zx-green) !important;">games</mat-icon>
+          <span class="mat-list-item-small" style="color: var(--zx-green) !important; font-size: 13px !important; font-weight: 600 !important;">
+            Rush Hour Puzzle
+          </span>
+        </div>
+      </a>
+
+      <div class="w-100 zx-border-gray-top-v-v-light my-1" [class.zx-low-opp]="isDarkMode"></div>
+
       <a mat-list-item (click)="openWhatsApp()">
         <div class="w-100 h-100 d-flex align-items-center gap-2">
           <div class="whatsup-logo-container">
