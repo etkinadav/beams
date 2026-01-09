@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { trigger, transition, style, animate } from '@angular/animations';
 
 export interface Vehicle {
   id: string;
@@ -17,7 +18,17 @@ type Direction = "left" | "right" | "up" | "down";
   styleUrls: ["./rush-hour.component.css"],
   host: {
     class: 'fill-screen'
-  }
+  },
+  animations: [
+    trigger('textAnimation', [
+      transition('* => *', [
+        style({ opacity: 0, transform: 'scale(0.5) translateY(-50px)' }),
+        animate('0.5s ease-out', style({ opacity: 1, transform: 'scale(1) translateY(0)' })),
+        animate('1s ease-in', style({ opacity: 1, transform: 'scale(1) translateY(0)' })),
+        animate('0.5s ease-in', style({ opacity: 0, transform: 'scale(0.5) translateY(50px)' }))
+      ])
+    ])
+  ]
 })
 export class RushHourComponent implements OnInit {
   GRID_SIZE = 6;
@@ -27,6 +38,11 @@ export class RushHourComponent implements OnInit {
   gameWon: boolean = false;
   initialVehicles: Vehicle[] = []; // Store initial state for reset
   backgroundOpacity: number = 0; // Opacity based on red car position
+  celebrationStarted: boolean = false;
+  celebrationTextIndex: number = 0;
+  celebrationTexts: string[] = ["אבא, אני אוהב אותך!", "יום הולדת שמח אבא!", "🎉 מזל טוב! 🎉"];
+  vehiclesFlying: boolean = false;
+  vehicleFlyOffsets: Map<string, {x: number, y: number, rotation: number}> = new Map();
 
   constructor() { }
 
@@ -72,7 +88,81 @@ export class RushHourComponent implements OnInit {
     this.vehicles = JSON.parse(JSON.stringify(this.initialVehicles)); // Deep copy
     this.selectedVehicleId = null;
     this.gameWon = false;
+    this.celebrationStarted = false;
+    this.vehiclesFlying = false;
+    this.celebrationTextIndex = 0;
+    this.vehicleFlyOffsets.clear();
     this.updateBackgroundOpacity(); // Reset opacity when resetting game
+  }
+  
+  startCelebration() {
+    this.celebrationStarted = true;
+    
+    // Pre-calculate fly offsets for each vehicle (consistent per vehicle)
+    this.vehicles.forEach((vehicle, index) => {
+      const angle = (index * 360 / this.vehicles.length) + (index % 3) * 15;
+      const distance = 300 + (index % 3) * 100;
+      const radians = (angle * Math.PI) / 180;
+      const x = Math.cos(radians) * distance;
+      const y = Math.sin(radians) * distance;
+      const rotation = angle + (index % 5) * 20;
+      this.vehicleFlyOffsets.set(vehicle.id, { x, y, rotation });
+    });
+    
+    // Trigger vehicles flying animation
+    setTimeout(() => {
+      this.vehiclesFlying = true;
+    }, 100);
+    
+    // Rotate celebration texts every 2 seconds
+    let textIndex = 0;
+    const textInterval = setInterval(() => {
+      textIndex++;
+      if (textIndex >= this.celebrationTexts.length) {
+        clearInterval(textInterval);
+        return;
+      }
+      this.celebrationTextIndex = textIndex;
+    }, 2000);
+  }
+  
+  goToHome() {
+    // Navigate back to home
+    window.location.href = '/';
+  }
+  
+  getCelebrationText(): string {
+    return this.celebrationTexts[this.celebrationTextIndex] || this.celebrationTexts[0];
+  }
+  
+  getVehicleCelebrationStyle(vehicle: Vehicle, index: number): any {
+    if (!this.vehiclesFlying) {
+      return this.getVehicleStyle(vehicle);
+    }
+    
+    // Get pre-calculated offset or calculate if not exists
+    let offset = this.vehicleFlyOffsets.get(vehicle.id);
+    if (!offset) {
+      const angle = (index * 360 / this.vehicles.length) + (index % 3) * 15;
+      const distance = 300 + (index % 3) * 100;
+      const radians = (angle * Math.PI) / 180;
+      offset = {
+        x: Math.cos(radians) * distance,
+        y: Math.sin(radians) * distance,
+        rotation: angle + (index % 5) * 20
+      };
+      this.vehicleFlyOffsets.set(vehicle.id, offset);
+    }
+    
+    const baseStyle = this.getVehicleStyle(vehicle);
+    
+    return {
+      ...baseStyle,
+      transform: `translate(${offset.x}px, ${offset.y}px) rotate(${offset.rotation}deg)`,
+      transition: 'transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 2s ease-out',
+      opacity: 0.8,
+      zIndex: 100
+    };
   }
 
   buildOccupancyGrid(): (Vehicle | null)[][] {
@@ -174,6 +264,7 @@ export class RushHourComponent implements OnInit {
       if (vehicle.row === 2 && endCol === 5) {
         // Red is at E3-F3, moving right wins
         this.gameWon = true;
+        this.startCelebration();
         return;
       }
     }

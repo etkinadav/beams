@@ -22,8 +22,9 @@
         <div 
           *ngFor="let vehicle of vehicles; let i = index"
           class="vehicle"
-          [ngStyle]="getVehicleStyle(vehicle)"
-          (click)="onVehicleClick(vehicle.id); $event.stopPropagation()"
+          [ngClass]="{'flying': vehiclesFlying}"
+          [ngStyle]="vehiclesFlying ? getVehicleCelebrationStyle(vehicle, i) : getVehicleStyle(vehicle)"
+          (click)="!vehiclesFlying && onVehicleClick(vehicle.id); $event.stopPropagation()"
           [title]="vehicle.id">
           <span class="vehicle-number">{{ i + 1 }}</span>
         </div>
@@ -71,14 +72,36 @@
       </div>
     </div>
 
-    <!-- Win modal -->
-    <div class="win-modal" *ngIf="gameWon">
-      <div class="win-content">
-        <h2>🎉 Congratulations! 🎉</h2>
-        <p>You solved the puzzle!</p>
-        <p class="win-message">You unlocked the gift!</p>
-        <button class="reset-btn" (click)="resetGame()">Play Again</button>
+    <!-- Celebration Overlay -->
+    <div class="celebration-overlay" *ngIf="celebrationStarted">
+      <!-- Fireworks -->
+      <div class="firework" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9]"></div>
+      
+      <!-- Confetti -->
+      <div class="confetti" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]" [style.--delay]="i * 0.1 + 's'"></div>
+      
+      <!-- Sparkles -->
+      <div class="sparkle" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]" [style.--delay]="i * 0.2 + 's'"></div>
+      
+      <!-- Balloons -->
+      <div class="balloon balloon-1"></div>
+      <div class="balloon balloon-2"></div>
+      <div class="balloon balloon-3"></div>
+      <div class="balloon balloon-4"></div>
+      <div class="balloon balloon-5"></div>
+      <div class="balloon balloon-6"></div>
+      
+      <!-- Celebration Text -->
+      <div class="celebration-text-container">
+        <h1 class="celebration-text" [@textAnimation]="celebrationTextIndex">
+          {{ getCelebrationText() }}
+        </h1>
       </div>
+      
+      <!-- Return to menu button (appears after 5 seconds) -->
+      <button class="return-btn" (click)="goToHome()" *ngIf="celebrationTextIndex >= celebrationTexts.length - 1">
+        חזרה לתפריט
+      </button>
     </div>
   </div>
 </div>
