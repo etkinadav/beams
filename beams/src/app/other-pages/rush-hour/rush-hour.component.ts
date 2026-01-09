@@ -230,7 +230,8 @@ export class RushHourComponent implements OnInit {
   }
 
   getVehicleStyle(vehicle: Vehicle): any {
-    const cellSize = 60; // pixels per cell
+    // Calculate cell size as 70vh / 6 (70% of viewport height divided by 6 rows)
+    const cellSize = window.innerHeight * 0.7 / 6;
     const isSelected = vehicle.id === this.selectedVehicleId;
     
     if (vehicle.orientation === "H") {
@@ -265,9 +266,10 @@ export class RushHourComponent implements OnInit {
   }
 
   getArrowStyle(vehicle: Vehicle, direction: Direction): any {
-    const cellSize = 60;
-    const arrowSize = 20;
-    const offset = 5;
+    // Calculate cell size as 70vh / 6
+    const cellSize = window.innerHeight * 0.7 / 6;
+    const arrowSize = cellSize * 0.33; // 33% of cell size
+    const offset = cellSize * 0.08; // 8% of cell size
 
     let left = 0;
     let top = 0;
