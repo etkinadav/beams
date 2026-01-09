@@ -40,16 +40,16 @@ export class RushHourComponent implements OnInit {
       { id: "red", color: "red", orientation: "H", length: 2, row: 2, col: 0 }, // A3 -> row=2, col=0
       { id: "g1", color: "#4CAF50", orientation: "H", length: 2, row: 0, col: 2 }, // C1 -> row=0, col=2
       { id: "y1", color: "#FFC107", orientation: "V", length: 3, row: 0, col: 5 }, // F1 -> row=0, col=5
-      { id: "o1", color: "#FF9800", orientation: "H", length: 2, row: 1, col: 1 }, // B2 -> row=1, col=1
+      { id: "o1", color: "#FF9800", orientation: "H", length: 2, row: 1, col: 2 }, // C2 -> row=1, col=2
       { id: "lb1", color: "#03A9F4", orientation: "V", length: 3, row: 1, col: 4 }, // E2 -> row=1, col=4
       { id: "p1", color: "#E91E63", orientation: "V", length: 2, row: 2, col: 2 }, // C3 -> row=2, col=2
       { id: "ps1", color: "#9C27B0", orientation: "V", length: 2, row: 2, col: 3 }, // D3 -> row=2, col=3
-      { id: "dg1", color: "#607D8B", orientation: "H", length: 2, row: 2, col: 4 }, // E3 -> row=2, col=4
+      { id: "dg1", color: "#607D8B", orientation: "H", length: 2, row: 3, col: 4 }, // E4 -> row=3, col=4
       { id: "g2", color: "#8BC34A", orientation: "H", length: 2, row: 3, col: 0 }, // A4 -> row=3, col=0
-      { id: "pl1", color: "#673AB7", orientation: "H", length: 3, row: 3, col: 3 }, // D4 -> row=3, col=3
+      { id: "pl1", color: "#673AB7", orientation: "H", length: 3, row: 4, col: 3 }, // D5 -> row=4, col=3
       { id: "b1", color: "#D7CCC8", orientation: "H", length: 2, row: 4, col: 0 }, // A5 -> row=4, col=0
       { id: "ys1", color: "#FFEB3B", orientation: "V", length: 2, row: 4, col: 2 }, // C5 -> row=4, col=2
-      { id: "bl1", color: "#2196F3", orientation: "H", length: 3, row: 4, col: 3 }, // D5 -> row=4, col=3
+      { id: "bl1", color: "#2196F3", orientation: "H", length: 3, row: 5, col: 3 }, // D6 -> row=5, col=3
       { id: "g3", color: "#689F38", orientation: "H", length: 2, row: 5, col: 0 }, // A6 -> row=5, col=0
     ];
     
@@ -217,7 +217,7 @@ export class RushHourComponent implements OnInit {
         border: isSelected ? "3px solid #FFD700" : "2px solid #333",
         borderRadius: "4px",
         cursor: "pointer",
-        zIndex: isSelected ? 10 : 1,
+        zIndex: 10, // All vehicles on same layer
         boxShadow: isSelected ? "0 0 10px rgba(255, 215, 0, 0.8)" : "none"
       };
     } else {
@@ -231,7 +231,7 @@ export class RushHourComponent implements OnInit {
         border: isSelected ? "3px solid #FFD700" : "2px solid #333",
         borderRadius: "4px",
         cursor: "pointer",
-        zIndex: isSelected ? 10 : 1,
+        zIndex: 10, // All vehicles on same layer
         boxShadow: isSelected ? "0 0 10px rgba(255, 215, 0, 0.8)" : "none"
       };
     }
@@ -270,7 +270,7 @@ export class RushHourComponent implements OnInit {
       width: `${arrowSize}px`,
       height: `${arrowSize}px`,
       cursor: "pointer",
-      zIndex: 20
+      zIndex: 30 // Arrows always on top
     };
   }
 }

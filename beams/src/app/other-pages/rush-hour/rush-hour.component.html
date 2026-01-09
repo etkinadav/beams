@@ -9,10 +9,12 @@
 
     <div class="game-board-wrapper">
       <div class="game-board" (click)="onGridClick()" #gameBoard>
-        <!-- Grid cells - using ngFor to create 36 cells -->
-        <ng-container *ngFor="let row of [0,1,2,3,4,5]">
-          <div class="grid-cell-inner" *ngFor="let col of [0,1,2,3,4,5]"></div>
-        </ng-container>
+        <!-- Grid background -->
+        <div class="grid-background">
+          <ng-container *ngFor="let row of [0,1,2,3,4,5]">
+            <div class="grid-cell-inner" *ngFor="let col of [0,1,2,3,4,5]"></div>
+          </ng-container>
+        </div>
 
         <!-- Exit indicator on row 3 (row index 2) -->
         <div class="exit-indicator" style="position: absolute; right: -40px; top: 120px; width: 30px; height: 60px; border: 2px dashed #4CAF50; display: flex; align-items: center; justify-content: center; color: #4CAF50; font-weight: bold;">EXIT</div>
@@ -20,6 +22,7 @@
         <!-- Vehicles -->
         <div 
           *ngFor="let vehicle of vehicles"
+          class="vehicle"
           [ngStyle]="getVehicleStyle(vehicle)"
           (click)="onVehicleClick(vehicle.id); $event.stopPropagation()"
           [title]="vehicle.id">
