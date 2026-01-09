@@ -85,7 +85,7 @@
   background-position: center;
   background-repeat: no-repeat;
   z-index: 0; /* Behind grid cells but above base background */
-  transition: opacity 0.3s ease; /* Smooth opacity transition */
+  transition: opacity 0.3s ease, filter 0.3s ease; /* Smooth opacity and blur transition */
   pointer-events: none; /* Allow clicks to pass through */
 }
 

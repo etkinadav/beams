@@ -47,6 +47,7 @@ export class RushHourComponent implements OnInit {
   showGiftMessage: boolean = false;
 
   constructor() { }
+  
 
   ngOnInit() {
     this.initializeGame();

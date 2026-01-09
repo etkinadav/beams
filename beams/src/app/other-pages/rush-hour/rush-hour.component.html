@@ -27,6 +27,7 @@
           (click)="!vehiclesFlying && onVehicleClick(vehicle.id); $event.stopPropagation()"
           [title]="vehicle.id">
         </div>
+        
 
         <!-- Movement arrows (only for selected vehicle) -->
         <div *ngIf="selectedVehicleId">
