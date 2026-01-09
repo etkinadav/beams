@@ -41,7 +41,7 @@ export class RushHourComponent implements OnInit {
       { id: "g1", color: "#4CAF50", orientation: "H", length: 2, row: 0, col: 2 }, // C1 -> row=0, col=2
       { id: "y1", color: "#FFC107", orientation: "V", length: 3, row: 0, col: 5 }, // F1 -> row=0, col=5
       { id: "o1", color: "#FF9800", orientation: "H", length: 2, row: 1, col: 2 }, // C2 -> row=1, col=2
-      { id: "lb1", color: "#03A9F4", orientation: "V", length: 3, row: 1, col: 4 }, // E2 -> row=1, col=4
+      { id: "lb1", color: "#03A9F4", orientation: "V", length: 2, row: 0, col: 4 }, // E1 -> row=0, col=4
       { id: "p1", color: "#E91E63", orientation: "V", length: 2, row: 2, col: 2 }, // C3 -> row=2, col=2
       { id: "ps1", color: "#9C27B0", orientation: "V", length: 2, row: 2, col: 3 }, // D3 -> row=2, col=3
       { id: "dg1", color: "#607D8B", orientation: "H", length: 2, row: 3, col: 4 }, // E4 -> row=3, col=4
