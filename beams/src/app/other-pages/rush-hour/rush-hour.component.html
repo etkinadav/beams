@@ -9,6 +9,8 @@
 
     <div class="game-board-wrapper">
       <div class="game-board" (click)="onGridClick()" #gameBoard>
+        <!-- Background image layer with opacity -->
+        <div class="game-board-background" [ngStyle]="getBackgroundImageStyle()"></div>
         <!-- Grid cells - using ngFor to create 36 cells -->
         <ng-container *ngFor="let row of [0,1,2,3,4,5]">
           <div class="grid-cell-inner" *ngFor="let col of [0,1,2,3,4,5]"></div>

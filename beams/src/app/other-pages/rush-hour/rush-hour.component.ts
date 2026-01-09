@@ -26,6 +26,7 @@ export class RushHourComponent implements OnInit {
   selectedVehicleId: string | null = null;
   gameWon: boolean = false;
   initialVehicles: Vehicle[] = []; // Store initial state for reset
+  backgroundOpacity: number = 0; // Opacity based on red car position
 
   constructor() { }
 
@@ -37,7 +38,7 @@ export class RushHourComponent implements OnInit {
     // Initialize vehicles according to specification
     // Row/Col are 0-indexed: row=row-1, col: A=0,B=1,C=2,D=3,E=4,F=5
     this.initialVehicles = [
-      { id: "red", color: "red", orientation: "H", length: 2, row: 2, col: 0 }, // A3 -> row=2, col=0
+      { id: "red", color: "red", orientation: "H", length: 2, row: 2, col: 0 }, // A3 -> row=2, col=0 (starts at leftmost position)
       { id: "g1", color: "#4CAF50", orientation: "H", length: 2, row: 0, col: 2 }, // C1 -> row=0, col=2
       { id: "y1", color: "#FFC107", orientation: "V", length: 3, row: 0, col: 5 }, // F1 -> row=0, col=5
       { id: "o1", color: "#FF9800", orientation: "H", length: 2, row: 1, col: 2 }, // C2 -> row=1, col=2
@@ -54,12 +55,24 @@ export class RushHourComponent implements OnInit {
     ];
     
     this.resetGame();
+    this.updateBackgroundOpacity(); // Initialize opacity on game start
+  }
+  
+  getBackgroundOpacity(): number {
+    return this.backgroundOpacity;
+  }
+  
+  getBackgroundImageStyle(): any {
+    return {
+      opacity: this.backgroundOpacity
+    };
   }
 
   resetGame() {
     this.vehicles = JSON.parse(JSON.stringify(this.initialVehicles)); // Deep copy
     this.selectedVehicleId = null;
     this.gameWon = false;
+    this.updateBackgroundOpacity(); // Reset opacity when resetting game
   }
 
   buildOccupancyGrid(): (Vehicle | null)[][] {
@@ -179,6 +192,20 @@ export class RushHourComponent implements OnInit {
       case "down":
         vehicle.row += 1;
         break;
+    }
+    
+    // Update background opacity based on red car position
+    this.updateBackgroundOpacity();
+  }
+  
+  updateBackgroundOpacity() {
+    const redCar = this.vehicles.find(v => v.id === "red");
+    if (redCar) {
+      // col 0 = 0%, col 1 = 20%, col 2 = 40%, etc. (max 100% at col 5)
+      // Since red car starts at col 0 (opacity 0) and moves right
+      this.backgroundOpacity = Math.min(redCar.col * 0.2, 1.0);
+    } else {
+      this.backgroundOpacity = 0;
     }
   }
 
