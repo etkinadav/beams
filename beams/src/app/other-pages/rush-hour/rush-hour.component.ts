@@ -38,6 +38,7 @@ export class RushHourComponent implements OnInit {
   gameWon: boolean = false;
   initialVehicles: Vehicle[] = []; // Store initial state for reset
   backgroundOpacity: number = 0; // Opacity based on red car position
+  backgroundBlur: number = 20; // Blur based on red car position (starts high, decreases as car moves)
   celebrationStarted: boolean = false;
   celebrationTextIndex: number = 0;
   celebrationTexts: string[] = ["אבא, אני אוהב אותך!", "יום הולדת שמח אבא!", "🎉 מזל טוב! 🎉"];
@@ -72,7 +73,7 @@ export class RushHourComponent implements OnInit {
     ];
     
     this.resetGame();
-    this.updateBackgroundOpacity(); // Initialize opacity on game start
+    this.updateBackgroundOpacity(); // Initialize opacity and blur on game start
   }
   
   getBackgroundOpacity(): number {
@@ -81,7 +82,8 @@ export class RushHourComponent implements OnInit {
   
   getBackgroundImageStyle(): any {
     return {
-      opacity: this.backgroundOpacity
+      opacity: this.backgroundOpacity,
+      filter: `blur(${this.backgroundBlur}px)`
     };
   }
 
@@ -308,8 +310,15 @@ export class RushHourComponent implements OnInit {
       // col 0 = 0%, col 1 = 20%, col 2 = 40%, etc. (max 100% at col 5)
       // Since red car starts at col 0 (opacity 0) and moves right
       this.backgroundOpacity = Math.min(redCar.col * 0.2, 1.0);
+      
+      // Blur starts at 20px (when col=0, opacity=0) and decreases to 0px (when col=5, opacity=1.0)
+      // When red car is at col 0: blur = 20px
+      // When red car is at col 5: blur = 0px
+      // Linear decrease: blur = 20 - (redCar.col * 4)
+      this.backgroundBlur = Math.max(20 - (redCar.col * 4), 0);
     } else {
       this.backgroundOpacity = 0;
+      this.backgroundBlur = 20;
     }
   }
 

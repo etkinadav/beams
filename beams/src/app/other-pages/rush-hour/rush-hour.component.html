@@ -26,7 +26,6 @@
           [ngStyle]="vehiclesFlying ? getVehicleCelebrationStyle(vehicle, i) : getVehicleStyle(vehicle)"
           (click)="!vehiclesFlying && onVehicleClick(vehicle.id); $event.stopPropagation()"
           [title]="vehicle.id">
-          <span class="vehicle-number">{{ i + 1 }}</span>
         </div>
 
         <!-- Movement arrows (only for selected vehicle) -->
