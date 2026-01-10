@@ -1,3 +1,22 @@
+<!-- Intro Modal -->
+<div class="intro-modal-overlay" *ngIf="showInstructions" (click)="$event.stopPropagation()">
+  <div class="intro-modal" (click)="$event.stopPropagation()">
+    <div class="intro-icon">🚗</div>
+    <h2 class="intro-title">ברוך הבא אבא 🎉</h2>
+    <div class="intro-body">
+      <p>לפניך משחק קטן.</p>
+      <p>המטרה פשוטה:</p>
+      <p>לפנות את המכונית האדומה החוצה מהפקק.</p>
+      <p style="margin-top: 15px; font-weight: 600;">אבל שים לב —</p>
+      <p>רק כשהמכונית האדומה תצא החוצה,</p>
+      <p>תגלה מה המתנה שלך 🎁😉</p>
+    </div>
+    <button class="intro-start-btn" (click)="closeInstructions()">
+      יאללה, נתחיל 🚗
+    </button>
+  </div>
+</div>
+
 <div class="rush-hour-container">
   <div class="rush-hour-content">
     <h1 class="game-title">יומולדת שמח אבוש אהוב!</h1>
@@ -117,10 +136,6 @@
         </h1>
       </div>
       
-      <!-- Return to menu button (appears after showing gift message) -->
-      <button class="return-btn" (click)="goToHome()" *ngIf="showGiftMessage">
-        חזרה לתפריט
-      </button>
     </div>
   </div>
 </div>

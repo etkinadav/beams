@@ -41,10 +41,11 @@ export class RushHourComponent implements OnInit {
   backgroundBlur: number = 20; // Blur based on red car position (starts high, decreases as car moves)
   celebrationStarted: boolean = false;
   celebrationTextIndex: number = 0;
-  celebrationTexts: string[] = ["אבא, אני אוהב אותך!", "יום הולדת שמח אבא!", "🎉 מזל טוב! 🎉"];
+  celebrationTexts: string[] = ["אבא ❤️", "יום הולדת שמח!!! 🎉🎉", "אוהב אותך מלא 😍", "המתנה שלך… 🎧😉"];
   vehiclesFlying: boolean = false;
   vehicleFlyOffsets: Map<string, {x: number, y: number, rotation: number}> = new Map();
   showGiftMessage: boolean = false;
+  showInstructions: boolean = true; // Show instructions modal at start
 
   constructor() { }
   
@@ -98,6 +99,11 @@ export class RushHourComponent implements OnInit {
     this.showGiftMessage = false;
     this.vehicleFlyOffsets.clear();
     this.updateBackgroundOpacity(); // Reset opacity when resetting game
+    this.showInstructions = false; // Don't show instructions again on reset
+  }
+  
+  closeInstructions() {
+    this.showInstructions = false;
   }
   
   startCelebration() {
@@ -123,21 +129,20 @@ export class RushHourComponent implements OnInit {
       this.vehiclesFlying = true;
     }, 100);
     
-    // Show gift message after vehicles start flying
-    setTimeout(() => {
-      this.showGiftMessage = true;
-    }, 500);
-    
-    // Rotate celebration texts every 2 seconds
+    // Rotate celebration texts every 1.5 seconds (4 texts total)
     let textIndex = 0;
     const textInterval = setInterval(() => {
       textIndex++;
       if (textIndex >= this.celebrationTexts.length) {
         clearInterval(textInterval);
+        // After all texts, show gift message
+        setTimeout(() => {
+          this.showGiftMessage = true;
+        }, 500);
         return;
       }
       this.celebrationTextIndex = textIndex;
-    }, 2000);
+    }, 1500);
   }
   
   goToHome() {
