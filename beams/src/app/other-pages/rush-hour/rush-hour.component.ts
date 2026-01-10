@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ViewEncapsulation } from "@angular/core";
 import { trigger, transition, style, animate } from '@angular/animations';
 
 export interface Vehicle {
@@ -19,6 +19,7 @@ type Direction = "left" | "right" | "up" | "down";
   host: {
     class: 'fill-screen'
   },
+  encapsulation: ViewEncapsulation.None,
   animations: [
     trigger('textAnimation', [
       transition('* => *', [
@@ -74,8 +75,17 @@ export class RushHourComponent implements OnInit {
       { id: "g3", color: "#689F38", orientation: "H", length: 2, row: 5, col: 0 }, // A6 -> row=5, col=0
     ];
     
-    this.resetGame();
+    // Initialize game state (but don't reset showInstructions on first load)
+    this.vehicles = JSON.parse(JSON.stringify(this.initialVehicles)); // Deep copy
+    this.selectedVehicleId = null;
+    this.gameWon = false;
+    this.celebrationStarted = false;
+    this.vehiclesFlying = false;
+    this.celebrationTextIndex = 0;
+    this.showGiftMessage = false;
+    this.vehicleFlyOffsets.clear();
     this.updateBackgroundOpacity(); // Initialize opacity and blur on game start
+    // showInstructions stays true on initial load (set in property declaration)
   }
   
   getBackgroundOpacity(): number {
