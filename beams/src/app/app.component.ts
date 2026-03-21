@@ -21,19 +21,23 @@ export class AppComponent implements OnInit {
     private authService: AuthService,
     @Inject(DOCUMENT) private document: Document,
     private render: Renderer2) {
-    if (localStorage.getItem('language')) {
-      this.language = localStorage.getItem('language');
+    const stored = localStorage.getItem('language');
+    if (stored) {
+      this.language = stored;
     }
     translate.setDefaultLang(this.language);
     translate.use(this.language);
-    // console.log("selected---Lang---uage: 7")
   }
 
   ngOnInit() {
     this.authService.autoAuthUser();
     this.render.addClass(this.document.body, 'lightTheme');
+    this.directionService.toLanguageDirection(this.language);
     this.directionService.direction$.subscribe((direction) => {
       this.isRTL = direction === 'rtl';
+    });
+    this.directionService.currentLanguage$.subscribe((lang) => {
+      this.language = lang;
     });
   }
 

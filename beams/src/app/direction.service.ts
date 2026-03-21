@@ -35,10 +35,17 @@ export class DirectionService {
     }
 
     toLanguageDirection(lang: string) {
-        this.currentLanguageSubject.next(lang); // Emit language change
-        this.translateService.use(lang); // Change language in TranslateService
+        if (!lang) {
+            return;
+        }
+        this.currentLanguageSubject.next(lang);
+        this.translateService.use(lang);
         document.documentElement.setAttribute('lang', lang);
-        // console.log("selected---Lang---uage: 5" + lang)
+        try {
+            localStorage.setItem('language', lang);
+        } catch {
+            /* ignore */
+        }
     }
 
     setDarkMode(isDarkMode: boolean) {

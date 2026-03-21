@@ -1,3 +1,8 @@
+.app-shell {
+  min-height: 100vh;
+  display: block;
+}
+
 .app-main-nav {
     min-height: 100vh !important; /* במקום height קבוע */
     width: 100% !important;

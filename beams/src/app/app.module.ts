@@ -36,6 +36,7 @@ import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-plan
 import { LandbotComponent } from "./other-pages/landbot/landbot.component";
 import { LaundryComponent } from "./other-pages/laundry/laundry.component";
 import { RushHourComponent } from "./other-pages/rush-hour/rush-hour.component";
+import { AgronomistWizardComponent } from "./agronomist/agronomist-wizard/agronomist-wizard.component";
 import { PhoneComponent } from "./dialog/phone/phone.component";
 import { CopyScanComponent } from "./dialog/scan-copy/scan-copy.component";
 import { PropertyExplainComponent } from "./dialog/property-explain/property-explain.component";
@@ -45,7 +46,6 @@ import { ProductEditInfoComponent } from "./dialog/product-edit-info/product-edi
 
 
 import { FileUploadModule } from 'ng2-file-upload';
-import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { ModifyProductModule } from './main-section/modify-product/modify-product.module';
 import { ShoppingCartComponent } from './main-nav/shopping-cart/shopping-cart.component';
 
@@ -63,6 +63,7 @@ import { ShoppingCartComponent } from './main-nav/shopping-cart/shopping-cart.co
     LandbotComponent,
     LaundryComponent,
     RushHourComponent,
+    AgronomistWizardComponent,
     PreloginComponent,
     SocialComponent,
     TAndCComponent,
@@ -96,7 +97,6 @@ import { ShoppingCartComponent } from './main-nav/shopping-cart/shopping-cart.co
     FormsModule,
     ReactiveFormsModule,
     FileUploadModule,
-    MatProgressBarModule,
     // SocialLoginModule,
     // GoogleSigninButtonModule
     ModifyProductModule,

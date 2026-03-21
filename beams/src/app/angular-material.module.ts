@@ -32,6 +32,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @NgModule({
     exports: [
@@ -60,6 +61,7 @@ import { MatTabsModule } from '@angular/material/tabs';
         MatDatepickerModule,
         MatNativeDateModule,
         MatTabsModule,
+        MatProgressBarModule,
     ]
 })
 

@@ -1,0 +1,625 @@
+<div class="agronomist-page">
+  <mat-card class="agronomist-card">
+    <mat-card-header>
+      <mat-card-title>{{ 'agronomist.card.title' | translate }}</mat-card-title>
+      <mat-card-subtitle>
+        {{ 'agronomist.card.subtitle' | translate }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="progress-row">
+        <div class="progress-meta">
+          <span class="section-chip">{{ steps[stepIndex].sectionKey | translate }}</span>
+          <span class="step-count">{{
+            'agronomist.progress.step_of'
+              | translate
+                : { current: stepIndex + 1, total: totalSteps }
+          }}</span>
+        </div>
+        <h2 class="step-title">{{ steps[stepIndex].titleKey | translate }}</h2>
+        <mat-progress-bar
+          mode="determinate"
+          [value]="progressPercent"
+        ></mat-progress-bar>
+      </div>
+
+      <form [formGroup]="form" class="wizard-form">
+        <!-- 0 -->
+        <div *ngIf="stepIndex === 0" [formGroup]="goalGroup" class="step-panel">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.primary_objective' | translate }} *</mat-label>
+            <mat-select formControlName="primaryObjective">
+              <mat-option
+                *ngFor="let o of primaryObjectiveOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+            <mat-error>{{ 'agronomist.error.required' | translate }}</mat-error>
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="showPrimaryOther()"
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>{{ 'agronomist.field.primary_objective_other' | translate }}</mat-label>
+            <input matInput formControlName="primaryObjectiveOther" />
+          </mat-form-field>
+        </div>
+
+        <!-- 1 -->
+        <div *ngIf="stepIndex === 1" [formGroup]="goalGroup" class="step-panel">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.comparison_type' | translate }}</mat-label>
+            <mat-select formControlName="comparisonType" multiple>
+              <mat-option
+                *ngFor="let o of comparisonTypeOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="showComparisonOther()"
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>{{ 'agronomist.field.comparison_type_other' | translate }}</mat-label>
+            <input matInput formControlName="comparisonTypeOther" />
+          </mat-form-field>
+        </div>
+
+        <!-- 2 -->
+        <div *ngIf="stepIndex === 2" [formGroup]="goalGroup" class="step-panel">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.success_metrics' | translate }}</mat-label>
+            <mat-select formControlName="successMetrics" multiple>
+              <mat-option
+                *ngFor="let o of successMetricsOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="showSuccessOther()"
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>{{ 'agronomist.field.success_metrics_other' | translate }}</mat-label>
+            <input matInput formControlName="successMetricsOther" />
+          </mat-form-field>
+        </div>
+
+        <!-- 3 -->
+        <div *ngIf="stepIndex === 3" [formGroup]="cropGroup" class="step-panel">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.crop_type' | translate }} *</mat-label>
+            <input matInput formControlName="cropType" [placeholder]="'agronomist.placeholder.crop_example' | translate" />
+            <mat-error>{{ 'agronomist.error.required' | translate }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- 4 -->
+        <div *ngIf="stepIndex === 4" [formGroup]="cropGroup" class="step-panel">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.crop_variety' | translate }}</mat-label>
+            <input matInput formControlName="cropVariety" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.seed_type' | translate }}</mat-label>
+            <input matInput formControlName="seedType" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.growth_stage' | translate }}</mat-label>
+            <mat-select formControlName="growthStage">
+              <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+              <mat-option *ngFor="let o of growthStageOptions" [value]="o.value">{{
+                o.labelKey | translate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- 5 -->
+        <div
+          *ngIf="stepIndex === 5"
+          [formGroup]="environmentGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.growing_method' | translate }} *</mat-label>
+            <mat-select formControlName="growingMethod">
+              <mat-option
+                *ngFor="let o of growingMethodOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+            <mat-error>{{ 'agronomist.error.required' | translate }}</mat-error>
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="showGrowingOther()"
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>{{ 'agronomist.field.growing_method_other' | translate }}</mat-label>
+            <input matInput formControlName="growingMethodOther" />
+          </mat-form-field>
+        </div>
+
+        <!-- 6 -->
+        <div
+          *ngIf="stepIndex === 6"
+          [formGroup]="environmentGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.country' | translate }}</mat-label>
+            <input matInput formControlName="country" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.region' | translate }}</mat-label>
+            <input matInput formControlName="region" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.climate_type' | translate }}</mat-label>
+            <mat-select formControlName="climateType">
+              <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+              <mat-option *ngFor="let o of climateTypeOptions" [value]="o.value">{{
+                o.labelKey | translate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- 7 -->
+        <div
+          *ngIf="stepIndex === 7"
+          [formGroup]="environmentGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.greenhouse' | translate }}</mat-label>
+            <mat-select formControlName="greenhouse">
+              <mat-option
+                *ngFor="let o of boolSelectOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.controlled_environment' | translate }}</mat-label>
+            <mat-select formControlName="controlledEnvironment">
+              <mat-option
+                *ngFor="let o of boolSelectOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- 8 -->
+        <div
+          *ngIf="stepIndex === 8"
+          [formGroup]="substrateGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.soil_type' | translate }}</mat-label>
+            <mat-select formControlName="soilType">
+              <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+              <mat-option *ngFor="let o of soilTypeOptions" [value]="o.value">{{
+                o.labelKey | translate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="showSoilOther()"
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>{{ 'agronomist.field.soil_type_other' | translate }}</mat-label>
+            <input matInput formControlName="soilTypeOther" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.drainage' | translate }}</mat-label>
+            <mat-select formControlName="drainage">
+              <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+              <mat-option *ngFor="let o of drainageOptions" [value]="o.value">{{
+                o.labelKey | translate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- 9 -->
+        <div
+          *ngIf="stepIndex === 9"
+          [formGroup]="substrateGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.soil_ph' | translate }}</mat-label>
+            <input matInput type="number" step="0.1" formControlName="soilPh" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.substrate_notes' | translate }}</mat-label>
+            <textarea matInput rows="3" formControlName="substrateNotes"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 10 -->
+        <div
+          *ngIf="stepIndex === 10"
+          [formGroup]="irrigationGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.irrigation_method' | translate }}</mat-label>
+            <mat-select formControlName="irrigationMethod">
+              <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+              <mat-option
+                *ngFor="let o of irrigationMethodOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field
+            *ngIf="showIrrigationOther()"
+            appearance="outline"
+            class="full-width"
+          >
+            <mat-label>{{ 'agronomist.field.irrigation_method_other' | translate }}</mat-label>
+            <input matInput formControlName="irrigationMethodOther" />
+          </mat-form-field>
+        </div>
+
+        <!-- 11 -->
+        <div
+          *ngIf="stepIndex === 11"
+          [formGroup]="irrigationGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.irrigation_frequency' | translate }}</mat-label>
+            <input matInput formControlName="irrigationFrequency" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.water_type' | translate }}</mat-label>
+            <input matInput formControlName="waterType" />
+          </mat-form-field>
+        </div>
+
+        <!-- 12 -->
+        <div
+          *ngIf="stepIndex === 12"
+          [formGroup]="irrigationGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.water_quality_notes' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="4"
+              formControlName="waterQualityNotes"
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 13 -->
+        <div
+          *ngIf="stepIndex === 13"
+          [formGroup]="fertilizationGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.fertilization_strategy' | translate }}</mat-label>
+            <mat-select formControlName="fertilizationStrategy">
+              <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+              <mat-option
+                *ngFor="let o of fertilizationStrategyOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.existing_protocol' | translate }}</mat-label>
+            <mat-select formControlName="existingFertilizationProtocol">
+              <mat-option
+                *ngFor="let o of boolSelectOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.fertilizer_types' | translate }}</mat-label>
+            <input matInput formControlName="fertilizerTypes" />
+          </mat-form-field>
+        </div>
+
+        <!-- 14 -->
+        <div
+          *ngIf="stepIndex === 14"
+          [formGroup]="fertilizationGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.nutrient_notes' | translate }}</mat-label>
+            <textarea matInput rows="4" formControlName="nutrientNotes"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 15 -->
+        <div
+          *ngIf="stepIndex === 15"
+          [formGroup]="lightingGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.sun_exposure' | translate }}</mat-label>
+            <mat-select formControlName="sunExposure">
+              <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+              <mat-option *ngFor="let o of sunExposureOptions" [value]="o.value">{{
+                o.labelKey | translate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- 16 -->
+        <div
+          *ngIf="stepIndex === 16"
+          [formGroup]="lightingGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.artificial_lighting' | translate }}</mat-label>
+            <mat-select formControlName="artificialLighting">
+              <mat-option
+                *ngFor="let o of boolSelectOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.lighting_type' | translate }}</mat-label>
+            <input matInput formControlName="lightingType" />
+          </mat-form-field>
+        </div>
+
+        <!-- 17 -->
+        <div
+          *ngIf="stepIndex === 17"
+          [formGroup]="lightingGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.avg_temp' | translate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              step="0.1"
+              formControlName="averageTemperature"
+            />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.humidity_notes' | translate }}</mat-label>
+            <textarea matInput rows="3" formControlName="humidityNotes"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 18 -->
+        <div
+          *ngIf="stepIndex === 18"
+          [formGroup]="trialDesignGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.control_group' | translate }}</mat-label>
+            <mat-select formControlName="controlGroup">
+              <mat-option
+                *ngFor="let o of boolSelectOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <div class="two-col">
+            <mat-form-field appearance="outline" class="grow">
+              <mat-label>{{ 'agronomist.field.num_groups' | translate }}</mat-label>
+              <input matInput type="number" formControlName="numberOfGroups" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="grow">
+              <mat-label>{{ 'agronomist.field.replications' | translate }}</mat-label>
+              <input matInput type="number" formControlName="replications" />
+            </mat-form-field>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.sample_size' | translate }}</mat-label>
+            <input matInput type="number" formControlName="sampleSizePerGroup" />
+          </mat-form-field>
+        </div>
+
+        <!-- 19 -->
+        <div
+          *ngIf="stepIndex === 19"
+          [formGroup]="trialDesignGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.plot_size' | translate }}</mat-label>
+            <input matInput formControlName="plotSize" />
+          </mat-form-field>
+          <div class="two-col">
+            <mat-form-field appearance="outline" class="grow">
+              <mat-label>{{ 'agronomist.field.duration_value' | translate }}</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="experimentDurationValue"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="grow">
+              <mat-label>{{ 'agronomist.field.duration_unit' | translate }}</mat-label>
+              <mat-select formControlName="experimentDurationUnit">
+                <mat-option value="">{{ 'agronomist.placeholder.dash' | translate }}</mat-option>
+                <mat-option *ngFor="let o of durationUnitOptions" [value]="o.value">{{
+                  o.labelKey | translate
+                }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.trial_notes' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="4"
+              formControlName="trialDesignNotes"
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 20 -->
+        <div
+          *ngIf="stepIndex === 20"
+          [formGroup]="priorKnowledgeGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.prev_experience' | translate }}</mat-label>
+            <mat-select formControlName="previousExperience">
+              <mat-option
+                *ngFor="let o of boolSelectOptions"
+                [value]="o.value"
+                >{{ o.labelKey | translate }}</mat-option
+              >
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.prev_attempts' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="4"
+              formControlName="previousAttempts"
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 21 -->
+        <div
+          *ngIf="stepIndex === 21"
+          [formGroup]="priorKnowledgeGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.assumptions' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="3"
+              formControlName="assumptionsToTest"
+            ></textarea>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.constraints' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="3"
+              formControlName="knownConstraints"
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 22 -->
+        <div
+          *ngIf="stepIndex === 22"
+          [formGroup]="freeTextGroup"
+          class="step-panel"
+        >
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'agronomist.field.additional_notes' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="5"
+              formControlName="additionalNotes"
+            ></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- 23 review -->
+        <div *ngIf="stepIndex === 23" class="step-panel review-panel">
+          <p class="review-intro">
+            {{ 'agronomist.review.intro' | translate }}
+          </p>
+          <div
+            *ngFor="let g of reviewSectionGroups()"
+            class="review-section"
+          >
+            <div class="review-section-head">
+              <h3>{{ g.sectionKey | translate }}</h3>
+              <button
+                mat-button
+                type="button"
+                color="primary"
+                (click)="goToStep(sectionStartStep[g.sectionKey])"
+              >
+                {{ 'agronomist.btn.edit' | translate }}
+              </button>
+            </div>
+            <mat-list dense>
+              <mat-list-item *ngFor="let item of g.items">
+                <span matListItemTitle>{{ item.labelKey | translate }}</span>
+                <span matListItemLine>{{ item.value }}</span>
+              </mat-list-item>
+            </mat-list>
+          </div>
+        </div>
+      </form>
+
+      <div class="nav-actions">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="back()"
+          [disabled]="stepIndex === 0 || submitting"
+        >
+          <mat-icon>arrow_back</mat-icon>
+          {{ 'agronomist.btn.back' | translate }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          *ngIf="stepIndex < totalSteps - 1"
+          (click)="next()"
+          [disabled]="submitting"
+        >
+          {{ 'agronomist.btn.next' | translate }}
+          <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          *ngIf="stepIndex === totalSteps - 1"
+          (click)="submit()"
+          [disabled]="submitting"
+        >
+          <mat-spinner
+            *ngIf="submitting"
+            diameter="20"
+            class="btn-spinner"
+          ></mat-spinner>
+          <span *ngIf="!submitting">{{ 'agronomist.btn.submit' | translate }}</span>
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

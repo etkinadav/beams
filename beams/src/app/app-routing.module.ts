@@ -19,6 +19,7 @@ import { ThreedPlannerComponent } from "./other-pages/threed-planner/threed-plan
 import { LandbotComponent } from "./other-pages/landbot/landbot.component";
 import { LaundryComponent } from "./other-pages/laundry/laundry.component";
 import { RushHourComponent } from "./other-pages/rush-hour/rush-hour.component";
+import { AgronomistWizardComponent } from "./agronomist/agronomist-wizard/agronomist-wizard.component";
 
 
 
@@ -27,6 +28,8 @@ const routes: Routes = [
     { path: "landbot", component: LandbotComponent },
     { path: "laundry", component: LaundryComponent },
     { path: "rush-hour", component: RushHourComponent },
+    { path: "agronomist", component: AgronomistWizardComponent },
+    { path: "agronomist/new", component: AgronomistWizardComponent },
 
     { path: "", component: ChooseProductComponent },
 

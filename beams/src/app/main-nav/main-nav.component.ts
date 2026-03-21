@@ -436,6 +436,12 @@ export class MainNavComponent implements OnInit, OnDestroy {
     this.router.navigate(["/rush-hour"]);
   }
 
+  goToAgronomist() {
+    this.closeDrawer();
+    this.closeProfileManu();
+    this.router.navigate(["/agronomist"]);
+  }
+
 
   updateGreeting() {
     const currentHour = new Date().getHours();

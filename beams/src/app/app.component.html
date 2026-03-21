@@ -1,1 +1,7 @@
-<app-main-nav></app-main-nav>
+<div
+  class="app-shell"
+  [attr.dir]="isRTL ? 'rtl' : 'ltr'"
+  [attr.lang]="language"
+>
+  <app-main-nav></app-main-nav>
+</div>
