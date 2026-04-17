@@ -19,6 +19,8 @@
   width: 100%;
   height: 100%;
   z-index: 0;
+  /* MapLibre marker math uses % transforms; RTL on an ancestor breaks placement in many browsers */
+  direction: ltr;
 }
 
 .apd-config-blocker {

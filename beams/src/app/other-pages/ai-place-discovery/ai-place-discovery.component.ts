@@ -138,6 +138,7 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
           this.mapsLoadError = null;
           this.mapReady = true;
           this.refreshMarkers();
+          this.scheduleMapMarkerRepaint();
           this.attachResizeHandling(el);
           this.cdr.markForCheck();
         });
@@ -175,33 +176,110 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
   useMyLocation(): void {
     this.searchError = null;
     if (!navigator.geolocation) {
-      this.searchError = "Geolocation is not supported.";
+      this.searchError = "Geolocation is not supported in this browser.";
       return;
     }
     this.locationLoading = true;
+    this.cdr.markForCheck();
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        this.userLat = pos.coords.latitude;
-        this.userLng = pos.coords.longitude;
-        this.locationLoading = false;
-        if (this.map && this.mapReady) {
-          this.map.flyTo({
-            center: [this.userLng!, this.userLat!],
-            zoom: 14,
-            essential: true,
-          });
-          this.refreshMarkers();
-        }
-        this.cdr.markForCheck();
+        this.ngZone.run(() => {
+          this.locationLoading = false;
+          const parsed = this.parseAndValidateGeolocation(pos);
+          if (!parsed) {
+            this.userLat = null;
+            this.userLng = null;
+            this.refreshMarkers();
+            this.searchError =
+              "Could not use the reported location (invalid or unreliable). Try again with precise location enabled, disable VPN, or move outdoors.";
+            this.cdr.markForCheck();
+            return;
+          }
+          const { lat, lng } = parsed;
+          this.userLat = lat;
+          this.userLng = lng;
+          if (this.map && this.mapReady) {
+            this.map.resize();
+            this.refreshMarkers();
+            this.map.flyTo({
+              center: [lng, lat],
+              zoom: 14,
+              essential: true,
+            });
+            this.scheduleMapMarkerRepaint();
+          }
+          this.cdr.markForCheck();
+        });
       },
       (err: GeolocationPositionError) => {
-        this.locationLoading = false;
-        this.searchError =
-          err.code === 1 ? "Location permission denied." : "Could not read your location.";
-        this.cdr.markForCheck();
+        this.ngZone.run(() => {
+          this.locationLoading = false;
+          this.userLat = null;
+          this.userLng = null;
+          this.refreshMarkers();
+          this.searchError = this.geolocationErrorMessage(err);
+          this.cdr.markForCheck();
+        });
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0,
+      }
     );
+  }
+
+  /**
+   * Rejects non-finite coords, out-of-range, null island, and absurd accuracy (coarse IP/VPN fallbacks).
+   */
+  private parseAndValidateGeolocation(pos: GeolocationPosition): { lat: number; lng: number } | null {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return null;
+    }
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      return null;
+    }
+    if (Math.abs(lat) < 1e-8 && Math.abs(lng) < 1e-8) {
+      return null;
+    }
+    const acc = pos.coords.accuracy;
+    if (Number.isFinite(acc) && acc > 500_000) {
+      console.warn("Geolocation rejected: accuracy too poor (m):", acc, { lat, lng });
+      return null;
+    }
+    return { lat, lng };
+  }
+
+  private geolocationErrorMessage(err: GeolocationPositionError): string {
+    switch (err.code) {
+      case err.PERMISSION_DENIED:
+        return "Location access denied. Allow location for this site in the browser settings.";
+      case err.POSITION_UNAVAILABLE:
+        return "Location unavailable. Try turning on GPS/location services, disabling VPN, or using a different browser.";
+      case err.TIMEOUT:
+        return "Location request timed out. Try again outdoors or with a stronger signal.";
+      default:
+        return "Could not read your location. Please try again.";
+    }
+  }
+
+  /** Resize + repaint after markers / camera change (markers live in the canvas container DOM). */
+  private scheduleMapMarkerRepaint(): void {
+    if (!this.map) {
+      return;
+    }
+    const map = this.map;
+    const bump = () => {
+      map.resize();
+      map.triggerRepaint();
+    };
+    requestAnimationFrame(() => {
+      bump();
+      requestAnimationFrame(bump);
+    });
+    map.once("moveend", bump);
   }
 
   private refreshMarkers(): void {
@@ -215,9 +293,19 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
     this.placeMarkers.clear();
 
     if (this.userLat != null && this.userLng != null) {
-      this.userMarker = new maplibregl.Marker({ color: "#1976d2" })
-        .setLngLat([this.userLng, this.userLat])
+      const lng = this.userLng;
+      const lat = this.userLat;
+      // Built-in SVG marker (same code path as place pins) — reliable vs custom DOM + RTL % transforms
+      this.userMarker = new maplibregl.Marker({
+        color: "#d32f2f",
+        scale: 1.15,
+        anchor: "center",
+      })
+        .setLngLat([lng, lat])
         .addTo(this.map);
+      const el = this.userMarker.getElement();
+      el.setAttribute("aria-label", "Your current location");
+      el.style.zIndex = "5";
     }
 
     for (const p of this.places) {

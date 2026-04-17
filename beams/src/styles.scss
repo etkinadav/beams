@@ -1459,3 +1459,8 @@ h4 {
   border-radius: 12px;
   overflow: hidden;
 }
+
+/* MapLibre: keep HTML markers above the map canvas when stacking contexts differ */
+.maplibregl-canvas-container .maplibregl-marker {
+  z-index: 2;
+}
