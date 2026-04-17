@@ -1,4 +1,4 @@
-const googlePlacesSearch = require("../services/googlePlacesSearch");
+const placeSearchOrchestrator = require("../services/placeSearchOrchestrator");
 const { scorePlace } = require("../helpers/placePromptScoring");
 
 const ALLOWED_CATEGORIES = ["cafe", "restaurant", "hotel", "bar", "all"];
@@ -11,6 +11,9 @@ function pickSearchBody(req) {
     longitude: b.longitude,
     radius: b.radius,
     category: b.category,
+    mapCenterLat: b.mapCenterLat,
+    mapCenterLng: b.mapCenterLng,
+    debug: b.debug,
   };
 }
 
@@ -40,6 +43,23 @@ function validate(body) {
     errors.push(`category must be one of: ${ALLOWED_CATEGORIES.join(", ")}`);
   }
 
+  let mapCenterLat = null;
+  let mapCenterLng = null;
+  if (body.mapCenterLat != null && body.mapCenterLat !== "") {
+    const m = Number(body.mapCenterLat);
+    if (Number.isFinite(m) && m >= -90 && m <= 90) {
+      mapCenterLat = m;
+    }
+  }
+  if (body.mapCenterLng != null && body.mapCenterLng !== "") {
+    const m = Number(body.mapCenterLng);
+    if (Number.isFinite(m) && m >= -180 && m <= 180) {
+      mapCenterLng = m;
+    }
+  }
+
+  const debugFlag = body.debug === true || body.debug === "true";
+
   return {
     errors,
     values: {
@@ -48,6 +68,9 @@ function validate(body) {
       longitude: lng,
       radius,
       category: catRaw,
+      mapCenterLat,
+      mapCenterLng,
+      debug: debugFlag,
     },
   };
 }
@@ -71,56 +94,66 @@ exports.search = async (req, res) => {
     });
   }
 
+  const debug =
+    values.debug === true ||
+    String(process.env.AI_PLACE_SEARCH_DEBUG || "").toLowerCase() === "true";
+
   try {
-    const { placesNormalized, metaExtra, placesStatus } = await googlePlacesSearch.searchPlaces(apiKey, values);
+    const { placesNormalized, metaExtra, placesStatus, effectiveRadiusMeters, searchDebug } =
+      await placeSearchOrchestrator.searchPlaces(apiKey, values, { debug });
 
     const ctx = {
       prompt: values.prompt,
       category: values.category,
       userLat: values.latitude,
       userLng: values.longitude,
-      radiusMeters: values.radius,
+      radiusMeters: effectiveRadiusMeters,
     };
 
     const places = placesNormalized
       .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
       .map((p) => {
-      const s = scorePlace(ctx, p);
-      const row = {
-        id: p.id,
-        name: p.name,
-        lat: p.lat,
-        lng: p.lng,
-        address: p.address,
-        rating: p.rating,
-        userRatingsTotal: p.userRatingsTotal,
-        priceLevel: p.priceLevel,
-        openNow: p.openNow,
-        types: p.types,
-        photoReference: p.photoReference,
-        photoUrl: null,
-        googleMapsUrl: p.googleMapsUrl,
-        distanceMeters: p.distanceMeters,
-        relevanceScore: s.relevanceScore,
-        matchReasons: s.matchReasons,
-        warnings: s.warnings,
-      };
-      if (s.smokingInfo) row.smokingInfo = s.smokingInfo;
-      return row;
-    });
+        const s = scorePlace(ctx, p);
+        const row = {
+          id: p.id,
+          name: p.name,
+          lat: p.lat,
+          lng: p.lng,
+          address: p.address,
+          rating: p.rating,
+          userRatingsTotal: p.userRatingsTotal,
+          priceLevel: p.priceLevel,
+          openNow: p.openNow,
+          types: p.types,
+          photoReference: p.photoReference,
+          photoUrl: null,
+          googleMapsUrl: p.googleMapsUrl,
+          distanceMeters: p.distanceMeters,
+          relevanceScore: s.relevanceScore,
+          matchReasons: s.matchReasons,
+          warnings: s.warnings,
+        };
+        if (s.smokingInfo) row.smokingInfo = s.smokingInfo;
+        return row;
+      });
 
     places.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
 
+    const meta = {
+      prompt: values.prompt,
+      location: { lat: values.latitude, lng: values.longitude },
+      radius: values.radius,
+      category: values.category,
+      totalResults: places.length,
+      placesApiStatus: placesStatus,
+      ...metaExtra,
+    };
+    if (debug && searchDebug) {
+      meta.searchDebug = searchDebug;
+    }
+
     return res.json({
-      meta: {
-        prompt: values.prompt,
-        location: { lat: values.latitude, lng: values.longitude },
-        radius: values.radius,
-        category: values.category,
-        totalResults: places.length,
-        placesApiStatus: placesStatus,
-        ...metaExtra,
-      },
+      meta,
       places,
     });
   } catch (err) {

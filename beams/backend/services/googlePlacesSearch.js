@@ -1,5 +1,4 @@
 const axios = require("axios");
-const { normalize, mentionsNightlifeArea } = require("../helpers/placePromptScoring");
 
 const TEXT_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json";
 const NEARBY_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
@@ -80,7 +79,7 @@ function normalizePlaceResult(place, userLat, userLng) {
   };
 }
 
-async function runTextSearch(apiKey, { prompt, lat, lng, radius, category }) {
+async function runLegacyTextSearch(apiKey, { prompt, lat, lng, radius, category }) {
   const type = CATEGORY_TO_TYPE[category] || null;
   const params = {
     query: String(prompt).trim(),
@@ -146,10 +145,14 @@ function dedupeByPlaceId(list) {
   return out;
 }
 
-async function searchPlaces(apiKey, body) {
+/**
+ * Legacy Places Text Search + optional Nearby fallback (unchanged behavior).
+ * Used when Gemini / Places (New) path is unavailable or fails.
+ */
+async function searchPlacesLegacy(apiKey, body) {
   const { prompt, latitude, longitude, radius, category } = body;
 
-  const primary = await runTextSearch(apiKey, {
+  const primary = await runLegacyTextSearch(apiKey, {
     prompt,
     lat: latitude,
     lng: longitude,
@@ -174,18 +177,8 @@ async function searchPlaces(apiKey, body) {
 
   const normalized = combined.map((r) => normalizePlaceResult(r, latitude, longitude));
 
-  let metaExtra = {};
-  const promptLower = normalize(prompt);
-  if (category === "hotel" && mentionsNightlifeArea(promptLower)) {
-    const barInfo = await countBarsNearby(apiKey, latitude, longitude, radius);
-    metaExtra = {
-      nearbyBarsSampleCount: barInfo.count,
-      nearbyBarsNote:
-        barInfo.count != null
-          ? "Approximate bar venues in range (first API page only; not exhaustive)."
-          : null,
-    };
-  }
+  /** Hotel/nightlife meta is attached in `placeSearchOrchestrator` to avoid duplicate work. */
+  const metaExtra = {};
 
   return {
     placesRaw: combined,
@@ -196,7 +189,9 @@ async function searchPlaces(apiKey, body) {
 }
 
 module.exports = {
-  searchPlaces,
+  searchPlacesLegacy,
+  runLegacyTextSearch,
+  countBarsNearby,
   CATEGORY_TO_TYPE,
   normalizePlaceResult,
 };
