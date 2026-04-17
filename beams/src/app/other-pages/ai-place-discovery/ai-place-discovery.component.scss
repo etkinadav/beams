@@ -1,0 +1,262 @@
+.ai-place-discovery-host {
+  display: block;
+  padding: 72px 16px 32px;
+  min-height: calc(var(--vh, 1vh) * 100);
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(38, 38, 38, 0.04) 0%, transparent 28%);
+}
+
+.apd-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.apd-header {
+  margin-bottom: 20px;
+}
+
+.apd-title {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.apd-sub {
+  margin: 0;
+  max-width: 52rem;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.card-like {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+}
+
+.apd-field-full {
+  width: 100%;
+}
+
+.apd-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.apd-row mat-form-field {
+  min-width: 160px;
+  flex: 1;
+}
+
+.apd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.apd-actions button mat-icon {
+  margin-inline-end: 4px;
+  vertical-align: middle;
+}
+
+.apd-hint {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.apd-coords {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  font-family: ui-monospace, monospace;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.apd-manual {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.apd-manual-title {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.apd-error {
+  color: #c62828;
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.apd-map-results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .apd-map-results {
+    grid-template-columns: 1fr;
+  }
+}
+
+.apd-section-title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.apd-map-note,
+.apd-map-fallback {
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.apd-map-frame {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.apd-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.apd-empty mat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  opacity: 0.5;
+}
+
+.apd-meta {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.55);
+  margin-bottom: 8px;
+}
+
+.apd-meta-note {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.55);
+  margin: 0 0 12px;
+}
+
+.apd-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.apd-card {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  border: 2px solid transparent;
+}
+
+.apd-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.apd-card-selected {
+  border-color: rgba(63, 81, 181, 0.55);
+  box-shadow: 0 4px 14px rgba(63, 81, 181, 0.2);
+}
+
+.apd-card-media img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.apd-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.apd-place-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.apd-score {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3f51b5;
+}
+
+.apd-address {
+  margin: 6px 0 8px;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 0.95rem;
+}
+
+.apd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.apd-chip {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.apd-types {
+  margin: 4px 0 8px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.apd-reasons,
+.apd-warn {
+  margin: 8px 0;
+  padding-inline-start: 18px;
+  font-size: 0.85rem;
+}
+
+.apd-reasons {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.apd-warn {
+  color: #6d4c41;
+}
+
+.apd-smoking {
+  font-size: 0.85rem;
+  margin: 8px 0;
+}
+
+.apd-card a[mat-stroked-button] {
+  margin-top: 8px;
+}
+
+.apd-map-canvas {
+  width: 100%;
+  min-height: 420px;
+  height: 420px;
+}

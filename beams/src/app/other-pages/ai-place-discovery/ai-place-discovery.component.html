@@ -1,0 +1,169 @@
+<div class="apd-wrap" [attr.dir]="isRTL ? 'rtl' : 'ltr'">
+  <header class="apd-header">
+    <h1 class="apd-title">Smart place discovery</h1>
+    <p class="apd-sub">
+      Describe what you want in plain language. Rankings combine Google Places data with light heuristics — not verified facts for
+      things like smoking policies unless the data source explicitly includes them.
+    </p>
+  </header>
+
+  <section class="apd-form card-like">
+    <mat-form-field appearance="outline" class="apd-field-full">
+      <mat-label>Prompt</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        [(ngModel)]="prompt"
+        placeholder='Example: "High quality coffee nearby" or "Hotel under 2000 ILS near nightlife"'
+      ></textarea>
+    </mat-form-field>
+
+    <div class="apd-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <mat-select [(ngModel)]="category">
+          <mat-option value="all">All</mat-option>
+          <mat-option value="cafe">Cafe</mat-option>
+          <mat-option value="restaurant">Restaurant</mat-option>
+          <mat-option value="hotel">Hotel</mat-option>
+          <mat-option value="bar">Bar</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Radius</mat-label>
+        <mat-select [(ngModel)]="radiusMeters">
+          <mat-option *ngFor="let r of radiusOptions" [value]="r">{{ r }} m</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="apd-location-block">
+      <div class="apd-actions">
+        <button mat-raised-button color="primary" type="button" (click)="useMyLocation()" [disabled]="locationLoading">
+          <mat-icon>my_location</mat-icon>
+          {{ locationLoading ? "Locating…" : "Use my location" }}
+        </button>
+        <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (click)="search()"
+          [disabled]="searchLoading || locationLoading"
+        >
+          <mat-icon>search</mat-icon>
+          Search
+        </button>
+      </div>
+      <p class="apd-hint" *ngIf="locationMessage">{{ locationMessage }}</p>
+      <p class="apd-coords" *ngIf="userLat != null && userLng != null">
+        Location: {{ userLat | number : "1.4-4" }}, {{ userLng | number : "1.4-4" }}
+      </p>
+    </div>
+
+    <div class="apd-manual" *ngIf="locationDenied || userLat == null">
+      <p class="apd-manual-title">Manual coordinates (optional)</p>
+      <div class="apd-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Latitude</mat-label>
+          <input matInput type="text" [(ngModel)]="manualLat" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Longitude</mat-label>
+          <input matInput type="text" [(ngModel)]="manualLng" />
+        </mat-form-field>
+        <button mat-button type="button" color="primary" (click)="applyManualLocation()">Apply</button>
+      </div>
+    </div>
+
+    <p class="apd-error" *ngIf="searchError">{{ searchError }}</p>
+  </section>
+
+  <div class="apd-map-results">
+    <div class="apd-map-panel card-like">
+      <h2 class="apd-section-title">Map (MapTiler)</h2>
+      <p class="apd-map-note" *ngIf="mapsLoadError">{{ mapsLoadError }}</p>
+      <p class="apd-map-note" *ngIf="!maptilerConfigured && !mapsLoadError">
+        Configure <code>maptilerApiKey</code> (MAPTILER_API_KEY) in <code>environment</code> to show the map. Optional:
+        <code>maptilerMapId</code> (MAPTILER_MAP_ID) for a custom style; otherwise the default MapTiler basemap is used.
+      </p>
+      <div class="apd-map-frame" *ngIf="maptilerConfigured && !mapsLoadError">
+        <div #mapContainer class="apd-map-canvas"></div>
+      </div>
+      <p class="apd-map-fallback" *ngIf="maptilerConfigured && !mapsLoadError && !mapReady">Loading map…</p>
+    </div>
+
+    <div class="apd-results-panel card-like">
+      <h2 class="apd-section-title">Results</h2>
+
+      <div class="apd-state" *ngIf="searchLoading">
+        <mat-spinner diameter="40"></mat-spinner>
+        <span>Searching places…</span>
+      </div>
+
+      <div class="apd-state apd-empty" *ngIf="!searchLoading && hasSearched && places.length === 0 && !searchError">
+        <mat-icon>place</mat-icon>
+        <p>No places matched in this area. Try a wider radius or a different prompt.</p>
+      </div>
+
+      <div class="apd-state apd-empty" *ngIf="!searchLoading && !hasSearched && !searchError">
+        <mat-icon>travel_explore</mat-icon>
+        <p>Enter a prompt and search to see ranked places.</p>
+      </div>
+
+      <div class="apd-meta" *ngIf="meta && !searchLoading">
+        <span *ngIf="meta.placesApiStatus">API: {{ meta.placesApiStatus }}</span>
+        <span *ngIf="meta.nearbyBarsSampleCount != null">
+          · Bars in sample (area hint): {{ meta.nearbyBarsSampleCount }}
+        </span>
+      </div>
+      <p class="apd-meta-note" *ngIf="meta?.nearbyBarsNote">{{ meta?.nearbyBarsNote }}</p>
+
+      <div class="apd-cards">
+        <mat-card
+          *ngFor="let p of places; trackBy: trackByPlaceId"
+          class="apd-card"
+          [id]="'place-card-' + p.id"
+          [class.apd-card-selected]="p.id === selectedPlaceId"
+          (click)="selectCard(p)"
+        >
+          <div class="apd-card-media" *ngIf="p.photoUrl">
+            <img [src]="p.photoUrl" [alt]="p.name" loading="lazy" />
+          </div>
+          <mat-card-content>
+            <div class="apd-card-head">
+              <h3 class="apd-place-name">{{ p.name }}</h3>
+              <span class="apd-score" *ngIf="p.relevanceScore != null">Score {{ p.relevanceScore }}</span>
+            </div>
+            <p class="apd-address">{{ p.address || "—" }}</p>
+            <div class="apd-chips">
+              <span class="apd-chip" *ngIf="p.rating != null">
+                ★ {{ p.rating | number : "1.1-1" }}
+                <ng-container *ngIf="p.userRatingsTotal">({{ p.userRatingsTotal }} ratings)</ng-container>
+              </span>
+              <span class="apd-chip" *ngIf="p.distanceMeters != null">{{ p.distanceMeters }} m</span>
+              <span class="apd-chip" *ngIf="p.openNow === true">Open now</span>
+              <span class="apd-chip" *ngIf="p.openNow === false">May be closed</span>
+              <span class="apd-chip">Price: {{ priceLevelLabel(p.priceLevel) }}</span>
+            </div>
+            <p class="apd-types" *ngIf="p.types?.length">
+              <small>{{ p.types.slice(0, 8).join(" · ") }}</small>
+            </p>
+            <ul class="apd-reasons" *ngIf="p.matchReasons?.length">
+              <li *ngFor="let r of p.matchReasons">{{ r }}</li>
+            </ul>
+            <ul class="apd-warn" *ngIf="p.warnings?.length">
+              <li *ngFor="let w of p.warnings">{{ w }}</li>
+            </ul>
+            <p class="apd-smoking" *ngIf="p.smokingInfo === 'unknown'">
+              <strong>Smoking:</strong> availability not verified by Google data.
+            </p>
+            <a *ngIf="p.googleMapsUrl" mat-stroked-button color="primary" [href]="p.googleMapsUrl" target="_blank" rel="noopener">
+              Open in Google Maps
+            </a>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

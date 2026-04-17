@@ -14,6 +14,7 @@ const woodsRoutes = require("./routes/woods");
 const threedplannerRoutes = require("./routes/threedplanner");
 const landbotRoutes = require("./routes/landbot");
 const agronomistQueryRoutes = require("./routes/agronomistquery");
+const aiPlaceSearchRoutes = require("./routes/aiPlaceSearch");
 
 require('dotenv').config();
 
@@ -56,6 +57,7 @@ app.use("/api/woods", woodsRoutes);
 app.use("/api/threedplanner", threedplannerRoutes);
 app.use("/api/landbot", landbotRoutes);
 app.use("/api/agronomist-query", agronomistQueryRoutes);
+app.use("/api/ai-place-search", aiPlaceSearchRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

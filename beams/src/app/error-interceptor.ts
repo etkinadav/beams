@@ -35,6 +35,11 @@ export class ErrorInterceptor implements HttpInterceptor {
                     return throwError(error); // Return error without showing dialog
                 }
 
+                // Inline handling on feature pages (avoid duplicate global dialog)
+                if (error.url && error.url.includes('/api/ai-place-search')) {
+                    return throwError(error);
+                }
+
                 let errorMessage = "unknown_error"
                 console.log("error from interceptor", error);
                 if (error.error.message) {

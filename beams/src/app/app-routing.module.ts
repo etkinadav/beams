@@ -20,6 +20,7 @@ import { LandbotComponent } from "./other-pages/landbot/landbot.component";
 import { LaundryComponent } from "./other-pages/laundry/laundry.component";
 import { RushHourComponent } from "./other-pages/rush-hour/rush-hour.component";
 import { AgronomistWizardComponent } from "./agronomist/agronomist-wizard/agronomist-wizard.component";
+import { AiPlaceDiscoveryComponent } from "./other-pages/ai-place-discovery/ai-place-discovery.component";
 
 
 
@@ -30,6 +31,7 @@ const routes: Routes = [
     { path: "rush-hour", component: RushHourComponent },
     { path: "agronomist", component: AgronomistWizardComponent },
     { path: "agronomist/new", component: AgronomistWizardComponent },
+    { path: "ai-place-discovery", component: AiPlaceDiscoveryComponent },
 
     { path: "", component: ChooseProductComponent },
 

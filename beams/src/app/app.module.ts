@@ -37,6 +37,7 @@ import { LandbotComponent } from "./other-pages/landbot/landbot.component";
 import { LaundryComponent } from "./other-pages/laundry/laundry.component";
 import { RushHourComponent } from "./other-pages/rush-hour/rush-hour.component";
 import { AgronomistWizardComponent } from "./agronomist/agronomist-wizard/agronomist-wizard.component";
+import { AiPlaceDiscoveryComponent } from "./other-pages/ai-place-discovery/ai-place-discovery.component";
 import { PhoneComponent } from "./dialog/phone/phone.component";
 import { CopyScanComponent } from "./dialog/scan-copy/scan-copy.component";
 import { PropertyExplainComponent } from "./dialog/property-explain/property-explain.component";
@@ -64,6 +65,7 @@ import { ShoppingCartComponent } from './main-nav/shopping-cart/shopping-cart.co
     LaundryComponent,
     RushHourComponent,
     AgronomistWizardComponent,
+    AiPlaceDiscoveryComponent,
     PreloginComponent,
     SocialComponent,
     TAndCComponent,

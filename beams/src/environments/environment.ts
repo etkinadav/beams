@@ -7,7 +7,11 @@ const host = window.location.host;
 
 export const environment = {
   production: false,
-  apiUrl: '/api'
+  apiUrl: '/api',
+  /** MapTiler: החלף את הריק במפתח (בין המרכאות). סימון: {{putkeyhere}} */
+  maptilerApiKey: '',
+  /** מזהה סגנון מ-MapTiler; אופציונלי — {{putkeyhere}} או השאר ריק ל־streets-v2 */
+  maptilerMapId: '',
 };
 
 /*
