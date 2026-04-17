@@ -9,9 +9,9 @@ export const environment = {
   production: false,
   apiUrl: '/api',
   /** MapTiler: החלף את הריק במפתח (בין המרכאות). סימון: {{putkeyhere}} */
-  maptilerApiKey: '',
+  maptilerApiKey: 'vcb9jeTslt2RyaGbzwU8',
   /** מזהה סגנון מ-MapTiler; אופציונלי — {{putkeyhere}} או השאר ריק ל־streets-v2 */
-  maptilerMapId: '',
+  maptilerMapId: '019d9956-ca88-7f2f-b4c7-28e76a5eb49c',
 };
 
 /*

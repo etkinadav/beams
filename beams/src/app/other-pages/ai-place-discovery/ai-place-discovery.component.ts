@@ -9,46 +9,43 @@ import {
   ViewChild,
 } from "@angular/core";
 import * as maplibregl from "maplibre-gl";
-import type { Map as MaplibreMap, Marker } from "maplibre-gl";
+import type { Map as MaplibreMap, Marker, Popup } from "maplibre-gl";
 import { Subscription } from "rxjs";
 import { DirectionService } from "../../direction.service";
 import { environment } from "../../../environments/environment";
-import { AiPlaceCategory, AiPlaceResult, AiPlaceSearchResponse } from "../../models/ai-place-search.model";
+import { AiPlaceCategory, AiPlaceResult } from "../../models/ai-place-search.model";
 import { AiPlaceSearchService } from "../../services/ai-place-search.service";
-import { buildMapTilerStyleUrl } from "./maptiler-map.config";
+import {
+  buildMapTilerStyleUrl,
+  isConfiguredMapTilerApiKey,
+  sanitizeMapTilerMapId,
+} from "./maptiler-map.config";
 
 const SESSION_PROMPT_KEY = "ai-place-discovery-prompt";
-const DEFAULT_CENTER = { lat: 32.0853, lng: 34.7818 };
+const DEFAULT_CENTER: [number, number] = [34.7818, 32.0853]; // lng, lat — Tel Aviv
+const SEARCH_RADIUS = 1500;
+const SEARCH_CATEGORY: AiPlaceCategory = "all";
 
 @Component({
   selector: "app-ai-place-discovery",
   templateUrl: "./ai-place-discovery.component.html",
   styleUrls: ["./ai-place-discovery.component.scss"],
-  host: { class: "ai-place-discovery-host" },
 })
 export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild("mapContainer") mapContainerRef?: ElementRef<HTMLElement>;
+  @ViewChild("mapContainer", { static: true }) mapContainerRef!: ElementRef<HTMLElement>;
 
   isRTL = true;
   private directionSub?: Subscription;
+  private resizeObserver: ResizeObserver | null = null;
+  private readonly onWindowResize = () => this.map?.resize();
 
   prompt = "";
-  category: AiPlaceCategory = "all";
-  radiusMeters = 1500;
-  radiusOptions = [500, 1000, 2000, 5000];
-
   userLat: number | null = null;
   userLng: number | null = null;
   locationLoading = false;
-  locationMessage: string | null = null;
-  locationDenied = false;
 
-  manualLat: string = "";
-  manualLng: string = "";
-
-  /** True when MapTiler API key is set in environment (required to instantiate the map). */
   get maptilerConfigured(): boolean {
-    return !!environment.maptilerApiKey?.trim();
+    return isConfiguredMapTilerApiKey(environment.maptilerApiKey);
   }
 
   mapReady = false;
@@ -57,14 +54,13 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
   private map: MaplibreMap | null = null;
   private userMarker: Marker | null = null;
   private readonly placeMarkers = new Map<string, Marker>();
+  private activePopup: Popup | null = null;
 
   places: AiPlaceResult[] = [];
-  meta: AiPlaceSearchResponse["meta"] | null = null;
   selectedPlaceId: string | null = null;
 
   searchLoading = false;
   searchError: string | null = null;
-  hasSearched = false;
 
   constructor(
     private directionService: DirectionService,
@@ -75,24 +71,29 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
 
   ngOnInit(): void {
     const saved = sessionStorage.getItem(SESSION_PROMPT_KEY);
-    if (saved) this.prompt = saved;
-
+    if (saved) {
+      this.prompt = saved;
+    }
     this.directionSub = this.directionService.direction$.subscribe((d) => {
       this.isRTL = d === "rtl";
     });
-
-    this.offerGeolocation();
   }
 
   ngAfterViewInit(): void {
     if (!this.maptilerConfigured) {
       return;
     }
-    queueMicrotask(() => this.initMap());
+    // Defer until layout / fixed fullscreen dimensions are applied (fixes 0×0 map canvas).
+    setTimeout(() => this.initMap(), 0);
   }
 
   ngOnDestroy(): void {
     this.directionSub?.unsubscribe();
+    window.removeEventListener("resize", this.onWindowResize);
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    this.activePopup?.remove();
+    this.activePopup = null;
     this.destroyMap();
   }
 
@@ -114,98 +115,93 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
       return;
     }
 
-    const styleUrl = buildMapTilerStyleUrl(
-      environment.maptilerApiKey!,
-      environment.maptilerMapId || null
-    );
+    const apiKey = environment.maptilerApiKey!.trim();
+    const mapId = sanitizeMapTilerMapId(environment.maptilerMapId);
+    const styleUrl = buildMapTilerStyleUrl(apiKey, mapId);
 
     const center: [number, number] =
       this.userLng != null && this.userLat != null
         ? [this.userLng, this.userLat]
-        : [DEFAULT_CENTER.lng, DEFAULT_CENTER.lat];
+        : DEFAULT_CENTER;
 
     try {
       this.map = new maplibregl.Map({
         container: el,
         style: styleUrl,
         center,
-        zoom: 14,
+        zoom: 13,
       });
 
       this.map.on("load", () => {
         this.ngZone.run(() => {
+          this.map?.resize();
           this.mapsLoadError = null;
           this.mapReady = true;
           this.refreshMarkers();
+          this.attachResizeHandling(el);
           this.cdr.markForCheck();
         });
       });
 
       this.map.on("error", (e) => {
         console.warn("MapLibre error:", e);
+        const msg =
+          typeof (e as { error?: unknown }).error === "string"
+            ? ((e as { error: string }).error as string)
+            : (e as { error?: { message?: string } }).error?.message;
+        if (msg && /style|key|unauthorized|forbidden/i.test(msg)) {
+          this.ngZone.run(() => {
+            this.mapsLoadError = msg;
+            this.cdr.markForCheck();
+          });
+        }
       });
     } catch (e: unknown) {
       this.mapsLoadError = e instanceof Error ? e.message : "Failed to initialize map.";
     }
   }
 
-  offerGeolocation(): void {
-    this.locationMessage = "Use your location for better nearby results.";
+  private attachResizeHandling(el: HTMLElement): void {
+    window.addEventListener("resize", this.onWindowResize);
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.map) {
+        this.map.resize();
+      }
+    });
+    this.resizeObserver.observe(el);
   }
 
   useMyLocation(): void {
+    this.searchError = null;
     if (!navigator.geolocation) {
-      this.locationMessage = "Geolocation is not supported in this browser.";
+      this.searchError = "Geolocation is not supported.";
       return;
     }
     this.locationLoading = true;
-    this.locationDenied = false;
-    this.locationMessage = null;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         this.userLat = pos.coords.latitude;
         this.userLng = pos.coords.longitude;
         this.locationLoading = false;
-        this.maybeFitAfterLocation();
-        this.refreshMarkers();
+        if (this.map && this.mapReady) {
+          this.map.flyTo({
+            center: [this.userLng!, this.userLat!],
+            zoom: 14,
+            essential: true,
+          });
+          this.refreshMarkers();
+        }
+        this.cdr.markForCheck();
       },
       (err: GeolocationPositionError) => {
         this.locationLoading = false;
-        this.locationDenied = true;
-        this.locationMessage =
-          err.code === 1
-            ? "Location permission denied. Enter coordinates manually below, or adjust browser settings."
-            : "Could not read your location.";
+        this.searchError =
+          err.code === 1 ? "Location permission denied." : "Could not read your location.";
+        this.cdr.markForCheck();
       },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
     );
-  }
-
-  applyManualLocation(): void {
-    const lat = parseFloat(this.manualLat);
-    const lng = parseFloat(this.manualLng);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      this.locationMessage = "Enter valid numeric latitude and longitude.";
-      return;
-    }
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      this.locationMessage = "Latitude must be −90…90 and longitude −180…180.";
-      return;
-    }
-    this.userLat = lat;
-    this.userLng = lng;
-    this.locationDenied = false;
-    this.locationMessage = "Using manual coordinates.";
-    this.maybeFitAfterLocation();
-    this.refreshMarkers();
-  }
-
-  private maybeFitAfterLocation(): void {
-    setTimeout(() => {
-      if (this.map && this.mapReady && this.userLat != null && this.userLng != null) {
-        this.map.flyTo({ center: [this.userLng, this.userLat], zoom: 14 });
-      }
-    }, 200);
   }
 
   private refreshMarkers(): void {
@@ -237,34 +233,52 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
       marker.getElement().style.cursor = "pointer";
       marker.getElement().addEventListener("click", (ev) => {
         ev.stopPropagation();
-        this.ngZone.run(() => this.onMarkerClick(p.id));
+        this.ngZone.run(() => this.openPlacePopup(p));
       });
       this.placeMarkers.set(p.id, marker);
     }
   }
 
-  onMarkerClick(placeId: string): void {
-    this.selectedPlaceId = placeId;
+  private openPlacePopup(p: AiPlaceResult): void {
+    this.selectedPlaceId = p.id;
     this.refreshMarkers();
-    const p = this.places.find((x) => x.id === placeId);
-    if (p && this.map && this.mapReady && Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
-      this.map.flyTo({
-        center: [p.lng, p.lat],
-        zoom: Math.max(this.map.getZoom(), 15),
-        essential: true,
-      });
-    }
-    const el = document.getElementById(`place-card-${placeId}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    this.activePopup?.remove();
+    const safeName = this.escapeHtml(p.name || "Place");
+    const safeAddr = this.escapeHtml(p.address || "");
+    const rating =
+      p.rating != null
+        ? `<div class="apd-pop-rating">★ ${p.rating.toFixed(1)}${
+            p.userRatingsTotal != null ? ` (${p.userRatingsTotal})` : ""
+          }</div>`
+        : "";
+    const link =
+      p.googleMapsUrl != null && /^https:\/\//i.test(p.googleMapsUrl)
+        ? `<p style="margin:8px 0 0"><a href="${encodeURI(
+            p.googleMapsUrl
+          )}" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></p>`
+        : "";
+    const html = `<div style="font-family:system-ui,sans-serif;font-size:14px;line-height:1.35;max-width:260px">
+      <strong>${safeName}</strong>${rating}
+      <div style="margin-top:6px;color:#444">${safeAddr}</div>${link}</div>`;
+
+    this.activePopup = new maplibregl.Popup({ maxWidth: "280px", closeButton: true })
+      .setLngLat([p.lng, p.lat])
+      .setHTML(html)
+      .addTo(this.map!);
   }
 
-  selectCard(p: AiPlaceResult): void {
-    this.onMarkerClick(p.id);
+  private escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
   search(): void {
+    this.searchError = null;
     if (this.userLat == null || this.userLng == null) {
-      this.searchError = "Set your location or enter coordinates before searching.";
+      this.searchError = "Use “Use my location” first.";
       return;
     }
     const trimmed = this.prompt.trim();
@@ -275,29 +289,28 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
 
     sessionStorage.setItem(SESSION_PROMPT_KEY, trimmed);
     this.searchLoading = true;
-    this.searchError = null;
-    this.hasSearched = true;
     this.places = [];
-    this.meta = null;
     this.selectedPlaceId = null;
+    this.activePopup?.remove();
+    this.activePopup = null;
 
     this.aiPlaceSearch
       .search({
         prompt: trimmed,
         latitude: this.userLat,
         longitude: this.userLng,
-        radius: this.radiusMeters,
-        category: this.category,
+        radius: SEARCH_RADIUS,
+        category: SEARCH_CATEGORY,
       })
       .subscribe({
         next: (res) => {
           this.searchLoading = false;
-          this.meta = res.meta;
           this.places = res.places || [];
           setTimeout(() => {
             this.refreshMarkers();
             this.fitMapToResults();
-          }, 100);
+          }, 50);
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.searchLoading = false;
@@ -307,6 +320,7 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
             err?.message ||
             "Search failed.";
           this.searchError = typeof msg === "string" ? msg : "Search failed.";
+          this.cdr.markForCheck();
         },
       });
   }
@@ -315,6 +329,7 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
     if (!this.map || !this.mapReady || this.userLat == null || this.userLng == null) {
       return;
     }
+    this.map.resize();
     if (this.places.length === 0) {
       this.map.flyTo({ center: [this.userLng, this.userLat], zoom: 14, essential: true });
       return;
@@ -326,15 +341,6 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
         bounds.extend([p.lng, p.lat]);
       }
     }
-    this.map.fitBounds(bounds, { padding: 56, maxZoom: 16, duration: 600 });
-  }
-
-  priceLevelLabel(level: number | null): string {
-    if (level == null) return "—";
-    return Array(Math.min(4, level) + 1).join("$") + (level >= 4 ? "+" : "");
-  }
-
-  trackByPlaceId(_i: number, p: AiPlaceResult): string {
-    return p.id;
+    this.map.fitBounds(bounds, { padding: { top: 100, right: 48, bottom: 120, left: 48 }, maxZoom: 16, duration: 500 });
   }
 }

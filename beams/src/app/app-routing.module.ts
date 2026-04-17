@@ -32,6 +32,7 @@ const routes: Routes = [
     { path: "agronomist", component: AgronomistWizardComponent },
     { path: "agronomist/new", component: AgronomistWizardComponent },
     { path: "ai-place-discovery", component: AiPlaceDiscoveryComponent },
+    { path: "map", component: AiPlaceDiscoveryComponent },
 
     { path: "", component: ChooseProductComponent },
 

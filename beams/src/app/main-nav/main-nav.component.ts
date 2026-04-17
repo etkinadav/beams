@@ -54,6 +54,7 @@ export class MainNavComponent implements OnInit, OnDestroy {
   isThreeDPlannerPage = false;
   isLaundryPage = false;
   isRushHourPage = false;
+  isAiPlaceDiscoveryPage = false;
   private defaultProfileUrl = "../../assets/images/profile-default.png";
   isLoggedOutLoading: boolean = false;
   
@@ -90,7 +91,9 @@ export class MainNavComponent implements OnInit, OnDestroy {
         this.isThreeDPlannerPage = event.urlAfterRedirects === '/threedplanner';
         this.isLaundryPage = event.urlAfterRedirects === '/laundry';
         this.isRushHourPage = event.urlAfterRedirects === '/rush-hour';
-        
+        this.isAiPlaceDiscoveryPage =
+          event.urlAfterRedirects === '/ai-place-discovery' || event.urlAfterRedirects === '/map';
+
         // Set language to English when on laundry page
         if (this.isLaundryPage) {
           this.directionService.toLanguageDirection('en');
