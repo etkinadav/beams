@@ -1,5 +1,10 @@
 const placeSearchOrchestrator = require("../services/placeSearchOrchestrator");
-const { scorePlace } = require("../helpers/placePromptScoring");
+const {
+  scorePlace,
+  analyzePromptIntent,
+  placeMatchesStrictVeganIntent,
+  haversineMeters,
+} = require("../helpers/placePromptScoring");
 
 const ALLOWED_CATEGORIES = ["cafe", "restaurant", "hotel", "bar", "all"];
 
@@ -102,40 +107,60 @@ exports.search = async (req, res) => {
     const { placesNormalized, metaExtra, placesStatus, effectiveRadiusMeters, searchDebug } =
       await placeSearchOrchestrator.searchPlaces(apiKey, values, { debug });
 
+    const intent = analyzePromptIntent(values.prompt);
+    const planRadiusMeters = effectiveRadiusMeters;
+
+    let candidates = placesNormalized.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+
+    const maxAllowedMeters = planRadiusMeters * 1.5;
+    candidates = candidates.filter((p) => {
+      const dist =
+        p.distanceMeters != null && Number.isFinite(p.distanceMeters)
+          ? p.distanceMeters
+          : haversineMeters(values.latitude, values.longitude, p.lat, p.lng);
+      if (dist == null || Number.isNaN(dist)) return true;
+      return dist <= maxAllowedMeters;
+    });
+
+    if (intent.isStrictVeganQuery) {
+      candidates = candidates.filter((p) => placeMatchesStrictVeganIntent(p));
+    }
+
     const ctx = {
       prompt: values.prompt,
       category: values.category,
       userLat: values.latitude,
       userLng: values.longitude,
-      radiusMeters: effectiveRadiusMeters,
+      radiusMeters: planRadiusMeters,
+      isStrictQuery: intent.isStrictQuery,
+      isStrictVeganQuery: intent.isStrictVeganQuery,
+      mentionsVeganIntent: intent.mentionsVeganIntent,
     };
 
-    const places = placesNormalized
-      .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
-      .map((p) => {
-        const s = scorePlace(ctx, p);
-        const row = {
-          id: p.id,
-          name: p.name,
-          lat: p.lat,
-          lng: p.lng,
-          address: p.address,
-          rating: p.rating,
-          userRatingsTotal: p.userRatingsTotal,
-          priceLevel: p.priceLevel,
-          openNow: p.openNow,
-          types: p.types,
-          photoReference: p.photoReference,
-          photoUrl: null,
-          googleMapsUrl: p.googleMapsUrl,
-          distanceMeters: p.distanceMeters,
-          relevanceScore: s.relevanceScore,
-          matchReasons: s.matchReasons,
-          warnings: s.warnings,
-        };
-        if (s.smokingInfo) row.smokingInfo = s.smokingInfo;
-        return row;
-      });
+    const places = candidates.map((p) => {
+      const s = scorePlace(ctx, p);
+      const row = {
+        id: p.id,
+        name: p.name,
+        lat: p.lat,
+        lng: p.lng,
+        address: p.address,
+        rating: p.rating,
+        userRatingsTotal: p.userRatingsTotal,
+        priceLevel: p.priceLevel,
+        openNow: p.openNow,
+        types: p.types,
+        photoReference: p.photoReference,
+        photoUrl: null,
+        googleMapsUrl: p.googleMapsUrl,
+        distanceMeters: p.distanceMeters,
+        relevanceScore: s.relevanceScore,
+        matchReasons: s.matchReasons,
+        warnings: s.warnings,
+      };
+      if (s.smokingInfo) row.smokingInfo = s.smokingInfo;
+      return row;
+    });
 
     places.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
 

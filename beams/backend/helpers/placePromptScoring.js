@@ -69,6 +69,74 @@ function wantsLuxury(promptLower) {
   return /\bluxury\b|\b5\s*star\b|\bfive star\b|\bupscale\b|\bhigh end\b/.test(promptLower);
 }
 
+/**
+ * Strong constraint language in the user prompt.
+ */
+function detectStrictQuery(promptLower) {
+  return /\bonly\b|\bstrictly\b|\bexclusively\b|100\s*%|\bfully\b/.test(promptLower);
+}
+
+/**
+ * User cares about vegan / plant-based food (broad).
+ */
+function detectVeganFoodIntent(promptLower) {
+  return /\bvegan\b|\bplant[- ]based\b|\bplantbased\b|\bwfpb\b|\bwhole[- ]food\s+plant\b/.test(
+    promptLower
+  );
+}
+
+/**
+ * Strict vegan-style requirement: must filter/rank aggressively (e.g. "only vegan", "strictly plant-based").
+ */
+function detectStrictVeganQuery(promptLower) {
+  const mentionsVegan = detectVeganFoodIntent(promptLower);
+  if (!mentionsVegan) return false;
+  const strict = detectStrictQuery(promptLower);
+  const explicit =
+    /\bonly\s+(a\s+)?(vegan|plant[- ]based|plantbased)\b/.test(promptLower) ||
+    /\b(vegan|plant[- ]based)\s+only\b/.test(promptLower) ||
+    /\bstrictly\s+(vegan|plant[- ]based)\b/.test(promptLower) ||
+    /\b100\s*%\s*vegan\b/.test(promptLower) ||
+    /\bfully\s+vegan\b/.test(promptLower);
+  return strict || explicit;
+}
+
+/**
+ * @param {string} prompt
+ * @returns {{ promptLower: string, isStrictQuery: boolean, isStrictVeganQuery: boolean, mentionsVeganIntent: boolean }}
+ */
+function analyzePromptIntent(prompt) {
+  const promptLower = normalize(prompt);
+  return {
+    promptLower,
+    isStrictQuery: detectStrictQuery(promptLower),
+    isStrictVeganQuery: detectStrictVeganQuery(promptLower),
+    mentionsVeganIntent: detectVeganFoodIntent(promptLower),
+  };
+}
+
+/**
+ * Heuristic: place strongly matches vegan/plant-based intent (name, address, Google types).
+ * Reviews are not available on our normalized place shape.
+ */
+function placeMatchesStrictVeganIntent(place) {
+  const name = normalize(place.name || "");
+  const address = normalize(place.address || "");
+  const text = `${name} ${address}`;
+  if (/\bvegan\b/.test(text)) return true;
+  if (/\bplant[- ]based\b|\bplantbased\b/.test(text)) return true;
+  if (/\bplant\b/.test(name) && /\b(cafe|restaurant|kitchen|bistro|bar|grill|food|eatery|diner)\b/.test(name)) {
+    return true;
+  }
+  const types = Array.isArray(place.types) ? place.types : [];
+  for (const raw of types) {
+    const t = String(raw).toLowerCase();
+    if (t.includes("vegan")) return true;
+    if (t.includes("vegetarian")) return true;
+  }
+  return false;
+}
+
 function haversineMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -104,7 +172,10 @@ function priceLevelToHotelBandIls(priceLevel) {
  * @param {string} ctx.category - cafe|restaurant|hotel|bar|all
  * @param {number} ctx.userLat
  * @param {number} ctx.userLng
- * @param {number} ctx.radiusMeters
+ * @param {number} ctx.radiusMeters - plan radius (e.g. from Gemini), meters
+ * @param {boolean} [ctx.isStrictQuery]
+ * @param {boolean} [ctx.isStrictVeganQuery]
+ * @param {boolean} [ctx.mentionsVeganIntent]
  * @param {object} place - normalized place from Google
  */
 function scorePlace(ctx, place) {
@@ -113,6 +184,10 @@ function scorePlace(ctx, place) {
   const warnings = [];
 
   let score = 50;
+
+  const strict = ctx.isStrictQuery === true;
+  const strictVegan = ctx.isStrictVeganQuery === true;
+  const mentionsVegan = ctx.mentionsVeganIntent === true;
 
   const rating = typeof place.rating === "number" ? place.rating : null;
   const total = typeof place.userRatingsTotal === "number" ? place.userRatingsTotal : 0;
@@ -123,22 +198,38 @@ function scorePlace(ctx, place) {
       ? place.distanceMeters
       : haversineMeters(ctx.userLat, ctx.userLng, place.lat, place.lng);
 
+  const radiusM = Math.max(ctx.radiusMeters != null ? Number(ctx.radiusMeters) : 1500, 1);
+
+  const ratingWeight = strict ? 6 : 12;
   if (rating != null) {
-    score += (rating - 3) * 12;
-    if (rating >= 4.3) matchReasons.push("Strong Google Maps rating");
-    else if (rating >= 4.0) matchReasons.push("Solid Google Maps rating");
+    score += (rating - 3) * ratingWeight;
+    if (!strict) {
+      if (rating >= 4.3) matchReasons.push("Strong Google Maps rating");
+      else if (rating >= 4.0) matchReasons.push("Solid Google Maps rating");
+    } else if (rating >= 4.2) {
+      matchReasons.push("Solid rating (downweighted for strict query)");
+    }
   }
 
+  const reviewCap = strict ? 8 : 15;
+  const reviewMul = strict ? 3 : 6;
   if (total > 0) {
-    score += Math.min(15, Math.log10(total + 1) * 6);
-    if (total >= 100) matchReasons.push("Many user ratings");
+    score += Math.min(reviewCap, Math.log10(total + 1) * reviewMul);
+    if (!strict && total >= 100) matchReasons.push("Many user ratings");
   }
 
-  // Distance: closer is better within search radius
+  // Distance: bonus inside plan radius; penalty beyond (hard drop >1.5× radius happens in controller)
   if (typeof dist === "number" && !Number.isNaN(dist)) {
-    const proximity = Math.max(0, 1 - dist / Math.max(ctx.radiusMeters, 1));
-    score += proximity * 18;
-    if (dist < 400) matchReasons.push("Close to your location");
+    if (dist <= radiusM) {
+      const proximity = Math.max(0, 1 - dist / radiusM);
+      score += proximity * 18;
+      if (dist < 400) matchReasons.push("Close to your location");
+    } else if (dist <= radiusM * 1.5) {
+      const overRatio = (dist - radiusM) / radiusM;
+      const penalty = Math.min(40, Math.round(20 + overRatio * 20));
+      score -= penalty;
+      matchReasons.push("Distance penalty applied");
+    }
   }
 
   // Category / type alignment
@@ -158,6 +249,37 @@ function scorePlace(ctx, place) {
   if (cat === "bar" && types.includes("bar")) {
     score += 12;
     matchReasons.push("Bar category match");
+  }
+
+  const typesLower = types.map((t) => String(t).toLowerCase());
+  const nameNorm = normalize(place.name || "");
+  const hasVeganInName = /\bvegan\b/.test(nameNorm);
+  const hasPlantBasedInName = /\bplant[- ]based\b|\bplantbased\b/.test(nameNorm);
+  const hasPartialVeg =
+    /\bveggie\b|\bvegetarian\b/.test(nameNorm) || typesLower.some((t) => t.includes("vegetarian"));
+  const veganHeuristicMatch = placeMatchesStrictVeganIntent(place);
+
+  if (mentionsVegan || strictVegan) {
+    if (hasVeganInName) {
+      score += 30;
+      matchReasons.push("Name matches vegan intent");
+    } else if (hasPlantBasedInName) {
+      score += 20;
+      matchReasons.push("Strong plant-based keyword in name");
+    } else if (hasPartialVeg) {
+      score += 10;
+      matchReasons.push("Partial match to vegan/vegetarian intent");
+    } else if (veganHeuristicMatch) {
+      score += 15;
+      matchReasons.push("Types or address suggest vegan/vegetarian venue");
+    } else if (mentionsVegan && !strictVegan) {
+      score -= 30;
+      matchReasons.push("Weak relevance to vegan intent");
+    }
+
+    if (strictVegan && veganHeuristicMatch) {
+      matchReasons.push("Matched strict vegan filter");
+    }
   }
 
   if (mentionsCoffeeQuality(promptLower)) {
@@ -216,7 +338,7 @@ function scorePlace(ctx, place) {
 
   return {
     relevanceScore: score,
-    matchReasons: [...new Set(matchReasons)].slice(0, 6),
+    matchReasons: [...new Set(matchReasons)].slice(0, 10),
     warnings: [...new Set(warnings)].slice(0, 6),
     smokingInfo,
   };
@@ -229,5 +351,7 @@ module.exports = {
   mentionsCoffeeQuality,
   mentionsQuietWork,
   haversineMeters,
+  analyzePromptIntent,
+  placeMatchesStrictVeganIntent,
   scorePlace,
 };

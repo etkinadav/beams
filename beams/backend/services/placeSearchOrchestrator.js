@@ -14,42 +14,6 @@ const CATEGORY_MERGE = {
 };
 
 /**
- * TEMPORARY DEBUG — set to `false` to restore normal flow (Gemini → Places New → optional legacy).
- * While `true`:
- * - No Google API calls at all (no Places New, no legacy text/nearby, no countBarsNearby).
- * - Only Gemini planning runs; response is empty places + searchDebug.geminiPlan when validation succeeds.
- */
-const TEMP_DEBUG_HARD_STOP_AFTER_GEMINI_PLAN = true;
-
-/**
- * @param {object} values
- * @param {boolean} debug
- * @param {object} partial - extra searchDebug fields
- */
-function emptyResultWithDebug(values, debug, partial) {
-  const effectiveRadiusMeters = partial.effectiveRadiusMeters ?? values.radius;
-  const searchDebug = debug
-    ? {
-        plannerSource: partial.plannerSource ?? "gemini",
-        fallbackReason: partial.fallbackReason ?? null,
-        geminiPlan: partial.geminiPlan ?? null,
-        sanitizedPlan: partial.sanitizedPlan ?? partial.geminiPlan ?? null,
-        googleRequestSummary: partial.googleRequestSummary ?? null,
-        effectiveRadiusMeters,
-        debugStoppedBeforeGoogle: partial.debugStoppedBeforeGoogle === true,
-        ...partial.extra,
-      }
-    : null;
-  return {
-    placesNormalized: [],
-    placesStatus: "OK",
-    metaExtra: {},
-    effectiveRadiusMeters,
-    searchDebug,
-  };
-}
-
-/**
  * @param {object} values - validated controller body
  * @param {{ debug?: boolean }} [options]
  */
@@ -65,104 +29,10 @@ async function searchPlaces(apiKey, values, options = {}) {
     mapCenterLng: values.mapCenterLng != null ? Number(values.mapCenterLng) : null,
   };
 
-  // ---------------------------------------------------------------------------
-  // TEMPORARY: isolated path — zero Google HTTP calls (see TEMP_DEBUG_HARD_STOP_*)
-  // ---------------------------------------------------------------------------
-  if (TEMP_DEBUG_HARD_STOP_AFTER_GEMINI_PLAN) {
-    console.log("[DEBUG] Hard stop mode active — Google Places will not be called");
-
-    const hasGemini = !!(process.env.GEMINI_API_KEY && String(process.env.GEMINI_API_KEY).trim());
-    if (!hasGemini) {
-      console.log("[DEBUG] Gemini skipped: missing GEMINI_API_KEY");
-      return emptyResultWithDebug(values, debug, {
-        plannerSource: "fallback",
-        fallbackReason: "missing_gemini_key",
-        geminiPlan: null,
-        debugStoppedBeforeGoogle: true,
-      });
-    }
-
-    console.log("[DEBUG] Calling Gemini planner…");
-    const gemini = await planWithGemini({
-      userPrompt: values.prompt,
-      userLat: values.latitude,
-      userLng: values.longitude,
-      clientRadiusMeters: values.radius,
-      categoryHint: values.category,
-      mapCenterLat: ctxBuilder.mapCenterLat,
-      mapCenterLng: ctxBuilder.mapCenterLng,
-    });
-
-    if (!gemini.ok) {
-      console.log("[DEBUG] Gemini failed:", gemini.error);
-      return emptyResultWithDebug(values, debug, {
-        plannerSource: "fallback",
-        fallbackReason: gemini.error || "gemini_failed",
-        geminiPlan: null,
-        debugStoppedBeforeGoogle: true,
-        extra: { rawGeminiError: gemini.error },
-      });
-    }
-
-    console.log("[DEBUG] Gemini returned OK, validating plan…");
-    const v = validateAndSanitizeSearchPlan(gemini.raw, { userPrompt: values.prompt });
-    if (!v.ok) {
-      console.log("[DEBUG] Plan validation failed:", v.reason);
-      return emptyResultWithDebug(values, debug, {
-        plannerSource: "fallback",
-        fallbackReason: `plan:${v.reason}`,
-        geminiPlan: null,
-        debugStoppedBeforeGoogle: true,
-        extra: { rawGeminiOutput: gemini.raw },
-      });
-    }
-
-    let plan = { ...v.plan };
-    if (!plan.includedType && values.category && values.category !== "all") {
-      const hint = CATEGORY_MERGE[values.category];
-      const inc = normalizeIncludedType(hint);
-      if (inc) plan.includedType = inc;
-    }
-    if (plan.radiusMeters == null) {
-      plan.radiusMeters = values.radius;
-    }
-
-    console.log("[DEBUG] Sanitized Gemini plan created");
-    const { summary } = buildSearchTextRequest(plan, ctxBuilder);
-    console.log("[DEBUG] Sanitized plan:", JSON.stringify(plan, null, 2));
-    console.log("[DEBUG] Forced stop before Google — not calling searchTextNew or legacy");
-
-    const effectiveRadiusMeters =
-      plan.radiusMeters != null && Number.isFinite(plan.radiusMeters) ? plan.radiusMeters : values.radius;
-
-    const searchDebug = debug
-      ? {
-          plannerSource: "gemini",
-          fallbackReason: null,
-          geminiPlan: plan,
-          sanitizedPlan: plan,
-          googleRequestSummary: summary,
-          effectiveRadiusMeters,
-          debugStoppedBeforeGoogle: true,
-        }
-      : null;
-
-    return {
-      placesNormalized: [],
-      placesStatus: "OK",
-      metaExtra: {},
-      effectiveRadiusMeters,
-      searchDebug,
-    };
-  }
-
-  // ---------------------------------------------------------------------------
-  // Production path (Places New + legacy fallback)
-  // ---------------------------------------------------------------------------
   let metaExtra = {};
   const promptLower = normalize(values.prompt);
   if (values.category === "hotel" && mentionsNightlifeArea(promptLower)) {
-    console.log("[DEBUG] Google Places call starting: countBarsNearby (hotel meta)");
+    console.log("[DEBUG] countBarsNearby (hotel meta)");
     const barInfo = await countBarsNearby(apiKey, values.latitude, values.longitude, values.radius);
     metaExtra = {
       nearbyBarsSampleCount: barInfo.count,
@@ -179,7 +49,6 @@ async function searchPlaces(apiKey, values, options = {}) {
   let fallbackReason = null;
   let sanitizedPlan = null;
   let googleRequestSummary = null;
-  let debugStoppedBeforeGoogle = false;
 
   let geminiSucceeded = false;
 
@@ -209,13 +78,13 @@ async function searchPlaces(apiKey, values, options = {}) {
           plan.radiusMeters = values.radius;
         }
 
-        console.log("[DEBUG] Sanitized Gemini plan created");
+        console.log("[DEBUG] Gemini plan created");
         const { body, summary } = buildSearchTextRequest(plan, ctxBuilder);
         googleRequestSummary = summary;
         sanitizedPlan = plan;
 
         try {
-          console.log("[DEBUG] Google Places call starting: searchTextNew (Places API New)");
+          console.log("[DEBUG] Sending request to Google Places");
           const { resultsLegacyLike } = await searchTextNew(apiKey, body);
           placesNormalized = resultsLegacyLike.map((p) =>
             legacyShapeToNormalized(
@@ -242,7 +111,7 @@ async function searchPlaces(apiKey, values, options = {}) {
   }
 
   if (!geminiSucceeded) {
-    console.log("[DEBUG] Google Places call starting: searchPlacesLegacy (text search + optional nearby)");
+    console.log("[DEBUG] Sending request to Google Places");
     const leg = await searchPlacesLegacy(apiKey, values);
     placesNormalized = leg.placesNormalized;
     placesStatus = leg.placesStatus;
@@ -261,7 +130,7 @@ async function searchPlaces(apiKey, values, options = {}) {
         geminiPlan: sanitizedPlan || null,
         googleRequestSummary: googleRequestSummary || null,
         effectiveRadiusMeters,
-        debugStoppedBeforeGoogle,
+        debugStoppedBeforeGoogle: false,
       }
     : null;
 
@@ -276,5 +145,4 @@ async function searchPlaces(apiKey, values, options = {}) {
 
 module.exports = {
   searchPlaces,
-  TEMP_DEBUG_HARD_STOP_AFTER_GEMINI_PLAN,
 };

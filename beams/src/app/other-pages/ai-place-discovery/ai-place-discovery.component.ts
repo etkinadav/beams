@@ -400,6 +400,8 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
       .subscribe({
         next: (res: AiPlaceSearchResponse) => {
           this.searchLoading = false;
+          console.log("[DEBUG] AI place search full response:", res);
+          console.log("[DEBUG] geminiPlan:", res?.meta?.searchDebug?.geminiPlan);
           console.log("FULL RESPONSE:", res);
           console.log("res.meta:", res?.meta);
           console.log("res.meta.searchDebug:", res?.meta?.searchDebug);
