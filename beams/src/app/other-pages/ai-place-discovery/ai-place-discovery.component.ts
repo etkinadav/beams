@@ -14,7 +14,7 @@ import { Subscription } from "rxjs";
 import { DirectionService } from "../../direction.service";
 import { environment } from "../../../environments/environment";
 import { MatDialog } from "@angular/material/dialog";
-import { GeminiPlanDebugDialogComponent } from "../../dialog/gemini-plan-debug-dialog/gemini-plan-debug-dialog.component";
+import { SearchDebugFlowDialogComponent } from "../../dialog/search-debug-flow-dialog/search-debug-flow-dialog.component";
 import { AiPlaceCategory, AiPlaceResult, AiPlaceSearchResponse } from "../../models/ai-place-search.model";
 import { AiPlaceSearchService } from "../../services/ai-place-search.service";
 import {
@@ -402,6 +402,7 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
           this.searchLoading = false;
           console.log("[DEBUG] AI place search full response:", res);
           console.log("[DEBUG] geminiPlan:", res?.meta?.searchDebug?.geminiPlan);
+          console.log("DEBUG FLOW:", res?.meta?.debugFlow);
           console.log("FULL RESPONSE:", res);
           console.log("res.meta:", res?.meta);
           console.log("res.meta.searchDebug:", res?.meta?.searchDebug);
@@ -412,22 +413,23 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
             ? JSON.stringify(searchDebug, null, 2)
             : "(no meta.searchDebug — is backend debug enabled?)";
 
-          const geminiPlan = searchDebug?.geminiPlan;
-          if (geminiPlan != null && typeof geminiPlan === "object") {
+          this.places = res.places || [];
+
+          const debugFlow = res?.meta?.debugFlow;
+          if (debugFlow != null && typeof debugFlow === "object") {
             this.ngZone.run(() => {
               try {
-                this.dialog.open(GeminiPlanDebugDialogComponent, {
-                  width: "min(720px, 92vw)",
-                  maxHeight: "90vh",
-                  data: { plan: geminiPlan as Record<string, unknown> },
+                this.dialog.open(SearchDebugFlowDialogComponent, {
+                  width: "min(880px, 96vw)",
+                  maxHeight: "92vh",
+                  data: { debugFlow: debugFlow as Record<string, unknown> },
+                  autoFocus: false,
                 });
               } catch (e) {
-                console.error("GeminiPlanDebugDialog open failed:", e);
+                console.error("SearchDebugFlowDialog open failed:", e);
               }
             });
           }
-
-          this.places = res.places || [];
           setTimeout(() => {
             this.refreshMarkers();
             this.fitMapToResults();

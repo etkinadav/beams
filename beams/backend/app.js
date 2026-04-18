@@ -16,14 +16,14 @@ const landbotRoutes = require("./routes/landbot");
 const agronomistQueryRoutes = require("./routes/agronomistquery");
 const aiPlaceSearchRoutes = require("./routes/aiPlaceSearch");
 
-require('dotenv').config();
+// Default: load `.env` from the current working directory (e.g. `beams/` when you run `npm run start:server`).
+require("dotenv").config();
+// Canonical server secrets: `backend/.env` — MUST win over duplicate keys from the parent folder (dotenv does not override by default).
+require("dotenv").config({ path: path.join(__dirname, ".env"), override: true });
 
 const app = express();
 
-
-
 // Enable MongoDB connection using mongoose and dotenv
-require('dotenv').config({ path: __dirname + '/.env' });
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
         console.log('✅ Connected to MongoDB Atlas');

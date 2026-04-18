@@ -41,6 +41,48 @@ export interface AiPlaceSearchDebugMeta {
   debugStoppedBeforeGoogle?: boolean;
 }
 
+/** Full pipeline debug when server builds `meta.debugFlow` (debug mode). */
+export interface AiPlaceSearchDebugFlowMeta {
+  userPrompt?: string;
+  plannerSource?: string | null;
+  fallbackReason?: string | null;
+  geminiPlan?: Record<string, unknown> | null;
+  googleRequestSummary?: Record<string, unknown> | null;
+  googleResultsRawCount?: number;
+  afterNormalizationCount?: number;
+  afterDistanceFilterCount?: number;
+  afterStrictFilterCount?: number;
+  afterScoringCount?: number;
+  finalResultsCount?: number;
+  filteredOut?: Array<{
+    placeId: string | null;
+    name: string | null;
+    stage: string;
+    reason: string;
+    distanceMeters: number | null;
+    relevanceScoreBeforeRemoval: number | null;
+  }>;
+  keptResults?: Array<{
+    placeId: string | null;
+    name: string | null;
+    finalRelevanceScore: number | null;
+    matchReasons: string[];
+    warnings: string[];
+  }>;
+  evaluator?: {
+    overallQuality?: string;
+    confidence?: number;
+    strictViolations?: number;
+    summary?: string;
+  };
+  perResultEvaluation?: Array<{
+    placeId: string;
+    isMatch: boolean;
+    score: number;
+    reasons: string[];
+  }>;
+}
+
 export interface AiPlaceSearchMeta {
   prompt: string;
   location: { lat: number; lng: number };
@@ -51,6 +93,7 @@ export interface AiPlaceSearchMeta {
   nearbyBarsSampleCount?: number | null;
   nearbyBarsNote?: string | null;
   searchDebug?: AiPlaceSearchDebugMeta;
+  debugFlow?: AiPlaceSearchDebugFlowMeta;
 }
 
 export interface AiPlaceSearchResponse {

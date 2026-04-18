@@ -73,7 +73,7 @@ function wantsLuxury(promptLower) {
  * Strong constraint language in the user prompt.
  */
 function detectStrictQuery(promptLower) {
-  return /\bonly\b|\bstrictly\b|\bexclusively\b|100\s*%|\bfully\b/.test(promptLower);
+  return /\bonly\b|\bstrictly\b|\bexclusively\b|\bmust\b|100\s*%|\bfully\b/.test(promptLower);
 }
 
 /**

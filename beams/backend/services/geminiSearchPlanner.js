@@ -8,6 +8,25 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const DEFAULT_MODEL = "gemini-2.5-flash-lite";
 const GEMINI_TIMEOUT_MS = 14000;
 
+/** Log once per process: safe key presence + suffix + module. */
+let geminiDebugEnvLogged = false;
+
+function logGeminiEnvDebug() {
+  if (geminiDebugEnvLogged) {
+    return;
+  }
+  geminiDebugEnvLogged = true;
+  const raw = process.env.GEMINI_API_KEY;
+  const loaded = !!(raw && String(raw).trim());
+  console.log("[DEBUG] GEMINI_API_KEY loaded:", loaded);
+  if (loaded) {
+    const s = String(raw).trim();
+    const suffix = s.length <= 6 ? "(short)" : s.slice(-6);
+    console.log("[DEBUG] GEMINI_API_KEY suffix:", suffix);
+  }
+  console.log("[DEBUG] Gemini initialized in geminiSearchPlanner.js");
+}
+
 const SYSTEM_INSTRUCTION = `You are a strict search query planner for a maps "places" product.
 
 You NEVER call external APIs, invent URLs, or output secrets.
@@ -146,12 +165,16 @@ function buildUserPayload(ctx) {
  * @returns {Promise<{ ok: true, raw: RawSearchPlan } | { ok: false, error: string }>}
  */
 async function planWithGemini(ctx) {
+  // Gemini uses ONLY process.env.GEMINI_API_KEY (never GOOGLE_MAPS_API_KEY / GOOGLE_PLACES_API_KEY).
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || !String(apiKey).trim()) {
-    return { ok: false, error: "missing_gemini_key" };
+    throw new Error(
+      "GEMINI_API_KEY is missing or empty. Set GEMINI_API_KEY in beams/backend/.env (use override so it wins over a parent .env), then restart the Node server."
+    );
   }
 
   const modelName = (process.env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+  logGeminiEnvDebug();
   console.log("[DEBUG] Using Gemini model:", modelName);
 
   const genAI = new GoogleGenerativeAI(String(apiKey).trim());

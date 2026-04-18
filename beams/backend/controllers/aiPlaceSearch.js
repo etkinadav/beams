@@ -1,4 +1,5 @@
 const placeSearchOrchestrator = require("../services/placeSearchOrchestrator");
+const { evaluateResults } = require("../services/searchResultsEvaluator");
 const {
   scorePlace,
   analyzePromptIntent,
@@ -7,6 +8,22 @@ const {
 } = require("../helpers/placePromptScoring");
 
 const ALLOWED_CATEGORIES = ["cafe", "restaurant", "hotel", "bar", "all"];
+
+/**
+ * @param {object} p - normalized place
+ * @param {number} userLat
+ * @param {number} userLng
+ * @returns {number | null}
+ */
+function distanceMetersForPlace(p, userLat, userLng) {
+  if (p.distanceMeters != null && Number.isFinite(p.distanceMeters)) {
+    return p.distanceMeters;
+  }
+  if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+    return haversineMeters(userLat, userLng, p.lat, p.lng);
+  }
+  return null;
+}
 
 function pickSearchBody(req) {
   const b = req.body || {};
@@ -110,21 +127,78 @@ exports.search = async (req, res) => {
     const intent = analyzePromptIntent(values.prompt);
     const planRadiusMeters = effectiveRadiusMeters;
 
-    let candidates = placesNormalized.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+    const googleResultsRawCount = placesNormalized.length;
+
+    /** @type {Array<{ placeId: string | null, name: string | null, stage: string, reason: string, distanceMeters: number | null, relevanceScoreBeforeRemoval: number | null }>} */
+    const filteredOut = [];
+
+    const afterNorm = [];
+    for (const p of placesNormalized) {
+      if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+        afterNorm.push(p);
+      } else {
+        filteredOut.push({
+          placeId: p.id != null ? String(p.id) : null,
+          name: p.name != null ? String(p.name) : null,
+          stage: "normalization",
+          reason: "Missing required location data",
+          distanceMeters: null,
+          relevanceScoreBeforeRemoval: null,
+        });
+      }
+    }
 
     const maxAllowedMeters = planRadiusMeters * 1.5;
-    candidates = candidates.filter((p) => {
-      const dist =
-        p.distanceMeters != null && Number.isFinite(p.distanceMeters)
-          ? p.distanceMeters
-          : haversineMeters(values.latitude, values.longitude, p.lat, p.lng);
-      if (dist == null || Number.isNaN(dist)) return true;
-      return dist <= maxAllowedMeters;
-    });
-
-    if (intent.isStrictVeganQuery) {
-      candidates = candidates.filter((p) => placeMatchesStrictVeganIntent(p));
+    const afterDist = [];
+    for (const p of afterNorm) {
+      const dist = distanceMetersForPlace(p, values.latitude, values.longitude);
+      if (dist == null || Number.isNaN(dist)) {
+        afterDist.push(p);
+        continue;
+      }
+      if (dist <= maxAllowedMeters) {
+        afterDist.push(p);
+      } else {
+        filteredOut.push({
+          placeId: p.id != null ? String(p.id) : null,
+          name: p.name != null ? String(p.name) : null,
+          stage: "distanceFilter",
+          reason: "Distance exceeded allowed range",
+          distanceMeters: Math.round(dist),
+          relevanceScoreBeforeRemoval: null,
+        });
+      }
     }
+
+    let candidates = afterDist;
+    if (intent.isStrictVeganQuery) {
+      const afterStrict = [];
+      for (const p of afterDist) {
+        if (placeMatchesStrictVeganIntent(p)) {
+          afterStrict.push(p);
+        } else {
+          const dist = distanceMetersForPlace(p, values.latitude, values.longitude);
+          filteredOut.push({
+            placeId: p.id != null ? String(p.id) : null,
+            name: p.name != null ? String(p.name) : null,
+            stage: "strictFilter",
+            reason: "Did not match strict vegan intent",
+            distanceMeters: dist != null && !Number.isNaN(dist) ? Math.round(dist) : null,
+            relevanceScoreBeforeRemoval: null,
+          });
+        }
+      }
+      candidates = afterStrict;
+    }
+
+    const afterNormalizationCount = afterNorm.length;
+    const afterDistanceFilterCount = afterDist.length;
+    const afterStrictFilterCount = candidates.length;
+
+    console.log("[DEBUG] Google raw results count:", googleResultsRawCount);
+    console.log("[DEBUG] After normalization (valid lat/lng):", afterNormalizationCount);
+    console.log("[DEBUG] After distance filter:", afterDistanceFilterCount);
+    console.log("[DEBUG] After strict filter:", afterStrictFilterCount);
 
     const ctx = {
       prompt: values.prompt,
@@ -164,6 +238,59 @@ exports.search = async (req, res) => {
 
     places.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
 
+    const afterScoringCount = places.length;
+    const finalResultsCount = places.length;
+
+    console.log("[DEBUG] After scoring:", afterScoringCount);
+    console.log("[DEBUG] Final results count:", finalResultsCount);
+
+    let debugFlow = null;
+    if (debug) {
+      const evalOut = evaluateResults({
+        userPrompt: values.prompt,
+        geminiPlan: searchDebug && searchDebug.geminiPlan != null ? searchDebug.geminiPlan : null,
+        placesResults: places,
+        planRadiusMeters: planRadiusMeters,
+      });
+
+      const plannerSource = searchDebug && searchDebug.plannerSource != null ? searchDebug.plannerSource : null;
+      const fallbackReason = searchDebug && searchDebug.fallbackReason !== undefined ? searchDebug.fallbackReason : null;
+      const geminiPlan = searchDebug && searchDebug.geminiPlan != null ? searchDebug.geminiPlan : null;
+      const googleRequestSummary =
+        searchDebug && searchDebug.googleRequestSummary != null ? searchDebug.googleRequestSummary : null;
+
+      const keptResults = places.map((row) => ({
+        placeId: row.id != null ? String(row.id) : null,
+        name: row.name != null ? String(row.name) : null,
+        finalRelevanceScore: typeof row.relevanceScore === "number" ? row.relevanceScore : null,
+        matchReasons: Array.isArray(row.matchReasons) ? row.matchReasons : [],
+        warnings: Array.isArray(row.warnings) ? row.warnings : [],
+      }));
+
+      debugFlow = {
+        userPrompt: values.prompt,
+        plannerSource,
+        fallbackReason,
+        geminiPlan,
+        googleRequestSummary,
+        googleResultsRawCount,
+        afterNormalizationCount,
+        afterDistanceFilterCount,
+        afterStrictFilterCount,
+        afterScoringCount,
+        finalResultsCount,
+        filteredOut,
+        keptResults,
+        evaluator: {
+          overallQuality: evalOut.overallQuality,
+          confidence: evalOut.confidence,
+          strictViolations: evalOut.strictViolations,
+          summary: evalOut.summary,
+        },
+        perResultEvaluation: evalOut.perResult,
+      };
+    }
+
     const meta = {
       prompt: values.prompt,
       location: { lat: values.latitude, lng: values.longitude },
@@ -175,6 +302,9 @@ exports.search = async (req, res) => {
     };
     if (debug && searchDebug) {
       meta.searchDebug = searchDebug;
+    }
+    if (debug && debugFlow) {
+      meta.debugFlow = debugFlow;
     }
 
     return res.json({

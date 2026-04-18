@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>Search pipeline debug</h2>
+<mat-dialog-content class="sdf-dialog-content">
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 1 — User Prompt</h3>
+    <pre class="sdf-pre">{{ jsonKey("userPrompt") }}</pre>
+  </section>
+
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 2 — Planner source &amp; pipeline stage counts</h3>
+    <pre class="sdf-pre">{{ pipelineStagesJson() }}</pre>
+  </section>
+
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 3 — Gemini Plan (JSON)</h3>
+    <pre class="sdf-pre">{{ jsonKey("geminiPlan") }}</pre>
+  </section>
+
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 4 — Google request summary (Places New body / bias)</h3>
+    <pre class="sdf-pre">{{ jsonKey("googleRequestSummary") }}</pre>
+  </section>
+
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 5 — Filtered out (by stage)</h3>
+    <pre class="sdf-pre">{{ jsonKey("filteredOut") }}</pre>
+  </section>
+
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 6 — Kept results (scores &amp; reasons)</h3>
+    <pre class="sdf-pre">{{ jsonKey("keptResults") }}</pre>
+  </section>
+
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 7 — Evaluation summary</h3>
+    <pre class="sdf-pre">{{ jsonKey("evaluator") }}</pre>
+  </section>
+
+  <section class="sdf-section">
+    <h3 class="sdf-h3">SECTION 8 — Per-result evaluation</h3>
+    <pre class="sdf-pre">{{ jsonKey("perResultEvaluation") }}</pre>
+  </section>
+</mat-dialog-content>
+<mat-dialog-actions align="end" class="sdf-actions">
+  <button mat-stroked-button type="button" (click)="copyFullDebug()">Copy Full Debug</button>
+  <span class="sdf-copied" *ngIf="copyDone">Copied</span>
+  <button mat-button mat-dialog-close type="button">Close</button>
+</mat-dialog-actions>

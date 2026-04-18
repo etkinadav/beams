@@ -1,0 +1,39 @@
+.sdf-dialog-content {
+  max-height: min(78vh, 900px);
+  overflow: auto;
+  padding-top: 0;
+}
+
+.sdf-section {
+  margin-bottom: 1.25rem;
+}
+
+.sdf-h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+  opacity: 0.9;
+}
+
+.sdf-pre {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow: auto;
+  max-height: 220px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sdf-actions {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sdf-copied {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
