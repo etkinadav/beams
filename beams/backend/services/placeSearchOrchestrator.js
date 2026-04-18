@@ -127,6 +127,7 @@ async function searchPlaces(apiKey, values, options = {}) {
       plan.radiusMeters = values.radius;
     }
 
+    console.log("[DEBUG] Sanitized Gemini plan created");
     const { summary } = buildSearchTextRequest(plan, ctxBuilder);
     console.log("[DEBUG] Sanitized plan:", JSON.stringify(plan, null, 2));
     console.log("[DEBUG] Forced stop before Google — not calling searchTextNew or legacy");
@@ -208,6 +209,7 @@ async function searchPlaces(apiKey, values, options = {}) {
           plan.radiusMeters = values.radius;
         }
 
+        console.log("[DEBUG] Sanitized Gemini plan created");
         const { body, summary } = buildSearchTextRequest(plan, ctxBuilder);
         googleRequestSummary = summary;
         sanitizedPlan = plan;

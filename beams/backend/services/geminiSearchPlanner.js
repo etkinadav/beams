@@ -1,6 +1,11 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const DEFAULT_MODEL = "gemini-2.0-flash";
+/**
+ * Default model for query planning (Gemini API / AI Studio).
+ * Use a current GA Flash-Lite class model: fast, low cost, JSON-friendly.
+ * Override with GEMINI_MODEL in .env if needed.
+ */
+const DEFAULT_MODEL = "gemini-2.5-flash-lite";
 const GEMINI_TIMEOUT_MS = 14000;
 
 const SYSTEM_INSTRUCTION = `You are a strict search query planner for a maps "places" product.
@@ -101,6 +106,7 @@ async function planWithGemini(ctx) {
   }
 
   const modelName = (process.env.GEMINI_MODEL || DEFAULT_MODEL).trim();
+  console.log("[DEBUG] Using Gemini model:", modelName);
 
   const genAI = new GoogleGenerativeAI(String(apiKey).trim());
   const model = genAI.getGenerativeModel({
@@ -115,21 +121,26 @@ async function planWithGemini(ctx) {
 
   const userText = buildUserPayload(ctx);
 
-  const run = model.generateContent({
-    contents: [{ role: "user", parts: [{ text: userText }] }],
-  });
-
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error("gemini_timeout")), GEMINI_TIMEOUT_MS)
   );
 
-  let text;
+  console.log("[DEBUG] Calling Gemini planner...");
+  let result;
   try {
-    const result = await Promise.race([run, timeout]);
-    text = result.response.text();
+    result = await Promise.race([model.generateContent(userText), timeout]);
+    console.log("[DEBUG] Gemini planner response received");
   } catch (e) {
     const msg = e && e.message ? e.message : String(e);
     return { ok: false, error: msg.includes("timeout") ? "gemini_timeout" : `gemini_error:${msg}` };
+  }
+
+  let text;
+  try {
+    text = result.response.text();
+  } catch (e) {
+    const msg = e && e.message ? e.message : String(e);
+    return { ok: false, error: `gemini_error:${msg}` };
   }
 
   let raw;
@@ -150,4 +161,5 @@ module.exports = {
   planWithGemini,
   buildUserPayload,
   SYSTEM_INSTRUCTION,
+  DEFAULT_MODEL,
 };
