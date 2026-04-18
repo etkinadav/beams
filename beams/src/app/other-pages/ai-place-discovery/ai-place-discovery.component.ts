@@ -13,7 +13,9 @@ import type { Map as MaplibreMap, Marker, Popup } from "maplibre-gl";
 import { Subscription } from "rxjs";
 import { DirectionService } from "../../direction.service";
 import { environment } from "../../../environments/environment";
-import { AiPlaceCategory, AiPlaceResult } from "../../models/ai-place-search.model";
+import { MatDialog } from "@angular/material/dialog";
+import { GeminiPlanDebugDialogComponent } from "../../dialog/gemini-plan-debug-dialog/gemini-plan-debug-dialog.component";
+import { AiPlaceCategory, AiPlaceResult, AiPlaceSearchResponse } from "../../models/ai-place-search.model";
 import { AiPlaceSearchService } from "../../services/ai-place-search.service";
 import {
   buildMapTilerStyleUrl,
@@ -62,11 +64,15 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
   searchLoading = false;
   searchError: string | null = null;
 
+  /** TEMPORARY: full `meta.searchDebug` JSON for on-page debugging when modal fails */
+  debugSearchDebugInline: string | null = null;
+
   constructor(
     private directionService: DirectionService,
     private aiPlaceSearch: AiPlaceSearchService,
     private ngZone: NgZone,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -377,6 +383,7 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
 
     sessionStorage.setItem(SESSION_PROMPT_KEY, trimmed);
     this.searchLoading = true;
+    this.debugSearchDebugInline = null;
     this.places = [];
     this.selectedPlaceId = null;
     this.activePopup?.remove();
@@ -391,8 +398,33 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
         category: SEARCH_CATEGORY,
       })
       .subscribe({
-        next: (res) => {
+        next: (res: AiPlaceSearchResponse) => {
           this.searchLoading = false;
+          console.log("FULL RESPONSE:", res);
+          console.log("res.meta:", res?.meta);
+          console.log("res.meta.searchDebug:", res?.meta?.searchDebug);
+          console.log("res.meta.searchDebug.geminiPlan:", res?.meta?.searchDebug?.geminiPlan);
+
+          const searchDebug = res?.meta?.searchDebug;
+          this.debugSearchDebugInline = searchDebug
+            ? JSON.stringify(searchDebug, null, 2)
+            : "(no meta.searchDebug — is backend debug enabled?)";
+
+          const geminiPlan = searchDebug?.geminiPlan;
+          if (geminiPlan != null && typeof geminiPlan === "object") {
+            this.ngZone.run(() => {
+              try {
+                this.dialog.open(GeminiPlanDebugDialogComponent, {
+                  width: "min(720px, 92vw)",
+                  maxHeight: "90vh",
+                  data: { plan: geminiPlan as Record<string, unknown> },
+                });
+              } catch (e) {
+                console.error("GeminiPlanDebugDialog open failed:", e);
+              }
+            });
+          }
+
           this.places = res.places || [];
           setTimeout(() => {
             this.refreshMarkers();

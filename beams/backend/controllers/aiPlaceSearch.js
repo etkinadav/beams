@@ -94,9 +94,9 @@ exports.search = async (req, res) => {
     });
   }
 
-  const debug =
-    values.debug === true ||
-    String(process.env.AI_PLACE_SEARCH_DEBUG || "").toLowerCase() === "true";
+  // TEMPORARY: always attach meta.searchDebug (geminiPlan, etc.). Restore conditional before production:
+  // const debug = values.debug === true || process.env.AI_PLACE_SEARCH_DEBUG === 'true';
+  const debug = true;
 
   try {
     const { placesNormalized, metaExtra, placesStatus, effectiveRadiusMeters, searchDebug } =

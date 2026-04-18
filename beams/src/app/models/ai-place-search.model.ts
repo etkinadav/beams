@@ -29,6 +29,18 @@ export interface AiPlaceResult {
   smokingInfo?: string;
 }
 
+/** Present only when backend debug is on (request `debug: true` or `AI_PLACE_SEARCH_DEBUG`). */
+export interface AiPlaceSearchDebugMeta {
+  plannerSource?: string;
+  fallbackReason?: string | null;
+  geminiPlan?: Record<string, unknown> | null;
+  sanitizedPlan?: Record<string, unknown> | null;
+  googleRequestSummary?: Record<string, unknown> | null;
+  effectiveRadiusMeters?: number;
+  /** True when server skipped Google Places calls (debug build). */
+  debugStoppedBeforeGoogle?: boolean;
+}
+
 export interface AiPlaceSearchMeta {
   prompt: string;
   location: { lat: number; lng: number };
@@ -38,6 +50,7 @@ export interface AiPlaceSearchMeta {
   placesApiStatus?: string;
   nearbyBarsSampleCount?: number | null;
   nearbyBarsNote?: string | null;
+  searchDebug?: AiPlaceSearchDebugMeta;
 }
 
 export interface AiPlaceSearchResponse {
