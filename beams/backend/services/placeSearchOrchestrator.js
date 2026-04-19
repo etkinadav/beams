@@ -1,5 +1,5 @@
 const { planWithGemini } = require("./geminiSearchPlanner");
-const { validateAndSanitizeSearchPlan } = require("./searchPlanValidator");
+const { validateSearchContext, buildFallbackSearchContext } = require("./searchContextValidator");
 const { buildSearchTextRequest } = require("./placesRequestBuilder");
 const { searchTextNew, newPlaceToLegacyShape, legacyShapeToNormalized } = require("./placesNewTextSearch");
 const { searchPlacesLegacy, countBarsNearby } = require("./googlePlacesSearch");
@@ -49,6 +49,8 @@ async function searchPlaces(apiKey, values, options = {}) {
   let fallbackReason = null;
   let sanitizedPlan = null;
   let googleRequestSummary = null;
+  /** @type {object | null} */
+  let searchContext = null;
 
   let geminiSucceeded = false;
 
@@ -66,9 +68,10 @@ async function searchPlaces(apiKey, values, options = {}) {
     });
 
     if (gemini.ok) {
-      const v = validateAndSanitizeSearchPlan(gemini.raw, { userPrompt: values.prompt });
+      const v = validateSearchContext(gemini.raw, { userPrompt: values.prompt });
       if (v.ok) {
-        const plan = { ...v.plan };
+        searchContext = v.searchContext;
+        const plan = { ...searchContext.searchPlan };
         if (!plan.includedType && values.category && values.category !== "all") {
           const hint = CATEGORY_MERGE[values.category];
           const inc = normalizeIncludedType(hint);
@@ -122,12 +125,20 @@ async function searchPlaces(apiKey, values, options = {}) {
   const effectiveRadiusMeters =
     sanitizedPlan && sanitizedPlan.radiusMeters != null ? sanitizedPlan.radiusMeters : values.radius;
 
+  if (!searchContext) {
+    searchContext = buildFallbackSearchContext(values);
+  }
+  if (!sanitizedPlan && searchContext && searchContext.searchPlan) {
+    sanitizedPlan = searchContext.searchPlan;
+  }
+
   const searchDebug = debug
     ? {
         plannerSource,
         fallbackReason: geminiSucceeded ? null : fallbackReason,
         sanitizedPlan: sanitizedPlan || null,
         geminiPlan: sanitizedPlan || null,
+        searchContext: searchContext || null,
         googleRequestSummary: googleRequestSummary || null,
         effectiveRadiusMeters,
         debugStoppedBeforeGoogle: false,
@@ -140,6 +151,7 @@ async function searchPlaces(apiKey, values, options = {}) {
     metaExtra,
     effectiveRadiusMeters,
     searchDebug,
+    searchContext,
   };
 }
 

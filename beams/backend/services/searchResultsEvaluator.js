@@ -8,8 +8,9 @@ const {
  * @param {object} params
  * @param {string} params.userPrompt
  * @param {object | null} params.geminiPlan
- * @param {Array<{ id: string, name: string, rating?: number|null, distanceMeters?: number|null, types?: string[] }>} params.placesResults
+ * @param {Array<{ id: string, name: string, rating?: number|null, distanceMeters?: number|null, types?: string[], warnings?: string[] }>} params.placesResults
  * @param {number} params.planRadiusMeters
+ * @param {number} [params.pipelineWarningCount] — warnings from scoring / strict (reduces confidence)
  * @returns {{
  *   overallQuality: "high"|"medium"|"low",
  *   confidence: number,
@@ -18,11 +19,18 @@ const {
  *   perResult: Array<{ placeId: string, isMatch: boolean, score: number, reasons: string[] }>
  * }}
  */
-function evaluateResults({ userPrompt, geminiPlan: _geminiPlan, placesResults, planRadiusMeters }) {
+function evaluateResults({
+  userPrompt,
+  geminiPlan: _geminiPlan,
+  placesResults,
+  planRadiusMeters,
+  pipelineWarningCount = 0,
+}) {
   console.log("[DEBUG] Evaluating results...");
 
   const intent = analyzePromptIntent(userPrompt);
   const radius = Math.max(Number(planRadiusMeters) > 0 ? Number(planRadiusMeters) : 1500, 1);
+  const hardDistCap = radius * 3;
 
   /** @type {Array<{ placeId: string, isMatch: boolean, score: number, reasons: string[] }>} */
   const perResult = [];
@@ -68,12 +76,15 @@ function evaluateResults({ userPrompt, geminiPlan: _geminiPlan, placesResults, p
     }
 
     if (dist != null) {
-      if (dist > radius * 1.5) {
-        score -= 20;
-        reasons.push("Far distance (>1.5× plan radius)");
+      if (dist > hardDistCap) {
+        score -= 25;
+        reasons.push("Very far distance (>3× plan radius)");
+      } else if (dist > radius * 2) {
+        score -= 12;
+        reasons.push("Far distance (between 2× and 3× plan radius)");
       } else if (dist > radius) {
-        score -= 20;
-        reasons.push("Distance beyond plan radius");
+        score -= 8;
+        reasons.push("Beyond plan radius (soft penalty)");
       }
     }
 
@@ -97,11 +108,14 @@ function evaluateResults({ userPrompt, geminiPlan: _geminiPlan, placesResults, p
   const avgScore = n > 0 ? perResult.reduce((a, p) => a + p.score, 0) / n : 0;
   const matchRate = n > 0 ? perResult.filter((p) => p.isMatch).length / n : 1;
   const violationRate = n > 0 ? strictViolations / n : 0;
+  const placeWarnings =
+    (placesResults || []).reduce((acc, p) => acc + (Array.isArray(p.warnings) ? p.warnings.length : 0), 0) +
+    (Number(pipelineWarningCount) || 0);
 
   let overallQuality = "medium";
   if (n === 0) {
     overallQuality = "low";
-  } else if (strictViolations === 0 && avgScore >= 65 && matchRate >= 0.85) {
+  } else if (strictViolations === 0 && avgScore >= 65 && matchRate >= 0.85 && n >= 3) {
     overallQuality = "high";
   } else if (violationRate > 0.35 || avgScore < 40 || matchRate < 0.5) {
     overallQuality = "low";
@@ -109,7 +123,19 @@ function evaluateResults({ userPrompt, geminiPlan: _geminiPlan, placesResults, p
     overallQuality = "medium";
   }
 
-  const confidence = Math.min(1, Math.max(0, matchRate * 0.55 + (avgScore / 100) * 0.45));
+  if (n > 0 && n <= 2 && overallQuality === "high") {
+    overallQuality = "medium";
+  }
+
+  let confidence = Math.min(1, Math.max(0, matchRate * 0.55 + (avgScore / 100) * 0.45));
+  if (n === 1) {
+    confidence *= 0.55;
+  } else if (n === 2) {
+    confidence *= 0.82;
+  }
+  if (placeWarnings > 0) {
+    confidence *= Math.max(0.35, 1 - Math.min(0.45, 0.06 * placeWarnings));
+  }
 
   const summary =
     n === 0

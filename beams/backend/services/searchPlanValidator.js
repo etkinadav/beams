@@ -2,12 +2,60 @@ const { normalizeIncludedType } = require("../config/allowedPlaceTypes");
 
 const RADIUS_MIN = 100;
 const RADIUS_MAX = 50000;
-const PAGE_SIZE_MIN = 1;
+/** Hard floor for API page size (never below 5). */
+const PAGE_SIZE_MIN = 5;
+/** Enforced minimum for ranking quality (Gemini may return 1 otherwise). */
+const PAGE_SIZE_ENFORCED_MIN = 8;
+const PAGE_SIZE_DEFAULT = 14;
 const PAGE_SIZE_MAX = 20;
 const TEXT_QUERY_MAX = 500;
 const REASONING_MAX = 600;
 const NOTE_MAX = 200;
 const NOTES_MAX_ITEMS = 12;
+
+/** Skip phrases that are not a named place (e.g. "in my area"). */
+const EXPLICIT_LOC_FIRST_WORD_STOP = new Set([
+  "my",
+  "this",
+  "the",
+  "here",
+  "me",
+  "a",
+  "an",
+  "area",
+  "vicinity",
+  "location",
+  "place",
+  "home",
+  "work",
+  "office",
+  "current",
+  "your",
+  "me",
+]);
+
+/**
+ * If the user names a place after "in", "at", or "near", treat search center as that place
+ * (not device location bias), so distance filtering does not wipe remote results.
+ * @param {string} userPrompt
+ * @returns {{ explicitLocationText: string, centerSource: "explicit_location" } | null}
+ */
+function inferExplicitLocationFromPrompt(userPrompt) {
+  const s = String(userPrompt || "").trim();
+  if (!s) return null;
+
+  const m = s.match(/\b(?:in|at|near)\s+([^,.;]+?)(?:\s*[,.;]|$)/i);
+  if (!m || !m[1]) return null;
+
+  let loc = m[1].trim().replace(/\s+/g, " ");
+  if (loc.length < 2 || loc.length > 120) return null;
+
+  const first = loc.split(/\s+/)[0].toLowerCase();
+  if (EXPLICIT_LOC_FIRST_WORD_STOP.has(first)) return null;
+  if (/^(my|this|the)\s+/i.test(loc)) return null;
+
+  return { explicitLocationText: loc, centerSource: "explicit_location" };
+}
 
 /**
  * @param {unknown} raw
@@ -15,6 +63,8 @@ const NOTES_MAX_ITEMS = 12;
  * @returns {{ ok: true, plan: object } | { ok: false, reason: string }}
  */
 function validateAndSanitizeSearchPlan(raw, ctx) {
+  const userPrompt = ctx && ctx.userPrompt != null ? String(ctx.userPrompt) : "";
+  const userWantsOpenNow = /\b(open now|currently open|open today|still open)\b/i.test(userPrompt);
   if (raw == null || typeof raw !== "object") {
     return { ok: false, reason: "plan_not_object" };
   }
@@ -92,10 +142,15 @@ function validateAndSanitizeSearchPlan(raw, ctx) {
   if (openNow !== true && openNow !== false && openNow !== null) {
     openNow = null;
   }
+  if (openNow === true && !userWantsOpenNow) {
+    openNow = null;
+  }
 
-  let maxResultCount = o.maxResultCount != null && o.maxResultCount !== "" ? Math.round(Number(o.maxResultCount)) : 15;
-  if (!Number.isFinite(maxResultCount)) maxResultCount = 15;
-  const pageSize = Math.min(PAGE_SIZE_MAX, Math.max(PAGE_SIZE_MIN, maxResultCount));
+  let maxResultCount =
+    o.maxResultCount != null && o.maxResultCount !== "" ? Math.round(Number(o.maxResultCount)) : PAGE_SIZE_DEFAULT;
+  if (!Number.isFinite(maxResultCount)) maxResultCount = PAGE_SIZE_DEFAULT;
+  let pageSize = Math.min(PAGE_SIZE_MAX, Math.max(PAGE_SIZE_MIN, maxResultCount));
+  pageSize = Math.min(PAGE_SIZE_MAX, Math.max(PAGE_SIZE_ENFORCED_MIN, pageSize));
 
   const reasoningSummary =
     o.reasoningSummary != null ? String(o.reasoningSummary).trim().slice(0, REASONING_MAX) : "";
@@ -106,6 +161,12 @@ function validateAndSanitizeSearchPlan(raw, ctx) {
       .map((n) => String(n).trim().slice(0, NOTE_MAX))
       .filter(Boolean)
       .slice(0, NOTES_MAX_ITEMS);
+  }
+
+  const inferredLoc = inferExplicitLocationFromPrompt(userPrompt);
+  if (inferredLoc) {
+    centerSource = inferredLoc.centerSource;
+    explicitLocationText = inferredLoc.explicitLocationText;
   }
 
   const plan = {
@@ -128,7 +189,10 @@ function validateAndSanitizeSearchPlan(raw, ctx) {
 
 module.exports = {
   validateAndSanitizeSearchPlan,
+  inferExplicitLocationFromPrompt,
   RADIUS_MIN,
   RADIUS_MAX,
+  PAGE_SIZE_MIN,
+  PAGE_SIZE_ENFORCED_MIN,
   PAGE_SIZE_MAX,
 };

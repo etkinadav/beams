@@ -60,8 +60,8 @@ Examples:
 - "half hour drive" → radiusMeters: 10000–15000 (do NOT exceed without reason)
 
 4. LOCATION SOURCE
-- If user specifies another city → use "explicit_location"
-- Do NOT combine with user_location unless unclear
+- If the user names a place (city, neighborhood, venue) via patterns like "in X", "at X", "near X", or a clear city/country name → centerSource MUST be "explicit_location" and explicitLocationText MUST be that place name (do NOT use user_location as the geographic center for that query).
+- If the query is about "near me" / current area only → use "user_location" (or map_center if the user refers to the map).
 - Never invent coordinates
 
 5. FILTER VS TEXT DECISION
@@ -78,7 +78,7 @@ Examples:
 - "expensive", "premium" → [3,4]
 
 8. OPEN STATUS
-- "open now", "currently open" → openNow: true
+- Set openNow: true ONLY if the user explicitly asks for currently-open places (e.g. "open now", "currently open"). Otherwise openNow must be null.
 
 9. LOCATION MODE
 - Default: "bias"
@@ -88,13 +88,20 @@ Examples:
 - If unsure → leave fields null
 - Never hallucinate
 
-11. OUTPUT FORMAT
-- maxResultCount: 1–20 (default 12–16)
-- reasoningSummary: one short sentence
-- notes: optional short caveats
+11. RESULT PAGE SIZE
+- maxResultCount MUST be between 8 and 20 (never 1–5; prefer 12–15 for ranking quality).
 
-Return JSON keys exactly:
-textQuery, includedType, locationMode, centerSource, explicitLocationText, radiusMeters, priceLevels, minRating, openNow, maxResultCount, reasoningSummary, notes
+12. OUTPUT FORMAT — nested JSON (required root keys):
+- searchPlan: same fields as before (textQuery, includedType, locationMode, centerSource, explicitLocationText, radiusMeters, priceLevels, minRating, openNow, maxResultCount, reasoningSummary, notes)
+- evaluationModel.dimensions: array of { name, weight (0–1, max 0.35 each), source: "google_result"|"google_filter"|"heuristic"|"review_inference", strictness: "strict"|"soft"|"preference" }
+- evaluationModel.metadata: { version: 1, querySummary: string }
+- constraints.strict: optional rules { id, requiredTerms[], forbiddenTerms[], partialTerms[] (weak matches — do not count as strict pass) }
+- constraints.soft: optional { id, requiredTerms or terms, penaltyWeight }
+- constraints.preference: optional { id, requiredTerms or terms, boostWeight }
+
+Do not hardcode a single category. Encode user intent in constraints and searchPlan.textQuery.
+
+Return a single JSON object with keys: searchPlan, evaluationModel, constraints
 `;
 
 /**
@@ -125,7 +132,9 @@ function extractJsonObject(text) {
 
 function buildUserPayload(ctx) {
   const lines = [
-    "Schema (types describe intent; use null when unknown):",
+    "Output ONE JSON object with root keys: searchPlan, evaluationModel, constraints.",
+    "",
+    "searchPlan fields (types describe intent; use null when unknown):",
     "{",
     '  "textQuery": string,',
     '  "includedType": string | null,',
@@ -133,13 +142,16 @@ function buildUserPayload(ctx) {
     '  "centerSource": "user_location" | "explicit_location" | "map_center" | null,',
     '  "explicitLocationText": string | null,',
     "  \"radiusMeters\": number | null,",
-    "  \"priceLevels\": number[] | null,   // each 0-4: 0 free ... 4 very expensive",
-    "  \"minRating\": number | null,      // 0-5 step 0.5",
-    "  \"openNow\": boolean | null,",
-    "  \"maxResultCount\": number,        // 1-20",
+    "  \"priceLevels\": number[] | null,",
+    "  \"minRating\": number | null,",
+    "  \"openNow\": boolean | null,  // only if user asked for open-now",
+    "  \"maxResultCount\": number,  // 8-20 (prefer 12-15)",
     '  "reasoningSummary": string,',
     "  \"notes\": string[]",
     "}",
+    "",
+    "evaluationModel: { dimensions: [{ name, weight (<=0.35), source, strictness }], metadata: { version: 1, querySummary: string } }",
+    "constraints: { strict: [...], soft: [...], preference: [...] } — encode dietary, price, vibe; use partialTerms when \"only vegan\" means weak matches (vegetarian) must not satisfy strict vegan alone.",
     "",
     `User prompt: ${ctx.userPrompt}`,
     `User device location (lat,lng): ${ctx.userLat},${ctx.userLng}`,

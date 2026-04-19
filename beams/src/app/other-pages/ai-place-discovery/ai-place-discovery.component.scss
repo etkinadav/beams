@@ -105,22 +105,6 @@
   white-space: nowrap;
 }
 
-/* TEMPORARY debug dump */
-.apd-debug-pre {
-  margin-top: 10px;
-  max-height: 40vh;
-  overflow: auto;
-  padding: 10px;
-  font-size: 11px;
-  line-height: 1.35;
-  text-align: left;
-  background: rgba(0, 0, 0, 0.55);
-  color: #e0f7fa;
-  border-radius: 6px;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 /* MapLibre attribution readable on dark gradient */
 :host ::ng-deep .maplibregl-ctrl-bottom-left,
 :host ::ng-deep .maplibregl-ctrl-bottom-right {

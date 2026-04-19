@@ -1,16 +1,16 @@
 const placeSearchOrchestrator = require("../services/placeSearchOrchestrator");
 const { evaluateResults } = require("../services/searchResultsEvaluator");
 const {
-  scorePlace,
-  analyzePromptIntent,
-  placeMatchesStrictVeganIntent,
-  haversineMeters,
-} = require("../helpers/placePromptScoring");
+  defaultEvaluationModel,
+  defaultConstraints,
+} = require("../services/searchContextValidator");
+const { applyStrictConstraints, scoreAllCandidates } = require("../services/searchScoringEngine");
+const { haversineMeters } = require("../helpers/placePromptScoring");
 
 const ALLOWED_CATEGORIES = ["cafe", "restaurant", "hotel", "bar", "all"];
 
 /**
- * @param {object} p - normalized place
+ * @param {object} p
  * @param {number} userLat
  * @param {number} userLng
  * @returns {number | null}
@@ -97,6 +97,152 @@ function validate(body) {
   };
 }
 
+/**
+ * @param {object} params
+ */
+const DISTANCE_HARD_MULTIPLIER = 3;
+
+function runIntelligencePipeline(params) {
+  const {
+    placesNormalized,
+    values,
+    planRadiusMeters,
+    evaluationModel,
+    constraints,
+    skipStrict,
+    skipDistance,
+    centerSource,
+    explicitLocationText,
+  } = params;
+
+  const explicitNamedPlace =
+    centerSource === "explicit_location" ||
+    (explicitLocationText != null && String(explicitLocationText).trim() !== "");
+
+  /** @type {Array<{ placeId: string | null, name: string | null, stage: string, reason: string, distanceMeters: number | null, relevanceScoreBeforeRemoval: number | null }>} */
+  const filteredOut = [];
+  const constraintHandlingLog = [];
+
+  const afterNorm = [];
+  for (const p of placesNormalized) {
+    if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+      afterNorm.push(p);
+    } else {
+      filteredOut.push({
+        placeId: p.id != null ? String(p.id) : null,
+        name: p.name != null ? String(p.name) : null,
+        stage: "normalization",
+        reason: "Missing required location data",
+        distanceMeters: null,
+        relevanceScoreBeforeRemoval: null,
+      });
+    }
+  }
+
+  const maxAllowedMeters =
+    skipDistance === true || explicitNamedPlace
+      ? Number.POSITIVE_INFINITY
+      : Math.max(1, Number(planRadiusMeters) || 1500) * DISTANCE_HARD_MULTIPLIER;
+  const afterDist = [];
+  for (const p of afterNorm) {
+    const dist = distanceMetersForPlace(p, values.latitude, values.longitude);
+    if (dist == null || Number.isNaN(dist)) {
+      afterDist.push(p);
+      continue;
+    }
+    if (dist <= maxAllowedMeters) {
+      afterDist.push(p);
+    } else {
+      filteredOut.push({
+        placeId: p.id != null ? String(p.id) : null,
+        name: p.name != null ? String(p.name) : null,
+        stage: "distanceFilter",
+        reason: "Distance exceeded allowed range (hard cap: 3× plan radius unless skipDistance)",
+        distanceMeters: Math.round(dist),
+        relevanceScoreBeforeRemoval: null,
+      });
+    }
+  }
+
+  let strictFiltered = [];
+  let constraintLog = [];
+  let warningsByPlaceId = {};
+  let candidates = afterDist;
+
+  const hasStrict =
+    !skipStrict && constraints && Array.isArray(constraints.strict) && constraints.strict.length > 0;
+
+  if (skipStrict && constraints && constraints.strict && constraints.strict.length > 0) {
+    constraintHandlingLog.push("Strict filters skipped (zero-result fallback)");
+  }
+  if (skipDistance) {
+    constraintHandlingLog.push("Distance hard filter skipped (sanity: all candidates were beyond 3× radius)");
+  } else if (explicitNamedPlace) {
+    constraintHandlingLog.push(
+      "Distance hard filter skipped (explicit place in query — user GPS ring would remove valid remote results)"
+    );
+  }
+
+  if (hasStrict) {
+    const r = applyStrictConstraints(afterDist, constraints, values.prompt);
+    candidates = r.kept;
+    strictFiltered = r.filteredOut;
+    constraintLog = r.constraintLog;
+    warningsByPlaceId = r.warningsByPlaceId;
+    filteredOut.push(...strictFiltered);
+  }
+
+  constraintHandlingLog.push(...constraintLog);
+
+  const scoreCtx = {
+    userPrompt: values.prompt,
+    planRadiusMeters,
+    userLat: values.latitude,
+    userLng: values.longitude,
+  };
+
+  const { rows, perResultScoreBreakdown } = scoreAllCandidates(
+    candidates,
+    evaluationModel,
+    constraints,
+    scoreCtx,
+    warningsByPlaceId
+  );
+
+  const places = rows.map((r) => {
+    const p = r.place;
+    return {
+      id: p.id,
+      name: p.name,
+      lat: p.lat,
+      lng: p.lng,
+      address: p.address,
+      rating: p.rating,
+      userRatingsTotal: p.userRatingsTotal,
+      priceLevel: p.priceLevel,
+      openNow: p.openNow,
+      types: p.types,
+      photoReference: p.photoReference,
+      photoUrl: null,
+      googleMapsUrl: p.googleMapsUrl,
+      distanceMeters: p.distanceMeters,
+      relevanceScore: r.relevanceScore,
+      matchReasons: r.matchReasons,
+      warnings: r.warnings,
+    };
+  });
+
+  return {
+    places,
+    filteredOut,
+    afterNorm,
+    afterDist,
+    candidates,
+    perResultScoreBreakdown,
+    constraintHandlingLog,
+  };
+}
+
 exports.search = async (req, res) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
@@ -116,141 +262,119 @@ exports.search = async (req, res) => {
     });
   }
 
-  // TEMPORARY: always attach meta.searchDebug (geminiPlan, etc.). Restore conditional before production:
-  // const debug = values.debug === true || process.env.AI_PLACE_SEARCH_DEBUG === 'true';
   const debug = true;
 
   try {
-    const { placesNormalized, metaExtra, placesStatus, effectiveRadiusMeters, searchDebug } =
+    const { placesNormalized, metaExtra, placesStatus, effectiveRadiusMeters, searchDebug, searchContext } =
       await placeSearchOrchestrator.searchPlaces(apiKey, values, { debug });
 
-    const intent = analyzePromptIntent(values.prompt);
     const planRadiusMeters = effectiveRadiusMeters;
+    const evaluationModel =
+      searchContext && searchContext.evaluationModel
+        ? searchContext.evaluationModel
+        : defaultEvaluationModel();
+    const constraints =
+      searchContext && searchContext.constraints ? searchContext.constraints : defaultConstraints();
+
+    const centerSource =
+      searchContext && searchContext.searchPlan && searchContext.searchPlan.centerSource != null
+        ? searchContext.searchPlan.centerSource
+        : null;
+    const explicitLocationText =
+      searchContext && searchContext.searchPlan && searchContext.searchPlan.explicitLocationText != null
+        ? searchContext.searchPlan.explicitLocationText
+        : null;
+
+    let fallbackUsed = false;
+    let distanceFallbackUsed = false;
+
+    let skipDistance = false;
+    let out = runIntelligencePipeline({
+      placesNormalized,
+      values,
+      planRadiusMeters,
+      evaluationModel,
+      constraints,
+      skipStrict: false,
+      skipDistance: false,
+      centerSource,
+      explicitLocationText,
+    });
+
+    if (out.afterDist.length === 0 && out.afterNorm.length > 0) {
+      distanceFallbackUsed = true;
+      const prevLog = out.constraintHandlingLog.slice();
+      skipDistance = true;
+      out = runIntelligencePipeline({
+        placesNormalized,
+        values,
+        planRadiusMeters,
+        evaluationModel,
+        constraints,
+        skipStrict: false,
+        skipDistance: true,
+        centerSource,
+        explicitLocationText,
+      });
+      out.constraintHandlingLog = [
+        "sanity: re-ran without distance hard filter (nothing within 3× radius)",
+        ...prevLog,
+        ...out.constraintHandlingLog,
+      ];
+    }
+
+    if (out.places.length === 0 && constraints.strict && constraints.strict.length > 0) {
+      fallbackUsed = true;
+      const prevLog = out.constraintHandlingLog.slice();
+      out = runIntelligencePipeline({
+        placesNormalized,
+        values,
+        planRadiusMeters,
+        evaluationModel,
+        constraints,
+        skipStrict: true,
+        skipDistance,
+        centerSource,
+        explicitLocationText,
+      });
+      out.constraintHandlingLog = [
+        "fallback: re-ran pipeline without strict filters (zero results)",
+        ...prevLog,
+        ...out.constraintHandlingLog,
+      ];
+    }
+
+    const places = out.places;
+    const filteredOut = out.filteredOut;
+    const perResultScoreBreakdown = out.perResultScoreBreakdown;
+    const constraintHandlingLog = out.constraintHandlingLog;
 
     const googleResultsRawCount = placesNormalized.length;
-
-    /** @type {Array<{ placeId: string | null, name: string | null, stage: string, reason: string, distanceMeters: number | null, relevanceScoreBeforeRemoval: number | null }>} */
-    const filteredOut = [];
-
-    const afterNorm = [];
-    for (const p of placesNormalized) {
-      if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
-        afterNorm.push(p);
-      } else {
-        filteredOut.push({
-          placeId: p.id != null ? String(p.id) : null,
-          name: p.name != null ? String(p.name) : null,
-          stage: "normalization",
-          reason: "Missing required location data",
-          distanceMeters: null,
-          relevanceScoreBeforeRemoval: null,
-        });
-      }
-    }
-
-    const maxAllowedMeters = planRadiusMeters * 1.5;
-    const afterDist = [];
-    for (const p of afterNorm) {
-      const dist = distanceMetersForPlace(p, values.latitude, values.longitude);
-      if (dist == null || Number.isNaN(dist)) {
-        afterDist.push(p);
-        continue;
-      }
-      if (dist <= maxAllowedMeters) {
-        afterDist.push(p);
-      } else {
-        filteredOut.push({
-          placeId: p.id != null ? String(p.id) : null,
-          name: p.name != null ? String(p.name) : null,
-          stage: "distanceFilter",
-          reason: "Distance exceeded allowed range",
-          distanceMeters: Math.round(dist),
-          relevanceScoreBeforeRemoval: null,
-        });
-      }
-    }
-
-    let candidates = afterDist;
-    if (intent.isStrictVeganQuery) {
-      const afterStrict = [];
-      for (const p of afterDist) {
-        if (placeMatchesStrictVeganIntent(p)) {
-          afterStrict.push(p);
-        } else {
-          const dist = distanceMetersForPlace(p, values.latitude, values.longitude);
-          filteredOut.push({
-            placeId: p.id != null ? String(p.id) : null,
-            name: p.name != null ? String(p.name) : null,
-            stage: "strictFilter",
-            reason: "Did not match strict vegan intent",
-            distanceMeters: dist != null && !Number.isNaN(dist) ? Math.round(dist) : null,
-            relevanceScoreBeforeRemoval: null,
-          });
-        }
-      }
-      candidates = afterStrict;
-    }
-
-    const afterNormalizationCount = afterNorm.length;
-    const afterDistanceFilterCount = afterDist.length;
-    const afterStrictFilterCount = candidates.length;
+    const afterNormalizationCount = out.afterNorm.length;
+    const afterDistanceFilterCount = out.afterDist.length;
+    const afterStrictFilterCount = out.candidates.length;
+    const afterScoringCount = places.length;
+    const finalResultsCount = places.length;
 
     console.log("[DEBUG] Google raw results count:", googleResultsRawCount);
     console.log("[DEBUG] After normalization (valid lat/lng):", afterNormalizationCount);
     console.log("[DEBUG] After distance filter:", afterDistanceFilterCount);
     console.log("[DEBUG] After strict filter:", afterStrictFilterCount);
-
-    const ctx = {
-      prompt: values.prompt,
-      category: values.category,
-      userLat: values.latitude,
-      userLng: values.longitude,
-      radiusMeters: planRadiusMeters,
-      isStrictQuery: intent.isStrictQuery,
-      isStrictVeganQuery: intent.isStrictVeganQuery,
-      mentionsVeganIntent: intent.mentionsVeganIntent,
-    };
-
-    const places = candidates.map((p) => {
-      const s = scorePlace(ctx, p);
-      const row = {
-        id: p.id,
-        name: p.name,
-        lat: p.lat,
-        lng: p.lng,
-        address: p.address,
-        rating: p.rating,
-        userRatingsTotal: p.userRatingsTotal,
-        priceLevel: p.priceLevel,
-        openNow: p.openNow,
-        types: p.types,
-        photoReference: p.photoReference,
-        photoUrl: null,
-        googleMapsUrl: p.googleMapsUrl,
-        distanceMeters: p.distanceMeters,
-        relevanceScore: s.relevanceScore,
-        matchReasons: s.matchReasons,
-        warnings: s.warnings,
-      };
-      if (s.smokingInfo) row.smokingInfo = s.smokingInfo;
-      return row;
-    });
-
-    places.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
-
-    const afterScoringCount = places.length;
-    const finalResultsCount = places.length;
-
     console.log("[DEBUG] After scoring:", afterScoringCount);
     console.log("[DEBUG] Final results count:", finalResultsCount);
 
     let debugFlow = null;
     if (debug) {
+      const pipelineWarningCount = (constraintHandlingLog || []).filter((line) =>
+        String(line).toLowerCase().includes("warning")
+      ).length;
+
       const evalOut = evaluateResults({
         userPrompt: values.prompt,
         geminiPlan: searchDebug && searchDebug.geminiPlan != null ? searchDebug.geminiPlan : null,
         placesResults: places,
         planRadiusMeters: planRadiusMeters,
+        pipelineWarningCount,
       });
 
       const plannerSource = searchDebug && searchDebug.plannerSource != null ? searchDebug.plannerSource : null;
@@ -272,6 +396,8 @@ exports.search = async (req, res) => {
         plannerSource,
         fallbackReason,
         geminiPlan,
+        evaluationModelUsed: evaluationModel,
+        searchContext: searchContext || null,
         googleRequestSummary,
         googleResultsRawCount,
         afterNormalizationCount,
@@ -281,6 +407,10 @@ exports.search = async (req, res) => {
         finalResultsCount,
         filteredOut,
         keptResults,
+        perResultScoreBreakdown,
+        constraintHandlingLog,
+        fallbackUsed,
+        distanceFallbackUsed,
         evaluator: {
           overallQuality: evalOut.overallQuality,
           confidence: evalOut.confidence,

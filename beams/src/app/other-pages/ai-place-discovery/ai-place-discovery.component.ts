@@ -64,9 +64,6 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
   searchLoading = false;
   searchError: string | null = null;
 
-  /** TEMPORARY: full `meta.searchDebug` JSON for on-page debugging when modal fails */
-  debugSearchDebugInline: string | null = null;
-
   constructor(
     private directionService: DirectionService,
     private aiPlaceSearch: AiPlaceSearchService,
@@ -383,7 +380,6 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
 
     sessionStorage.setItem(SESSION_PROMPT_KEY, trimmed);
     this.searchLoading = true;
-    this.debugSearchDebugInline = null;
     this.places = [];
     this.selectedPlaceId = null;
     this.activePopup?.remove();
@@ -407,11 +403,6 @@ export class AiPlaceDiscoveryComponent implements OnInit, AfterViewInit, OnDestr
           console.log("res.meta:", res?.meta);
           console.log("res.meta.searchDebug:", res?.meta?.searchDebug);
           console.log("res.meta.searchDebug.geminiPlan:", res?.meta?.searchDebug?.geminiPlan);
-
-          const searchDebug = res?.meta?.searchDebug;
-          this.debugSearchDebugInline = searchDebug
-            ? JSON.stringify(searchDebug, null, 2)
-            : "(no meta.searchDebug — is backend debug enabled?)";
 
           this.places = res.places || [];
 
